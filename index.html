@@ -272,10 +272,12 @@
        =============================== -->
   <div id="changelogOverlay">
     <div id="changelogModal">
-      <h2>Changelog (v1.1.2)</h2>
+      <h2>Changelog (v1.1.3)</h2>
       <ul>
         <li>Tutorial box now supports dark mode.</li>
         <li>Server-side Clear now removes broadcasts & messages instantly for all.</li>
+        <li>Notifications on DMS</li>
+        <li>Added No Notifications Option In Settings</li>
       </ul>
       <button onclick="closeChangelog()">Close</button>
     </div>
@@ -337,7 +339,7 @@
        2) CHAT SCREEN (chatDiv)
        ================================ -->
   <div id="chatDiv">
-    <h2>Chat Room</h2>
+    <h2>Yap Room</h2>
 
     <!-- Quick list of room commands -->
     <div class="tutorial-box">
@@ -353,7 +355,7 @@
     <div id="typingStatus"></div>
 
     <div class="chat-controls">
-      <textarea id="messageInput" placeholder="Type a message"></textarea>
+      <textarea id="messageInput" placeholder="Type a message" oninput="handleTyping()"></textarea>
       <button onclick="sendMessage()">Send</button>
       <button onclick="clearChat()">Clear Chat</button>
     </div>
@@ -372,7 +374,7 @@
         <div id="dmConversation" style="margin-top:10px; display:none;">
           <ul id="dmMessages"></ul>
           <div class="dm-controls">
-            <textarea id="dmMessageInput" placeholder="Type a direct message"></textarea>
+            <textarea id="dmMessageInput" placeholder="Type a direct message" oninput="handleTyping()"></textarea>
             <button onclick="sendDM()">Send DM</button>
           </div>
         </div>
@@ -413,6 +415,13 @@
       <option value="font-lucida">Lucida Sans Unicode</option>
       <option value="font-garamond">Garamond</option>
     </select>
+    <br><br>
+
+    <!-- Notification toggle -->
+    <label>
+      <input type="checkbox" id="notificationsToggle" onchange="toggleNotifications()" />
+      Enable Desktop Notifications
+    </label>
     <br><br>
 
     <button onclick="goBack()">Back</button>
@@ -566,6 +575,13 @@
         }
       });
       dmInput.addEventListener("input", autoResize);
+
+      // J) Restore Notifications Setting
+      const notificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
+      const notificationsToggle = document.getElementById("notificationsToggle");
+      if (notificationsToggle) {
+        notificationsToggle.checked = notificationsEnabled;
+      }
     };
 
     /* Close the changelog overlay each time */
@@ -889,6 +905,11 @@
       dmListener = db.ref(currentDMPath).on("child_added", (snap) => {
         const val = snap.val();
         displayDMMessage(val.user, val.text);
+
+        // If it's not our own message, show a desktop notification (if enabled)
+        if (val.user !== currentUsername) {
+          showDMNotification(val.user, val.text);
+        }
       });
     }
 
@@ -933,13 +954,6 @@
     /* =====================================================
        10) Group Chat (Revamped with Slash Commands)
        ===================================================== */
-    /*
-      Commands:
-        /createroom [roomName]
-        /join [roomName]
-        /invite [accountName]
-        /leave
-    */
     async function handleSlashCommand(text) {
       const parts = text.split(" ");
       const cmd = parts[0].toLowerCase(); 
@@ -951,7 +965,6 @@
         return;
       }
 
-      // Group commands
       switch(cmd) {
         case "/createroom":
           if (!arg) {
@@ -1104,7 +1117,6 @@
       }
     }
 
-    // OP slash commands: /mute [name], /unmute [name]
     function handleOpCommand(cmd, target) {
       if (!target) {
         alert("Usage: " + cmd + " [username]");
@@ -1119,7 +1131,6 @@
       }
     }
 
-    // Clear Chat for Everyone (including broadcasts)
     function clearChatForEveryone() {
       const confirmClear = confirm("Are you sure you want to clear the entire public chat AND all broadcasts for EVERYONE?");
       if (!confirmClear) return;
@@ -1133,7 +1144,6 @@
       alert("All messages and broadcasts cleared for everyone.");
     }
 
-    // Broadcast
     function sendBroadcast() {
       if (!isCurrentUserOP()) {
         alert("You are not an OP!");
@@ -1153,7 +1163,6 @@
       alert("Broadcast sent!");
     }
 
-    // Let OP set their color in the DB
     function setOpColor() {
       if (!isCurrentUserOP()) {
         alert("You are not an OP!");
@@ -1231,6 +1240,55 @@
       const selectedFont = document.getElementById("fontSelect").value;
       document.body.classList.add(selectedFont);
       localStorage.setItem("selectedFont", selectedFont);
+    }
+
+    /* =====================================================
+       17) Desktop Notifications
+       ===================================================== */
+
+    // Toggle from the Settings checkbox
+    function toggleNotifications() {
+      const isChecked = document.getElementById("notificationsToggle").checked;
+      localStorage.setItem("notificationsEnabled", isChecked);
+
+      // If user just turned ON notifications, request permission
+      if (isChecked) {
+        requestNotificationPermission();
+      }
+    }
+
+    // Request permission for notifications
+    function requestNotificationPermission() {
+      if (!("Notification" in window)) {
+        alert("This browser does not support desktop notifications.");
+        return;
+      }
+
+      if (Notification.permission !== "granted") {
+        Notification.requestPermission().then((permission) => {
+          if (permission !== "granted") {
+            alert("You blocked notifications in your browser settings.");
+            // Turn off toggle if user denied
+            document.getElementById("notificationsToggle").checked = false;
+            localStorage.setItem("notificationsEnabled", false);
+          }
+        });
+      }
+    }
+
+    // Display a desktop notification for new DM
+    function showDMNotification(user, text) {
+      const isNotificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
+      // If notifications are off or not supported, do nothing
+      if (!("Notification" in window) || !isNotificationsEnabled) return;
+
+      // Only show if document is not in focus
+      if (document.hidden && Notification.permission === "granted") {
+        new Notification("New DM from " + user, {
+          body: text,
+          icon: "https://via.placeholder.com/50" // Optional icon URL
+        });
+      }
     }
   </script>
 </body>
