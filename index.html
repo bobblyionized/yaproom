@@ -50,8 +50,8 @@
       margin: 0 4px;
     }
 
-    /* If user is an account, color the name in blue; if anon, black. */
-    .account-user {
+    /* If user is an account, color the name in blue by default; if anon, black. */
+    .account-user
       color: rgb(74, 148, 218);
       font-weight: bold;
     }
@@ -272,9 +272,10 @@
        =============================== -->
   <div id="changelogOverlay">
     <div id="changelogModal">
-      <h2>Changelog (v1.0.1)</h2>
+      <h2>Changelog (v1.0.5)</h2>
       <ul>
         <li>Changed from LOCAL hosting to SERVER hosting</li>
+        <li>Added Admin Panel</li>
       </ul>
       <button onclick="closeChangelog()">Close</button>
     </div>
@@ -309,6 +310,21 @@
     <hr />
     <!-- Settings button is only here, in the main screen -->
     <button onclick="showSettingsFromLogin()">Settings</button>
+
+    <!-- ===============================
+         OP-ONLY SECTION (MAIN MENU BOTTOM)
+         =============================== -->
+    <div id="opSection" style="display:none; margin-top: 20px; border-top:1px solid #ccc; padding-top:10px;">
+      <h3>OP Tools</h3>
+      <!-- Clear Chat Button -->
+      <button onclick="clearChatForEveryone()" style="background:#e00; color:#fff;">Clear Chat (Server-Side)</button>
+      <br /><br />
+
+      <!-- Color Picker -->
+      <label for="opColorPicker">Change Your Name Color:</label><br/>
+      <input type="color" id="opColorPicker" value="#4A94DA" />
+      <button onclick="setOpColor()">Set Name Color</button>
+    </div>
   </div>
 
   <!-- ================================
@@ -323,7 +339,7 @@
 
     <div class="chat-controls">
       <!-- Single-line <textarea> => no whitespace -->
-      <textarea id="messageInput" placeholder="Type a message (SHIFT+ENTER for new line)"></textarea>
+      <textarea id="messageInput" placeholder="Type a message"></textarea>
       <button onclick="sendMessage()">Send</button>
       <button onclick="clearChat()">Clear Chat</button>
     </div>
@@ -342,7 +358,7 @@
         <div id="dmConversation" style="margin-top:10px; display:none;">
           <ul id="dmMessages"></ul>
           <div class="dm-controls">
-            <textarea id="dmMessageInput" placeholder="Type a direct message (SHIFT+ENTER for new line)"></textarea>
+            <textarea id="dmMessageInput" placeholder="Type a direct message"></textarea>
             <button onclick="sendDM()">Send DM</button>
           </div>
         </div>
@@ -366,7 +382,7 @@
           <p>Group Key: <span id="groupDMKeyDisplay"></span></p>
           <ul id="groupDMMessages"></ul>
           <div class="groupdm-controls">
-            <textarea id="groupDMMessageInput" placeholder="Type a group message (SHIFT+ENTER for new line)"></textarea>
+            <textarea id="groupDMMessageInput" placeholder="Type a group message"></textarea>
             <button onclick="sendGroupDM()">Send</button>
           </div>
           <br>
@@ -431,6 +447,7 @@
   <script>
     /* =====================================================
        1) Firebase Configuration & Initialization
+       (DO NOT CHANGE THESE KEYS)
        ===================================================== */
     const firebaseConfig = {
       apiKey: "AIzaSyBkm5Lf3PaghllqcatG_FymhTm_x7mGa28",
@@ -445,11 +462,14 @@
     const db = firebase.database();
 
     /* =====================================================
-       2) Global Variables
+       2) Global Variables & OP List
        ===================================================== */
+    // Add more OP usernames here if needed
+    const OP_LIST = ["god", "pasta"];
+
     let lastMessageTime = 0;
     const RATE_LIMIT_MS = 2000; // 2-second limit
-    const badWords = ["shit","fuck","bitch"]; // Expand as needed
+    const badWords = ["shit","fuck","bitch", "nigga", "fucking", "shitting", "negro", "bullshit", "pussy"]; // Expand as needed
 
     let currentUsername = null;
     let currentPassHash = null;
@@ -458,6 +478,11 @@
     let currentGroupDMKey = null;
     let groupDMListener = null;
     let typingTimeout = null;
+
+    // We'll store muted users in a global object, updated from DB:
+    let mutedUsers = {};
+    // We'll store account colors (for OPs) in a global object, updated from DB:
+    let accountColors = {};
 
     /* =====================================================
        3) On Page Load: Always show Changelog
@@ -492,6 +517,11 @@
       // E) Listen for public chat
       db.ref("messages").on("child_added", (snapshot) => {
         const msg = snapshot.val();
+        // If user is muted, skip displaying
+        if (msg.user && mutedUsers[msg.user.toLowerCase()]) {
+          // Don't display
+          return;
+        }
         displayMessage(msg.user, msg.text, msg.isAccount);
       });
 
@@ -499,6 +529,16 @@
       db.ref("typing").on("value", (snap) => {
         const typingObj = snap.val() || {};
         showTypingStatus(typingObj);
+      });
+
+      // G) Listen for muted users
+      db.ref("mutedUsers").on("value", (snap) => {
+        mutedUsers = snap.val() || {};
+      });
+
+      // H) Listen for account colors
+      db.ref("accountColors").on("value", (snap) => {
+        accountColors = snap.val() || {};
       });
 
       // SHIFT+ENTER for main chat
@@ -588,6 +628,7 @@
       const notLoggedInUI = document.getElementById("notLoggedInUI");
       const loggedInUI = document.getElementById("loggedInUI");
       const loggedInName = document.getElementById("loggedInName");
+
       if (currentUsername && currentPassHash) {
         notLoggedInUI.style.display = "none";
         loggedInUI.style.display = "block";
@@ -596,8 +637,12 @@
         notLoggedInUI.style.display = "block";
         loggedInUI.style.display = "none";
       }
+      // Show or hide DM UI
       updateDMUI();
+      // Show or hide Group DM UI
       updateGroupDMUI();
+      // Show or hide OP tools
+      checkIfOP();
     }
 
     async function logOutAccount() {
@@ -683,15 +728,34 @@
     }
 
     function sendMessage() {
+      // First, if user typed a slash command and is OP, handle it:
+      const inp = document.getElementById("messageInput");
+      let text = inp.value.trim();
+      if (!text) return;
+
+      // If the user is OP and the text starts with "/", parse command:
+      if (isCurrentUserOP() && text.startsWith("/")) {
+        handleOpCommand(text);
+        inp.value = "";
+        inp.style.height = "40px";
+        return;
+      }
+
+      // Check if the user is muted:
+      if (currentUsername && mutedUsers[currentUsername.toLowerCase()]) {
+        alert("You are muted and cannot send messages.");
+        inp.value = "";
+        inp.style.height = "40px";
+        return;
+      }
+
       const currentTime = Date.now();
       if (currentTime - lastMessageTime < RATE_LIMIT_MS) {
         const secLeft = Math.ceil((RATE_LIMIT_MS - (currentTime - lastMessageTime)) / 1000);
         alert(`Wait ${secLeft} second(s).`);
         return;
       }
-      const inp = document.getElementById("messageInput");
-      let text = inp.value.trim();
-      if (!text) return;
+
       text = filterBadWords(text);
 
       let finalName = currentUsername;
@@ -717,14 +781,51 @@
       }
     }
 
+    function handleOpCommand(commandText) {
+      const parts = commandText.split(" ");
+      const mainCmd = parts[0].toLowerCase(); // e.g. "/mute"
+      const target = parts[1] ? parts[1].toLowerCase() : null;
+
+      if (mainCmd === "/mute") {
+        if (!target) {
+          alert("Usage: /mute [username]");
+          return;
+        }
+        db.ref("mutedUsers/" + target).set(true);
+        alert(`User "${target}" has been muted.`);
+      }
+      else if (mainCmd === "/unmute") {
+        if (!target) {
+          alert("Usage: /unmute [username]");
+          return;
+        }
+        db.ref("mutedUsers/" + target).remove();
+        alert(`User "${target}" has been unmuted.`);
+      }
+      else {
+        alert("Unknown command.");
+      }
+    }
+
     function displayMessage(user, text, isAccount) {
       const ul = document.getElementById("messages");
       const li = document.createElement("li");
       li.classList.add("message-enter");
 
       // color code name
-      const userClass = isAccount ? "account-user" : "anonymous-user";
-      li.innerHTML = `<span class="${userClass}">${user}</span>: ${text}`;
+      let userColorClass = isAccount ? "account-user" : "anonymous-user";
+      let colorStyle = "";
+
+      // If the user has a custom color (and is possibly an OP), use it:
+      if (accountColors[user.toLowerCase()]) {
+        colorStyle = `style="color:${accountColors[user.toLowerCase()]}; font-weight:bold;"`;
+      } 
+      else if (isAccount) {
+        // default for account is a blue color, as before:
+        colorStyle = `style="color:rgb(74, 148, 218);"`;
+      }
+
+      li.innerHTML = `<span class="${userColorClass}" ${colorStyle}>${user}</span>: ${text}`;
 
       ul.appendChild(li);
       ul.scrollTop = ul.scrollHeight;
@@ -821,6 +922,15 @@
       let text = inp.value.trim();
       if (!text) return;
       text = filterBadWords(text);
+
+      // If the current user is muted, block sending
+      if (currentUsername && mutedUsers[currentUsername.toLowerCase()]) {
+        alert("You are muted and cannot send messages.");
+        inp.value = "";
+        inp.style.height = "40px";
+        return;
+      }
+
       const finalName = currentUsername || "Unknown";
       const msgData = {
         user: finalName,
@@ -897,6 +1007,8 @@
       groupDMListener = db.ref("groupDms/" + gKey + "/messages").on("child_added", (snap) => {
         const val = snap.val();
         if (val.user && val.text) {
+          // If user is muted, skip
+          if (mutedUsers[val.user.toLowerCase()]) return;
           displayGroupDMMessage(val.user, val.text);
         } else if (val.system) {
           displayGroupDMMessage("System", val.system);
@@ -918,6 +1030,13 @@
         alert("No group DM open yet.");
         return;
       }
+
+      // If the current user is muted, block sending
+      if (currentUsername && mutedUsers[currentUsername.toLowerCase()]) {
+        alert("You are muted and cannot send messages.");
+        return;
+      }
+
       const currentTime = Date.now();
       if (currentTime - lastMessageTime < RATE_LIMIT_MS) {
         const secLeft = Math.ceil((RATE_LIMIT_MS - (currentTime - lastMessageTime)) / 1000);
@@ -980,6 +1099,7 @@
     function returnToLogin() {
       document.getElementById("chatDiv").style.display = "none";
       document.getElementById("loginDiv").style.display = "block";
+      checkIfOP(); // updates OP section in case we changed user
     }
 
     /* =====================================================
@@ -1039,6 +1159,44 @@
       const selectedFont = document.getElementById("fontSelect").value;
       document.body.classList.add(selectedFont);
       localStorage.setItem("selectedFont", selectedFont);
+    }
+
+    /* =====================================================
+       16) OP Features
+       - Clear Chat Server-Side
+       - Color Picker for OP name color
+       ===================================================== */
+    function checkIfOP() {
+      // If user is in OP_LIST, show the opSection in the main menu
+      const opSection = document.getElementById("opSection");
+      if (currentUsername && OP_LIST.includes(currentUsername.toLowerCase())) {
+        opSection.style.display = "block";
+      } else {
+        opSection.style.display = "none";
+      }
+    }
+
+    function isCurrentUserOP() {
+      return currentUsername && OP_LIST.includes(currentUsername.toLowerCase());
+    }
+
+    function clearChatForEveryone() {
+      const confirmClear = confirm("Are you sure you want to clear the entire public chat for EVERYONE?");
+      if (!confirmClear) return;
+      db.ref("messages").remove();
+      document.getElementById("messages").innerHTML = "";
+    }
+
+    // Let OP set their color in the DB
+    function setOpColor() {
+      if (!isCurrentUserOP()) {
+        alert("You are not an OP!");
+        return;
+      }
+      const colorPicker = document.getElementById("opColorPicker");
+      const chosenColor = colorPicker.value;
+      db.ref("accountColors/" + currentUsername.toLowerCase()).set(chosenColor);
+      alert("Your chat color has been updated to: " + chosenColor);
     }
   </script>
 </body>
