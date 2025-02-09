@@ -272,12 +272,13 @@
        =============================== -->
   <div id="changelogOverlay">
     <div id="changelogModal">
-      <h2>Changelog (v1.1.3)</h2>
+      <h2>Changelog (v1.1.5)</h2>
       <ul>
         <li>Tutorial box now supports dark mode.</li>
         <li>Server-side Clear now removes broadcasts & messages instantly for all.</li>
-        <li>Notifications on DMS</li>
-        <li>Added No Notifications Option In Settings</li>
+        <li>Notifications Added (not working D:)</li>
+        <li>Change Password Button Added</li>
+        <li>Overall QOL</li>
       </ul>
       <button onclick="closeChangelog()">Close</button>
     </div>
@@ -289,6 +290,10 @@
   <div id="loginDiv">
     <h2>Enter Chat</h2>
     <p>Anonymous / Temporary Name:</p>
+    <!-- 
+      If user is logged in, this will be read-only and show their username.
+      Otherwise, the user can type a name for anonymous chat.
+    -->
     <input type="text" id="anonymousInput" class="username-input" placeholder="Anonymous Name" />
     <button onclick="startChatting()" class="enter-chat-btn">Start Chatting</button>
 
@@ -303,9 +308,17 @@
 
     <div id="loggedInUI" style="display:none;">
       <p>Logged in as: <span id="loggedInName"></span></p>
+
+      <!-- Rename Account -->
       <input type="text" id="renameInput" placeholder="New username" style="width:100%; margin-bottom:5px;" />
       <button onclick="renameAccount()">Rename Account</button>
       <br /><br />
+
+      <!-- Change Password -->
+      <input type="text" id="changePassInput" placeholder="New Password" style="width:100%; margin-bottom:5px;" />
+      <button onclick="changePassword()">Change Password</button>
+      <br /><br />
+
       <button onclick="logOutAccount()">Log Out</button>
     </div>
 
@@ -640,14 +653,25 @@
       const notLoggedInUI = document.getElementById("notLoggedInUI");
       const loggedInUI = document.getElementById("loggedInUI");
       const loggedInName = document.getElementById("loggedInName");
+      const anonInput = document.getElementById("anonymousInput");
 
       if (currentUsername && currentPassHash) {
+        // Logged in
         notLoggedInUI.style.display = "none";
         loggedInUI.style.display = "block";
         loggedInName.textContent = currentUsername;
+
+        // Make the "anonymous name" box read-only, showing the current username
+        anonInput.value = currentUsername;
+        anonInput.disabled = true;
       } else {
+        // Not logged in
         notLoggedInUI.style.display = "block";
         loggedInUI.style.display = "none";
+
+        // Reset the anonymous input for potential new user
+        anonInput.value = "";
+        anonInput.disabled = false;
       }
       // Show or hide DM UI
       updateDMUI();
@@ -703,6 +727,35 @@
         updateAccountUI();
       } catch (err) {
         alert("Error renaming: " + err);
+      }
+    }
+
+    /* =====================================================
+       5B) Change Password
+       ===================================================== */
+    async function changePassword() {
+      if (!currentUsername || !currentPassHash) {
+        alert("You are not logged in, can't change password.");
+        return;
+      }
+      const newPass = document.getElementById("changePassInput").value.trim();
+      if (!newPass) {
+        alert("Enter a new password.");
+        return;
+      }
+      const newPassHash = sha256(newPass);
+
+      try {
+        // update the existing account
+        await db.ref("accounts/" + currentUsername).update({
+          passwordHash: newPassHash
+        });
+        currentPassHash = newPassHash;
+        localStorage.setItem("acc_passHash", newPassHash);
+        alert("Password changed successfully!");
+        document.getElementById("changePassInput").value = "";
+      } catch (err) {
+        alert("Error changing password: " + err);
       }
     }
 
