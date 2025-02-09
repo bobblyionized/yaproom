@@ -17,7 +17,7 @@
 
     /* Rounded corners for UI elements */
     #loginDiv, #chatDiv, #settingsDiv,
-    #messages, #dmMessages, #groupDMMessages,
+    #messages, #dmMessages,
     textarea, button, select {
       border-radius: 8px; 
     }
@@ -29,6 +29,7 @@
       padding: 20px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
+
     #chatDiv {
       display: none; /* Hidden until user enters or logs in */
     }
@@ -51,13 +52,22 @@
     }
 
     /* If user is an account, color the name in blue by default; if anon, black. */
-    .account-user
+    .account-user {
       color: rgb(74, 148, 218);
       font-weight: bold;
     }
     .anonymous-user {
       color: #000;
       font-weight: normal;
+    }
+
+    /* Special style for broadcast messages. */
+    .broadcast-msg {
+      background: #ffeb3b;
+      color: #000;
+      font-weight: bold;
+      padding: 4px;
+      border-radius: 4px;
     }
 
     /* Typing status area */
@@ -176,7 +186,7 @@
     }
 
     /* ----------------------------------------
-       5) DM Section
+       5) DM Section (Single User DM)
        ---------------------------------------- */
     #dmSection {
       margin-top: 20px;
@@ -202,29 +212,19 @@
     }
 
     /* ----------------------------------------
-       6) Group DM Section
+       Tutorial box styling
        ---------------------------------------- */
-    #groupDMSection {
-      margin-top: 20px;
-      border-top: 1px solid #ccc;
-      padding-top: 10px;
+    .tutorial-box {
+      margin-bottom:10px; 
+      font-size: 0.9em; 
+      background:#fafafa; 
+      padding:6px; 
+      border-radius:5px;
+      transition: background 0.3s, color 0.3s;
     }
-    #groupDMMessages {
-      list-style-type: none;
-      padding: 0;
-      max-height: 200px;
-      overflow-y: auto;
-      margin-bottom: 10px;
-      border: 1px solid #ddd;
-    }
-    #groupDMMessages li {
-      padding: 8px;
-      border-bottom: 1px solid #eee;
-      margin: 0 4px;
-    }
-    .groupdm-controls {
-      display: flex;
-      gap: 5px;
+    body.dark-mode .tutorial-box {
+      background: #333;
+      color: #eee;
     }
 
     /* ----------------------------------------
@@ -272,10 +272,10 @@
        =============================== -->
   <div id="changelogOverlay">
     <div id="changelogModal">
-      <h2>Changelog (v1.0.5)</h2>
+      <h2>Changelog (v1.1.2)</h2>
       <ul>
-        <li>Changed from LOCAL hosting to SERVER hosting</li>
-        <li>Added Admin Panel</li>
+        <li>Tutorial box now supports dark mode.</li>
+        <li>Server-side Clear now removes broadcasts & messages instantly for all.</li>
       </ul>
       <button onclick="closeChangelog()">Close</button>
     </div>
@@ -320,7 +320,13 @@
       <button onclick="clearChatForEveryone()" style="background:#e00; color:#fff;">Clear Chat (Server-Side)</button>
       <br /><br />
 
-      <!-- Color Picker -->
+      <!-- Broadcast -->
+      <label for="opBroadcastInput">Broadcast Message (shown to all):</label><br/>
+      <input type="text" id="opBroadcastInput" style="width:100%; margin-bottom:5px;" />
+      <button onclick="sendBroadcast()" style="background:#2196F3; color:#fff;">Send Broadcast</button>
+      <br /><br />
+
+      <!-- Color Picker (Optional) -->
       <label for="opColorPicker">Change Your Name Color:</label><br/>
       <input type="color" id="opColorPicker" value="#4A94DA" />
       <button onclick="setOpColor()">Set Name Color</button>
@@ -333,18 +339,26 @@
   <div id="chatDiv">
     <h2>Chat Room</h2>
 
+    <!-- Quick list of room commands -->
+    <div class="tutorial-box">
+      <strong>Group Chat Commands:</strong><br/>
+      /createroom [roomName]<br/>
+      /join [roomName]<br/>
+      /invite [accountName]<br/>
+      /leave
+    </div>
+
     <!-- A) Messages + "Who is typing" indicator -->
     <ul id="messages"></ul>
     <div id="typingStatus"></div>
 
     <div class="chat-controls">
-      <!-- Single-line <textarea> => no whitespace -->
       <textarea id="messageInput" placeholder="Type a message"></textarea>
       <button onclick="sendMessage()">Send</button>
       <button onclick="clearChat()">Clear Chat</button>
     </div>
 
-    <!-- 2B) Direct Messages Section -->
+    <!-- 2B) Direct Messages Section (Single DM) -->
     <div id="dmSection">
       <h3>Direct Messages</h3>
       <div id="dmLoginWarning" style="color:red; display:none;">
@@ -365,38 +379,7 @@
       </div>
     </div>
 
-    <!-- 2C) Group DM Section -->
-    <div id="groupDMSection">
-      <h3>Group DMs</h3>
-      <div id="groupLoginWarning" style="color:red; display:none;">
-        You must be logged in to create or join Group DMs.
-      </div>
-      <div id="groupDMUI" style="display:none;">
-        <button onclick="showGroupDMSetup()">Start Group DM</button>
-        <div id="groupDMSetup" style="display:none; margin:10px 0;">
-          <p>Type one or more usernames, separated by commas (e.g. "nightime, bobblyionized, chuckwee")</p>
-          <input type="text" id="groupDMParticipantsInput" placeholder="User1, User2, ..." style="width:100%; margin-bottom:5px;" />
-          <button onclick="createGroupDM()">Create Group DM</button>
-        </div>
-        <div id="activeGroupDM" style="display:none; margin-top:10px;">
-          <p>Group Key: <span id="groupDMKeyDisplay"></span></p>
-          <ul id="groupDMMessages"></ul>
-          <div class="groupdm-controls">
-            <textarea id="groupDMMessageInput" placeholder="Type a group message"></textarea>
-            <button onclick="sendGroupDM()">Send</button>
-          </div>
-          <br>
-          <button onclick="showAddPeopleUI()">Add People</button>
-          <div id="addPeopleUI" style="display:none; margin:10px 0;">
-            <p>Type additional usernames, separated by commas:</p>
-            <input type="text" id="addGroupDMParticipantsInput" placeholder="UserX, UserY, ..." style="width:100%; margin-bottom:5px;" />
-            <button onclick="addMorePeople()">Add Selected People</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 2D) Button to Return to Main Screen -->
+    <!-- 2C) Return to Main Screen -->
     <div style="margin-top:20px; text-align:center;">
       <button onclick="returnToLogin()">Return to Main Screen</button>
     </div>
@@ -465,7 +448,7 @@
        2) Global Variables & OP List
        ===================================================== */
     // Add more OP usernames here if needed
-    const OP_LIST = ["god", "pasta"];
+    const OP_LIST = ["god", "pasta"]; 
 
     let lastMessageTime = 0;
     const RATE_LIMIT_MS = 2000; // 2-second limit
@@ -473,15 +456,23 @@
 
     let currentUsername = null;
     let currentPassHash = null;
+
+    // DM
     let currentDMPath = null;
     let dmListener = null;
-    let currentGroupDMKey = null;
-    let groupDMListener = null;
+
+    // Group Chat 
+    let inGroupChat = false;
+    let currentGroupRoomName = null;
+    let groupListener = null;
+
+    // Typing
     let typingTimeout = null;
 
-    // We'll store muted users in a global object, updated from DB:
+    // Mute system
     let mutedUsers = {};
-    // We'll store account colors (for OPs) in a global object, updated from DB:
+
+    // OP color system
     let accountColors = {};
 
     /* =====================================================
@@ -514,15 +505,18 @@
       currentPassHash = localStorage.getItem("acc_passHash");
       updateAccountUI();
 
-      // E) Listen for public chat
+      // E) Listen for public chat (child_added + child_removed)
       db.ref("messages").on("child_added", (snapshot) => {
         const msg = snapshot.val();
-        // If user is muted, skip displaying
-        if (msg.user && mutedUsers[msg.user.toLowerCase()]) {
-          // Don't display
-          return;
-        }
-        displayMessage(msg.user, msg.text, msg.isAccount);
+        // If user is muted, skip
+        if (msg.user && mutedUsers[msg.user.toLowerCase()]) return;
+        displayMessage(msg.user, msg.text, msg.isAccount, false, snapshot.key);
+      });
+      db.ref("messages").on("child_removed", (snap) => {
+        // Remove from UI if present
+        const removedKey = snap.key;
+        const li = document.querySelector(`li[data-key="${removedKey}"]`);
+        if (li) li.remove();
       });
 
       // F) Listen for "typing" updates
@@ -539,6 +533,18 @@
       // H) Listen for account colors
       db.ref("accountColors").on("value", (snap) => {
         accountColors = snap.val() || {};
+      });
+
+      // I) Listen for OP broadcasts (child_added + child_removed)
+      db.ref("broadcasts").on("child_added", (snap) => {
+        const bData = snap.val();
+        displayMessage(bData.user, bData.text, true, true, snap.key); 
+      });
+      db.ref("broadcasts").on("child_removed", (snap) => {
+        // Remove broadcast from UI
+        const removedKey = snap.key;
+        const li = document.querySelector(`li[data-key="${removedKey}"]`);
+        if (li) li.remove();
       });
 
       // SHIFT+ENTER for main chat
@@ -560,16 +566,6 @@
         }
       });
       dmInput.addEventListener("input", autoResize);
-
-      // SHIFT+ENTER for Group DM
-      const groupInput = document.getElementById("groupDMMessageInput");
-      groupInput.addEventListener("keydown", function(e) {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          sendGroupDM();
-        }
-      });
-      groupInput.addEventListener("input", autoResize);
     };
 
     /* Close the changelog overlay each time */
@@ -639,8 +635,6 @@
       }
       // Show or hide DM UI
       updateDMUI();
-      // Show or hide Group DM UI
-      updateGroupDMUI();
       // Show or hide OP tools
       checkIfOP();
     }
@@ -711,7 +705,6 @@
       document.getElementById("loginDiv").style.display = "none";
       document.getElementById("chatDiv").style.display = "block";
       updateDMUI();
-      updateGroupDMUI();
     }
 
     /* =====================================================
@@ -728,27 +721,19 @@
     }
 
     function sendMessage() {
-      // First, if user typed a slash command and is OP, handle it:
       const inp = document.getElementById("messageInput");
       let text = inp.value.trim();
       if (!text) return;
 
-      // If the user is OP and the text starts with "/", parse command:
-      if (isCurrentUserOP() && text.startsWith("/")) {
-        handleOpCommand(text);
+      // If user typed a slash command, handle it (Group or OP commands)
+      if (text.startsWith("/")) {
+        handleSlashCommand(text);
         inp.value = "";
         inp.style.height = "40px";
         return;
       }
 
-      // Check if the user is muted:
-      if (currentUsername && mutedUsers[currentUsername.toLowerCase()]) {
-        alert("You are muted and cannot send messages.");
-        inp.value = "";
-        inp.style.height = "40px";
-        return;
-      }
-
+      // Rate limit
       const currentTime = Date.now();
       if (currentTime - lastMessageTime < RATE_LIMIT_MS) {
         const secLeft = Math.ceil((RATE_LIMIT_MS - (currentTime - lastMessageTime)) / 1000);
@@ -756,22 +741,40 @@
         return;
       }
 
-      text = filterBadWords(text);
-
-      let finalName = currentUsername;
-      const isAccount = (finalName != null && currentPassHash != null);
-
-      if (!finalName) {
-        finalName = "Unknown";
+      // Mute check
+      if (currentUsername && mutedUsers[currentUsername.toLowerCase()]) {
+        alert("You are muted and cannot send messages.");
+        inp.value = "";
+        inp.style.height = "40px";
+        return;
       }
 
-      const msgData = {
-        user: finalName,
-        text: text,
-        isAccount: isAccount,
-        timestamp: firebase.database.ServerValue.TIMESTAMP
-      };
-      db.ref("messages").push(msgData);
+      // Filter bad words
+      text = filterBadWords(text);
+
+      let finalName = currentUsername || "Unknown";
+      const isAccount = (currentUsername && currentPassHash);
+
+      // Are we in a group chat?
+      if (inGroupChat && currentGroupRoomName) {
+        // Send to group chat
+        const msgData = {
+          user: finalName,
+          text: text,
+          timestamp: firebase.database.ServerValue.TIMESTAMP
+        };
+        db.ref("groupRooms/" + currentGroupRoomName + "/messages").push(msgData);
+      } else {
+        // Send to public chat
+        const msgData = {
+          user: finalName,
+          text: text,
+          isAccount: isAccount,
+          timestamp: firebase.database.ServerValue.TIMESTAMP
+        };
+        db.ref("messages").push(msgData);
+      }
+
       inp.value = "";
       inp.style.height = "40px";
       lastMessageTime = currentTime;
@@ -781,60 +784,45 @@
       }
     }
 
-    function handleOpCommand(commandText) {
-      const parts = commandText.split(" ");
-      const mainCmd = parts[0].toLowerCase(); // e.g. "/mute"
-      const target = parts[1] ? parts[1].toLowerCase() : null;
-
-      if (mainCmd === "/mute") {
-        if (!target) {
-          alert("Usage: /mute [username]");
-          return;
-        }
-        db.ref("mutedUsers/" + target).set(true);
-        alert(`User "${target}" has been muted.`);
-      }
-      else if (mainCmd === "/unmute") {
-        if (!target) {
-          alert("Usage: /unmute [username]");
-          return;
-        }
-        db.ref("mutedUsers/" + target).remove();
-        alert(`User "${target}" has been unmuted.`);
-      }
-      else {
-        alert("Unknown command.");
-      }
-    }
-
-    function displayMessage(user, text, isAccount) {
+    // Add an optional param "messageKey" so we can store data-key for removal
+    function displayMessage(user, text, isAccount, isBroadcast, messageKey) {
       const ul = document.getElementById("messages");
       const li = document.createElement("li");
       li.classList.add("message-enter");
+
+      // Attach the data-key
+      if (messageKey) {
+        li.setAttribute("data-key", messageKey);
+      }
 
       // color code name
       let userColorClass = isAccount ? "account-user" : "anonymous-user";
       let colorStyle = "";
 
-      // If the user has a custom color (and is possibly an OP), use it:
-      if (accountColors[user.toLowerCase()]) {
+      // If the user has a custom color
+      if (accountColors[user?.toLowerCase()]) {
         colorStyle = `style="color:${accountColors[user.toLowerCase()]}; font-weight:bold;"`;
       } 
       else if (isAccount) {
-        // default for account is a blue color, as before:
+        // default for account is a blue color
         colorStyle = `style="color:rgb(74, 148, 218);"`;
       }
 
-      li.innerHTML = `<span class="${userColorClass}" ${colorStyle}>${user}</span>: ${text}`;
+      if (isBroadcast) {
+        // This is a broadcast message
+        li.innerHTML = `<span class="broadcast-msg">[BROADCAST from ${user}]</span> ${text}`;
+      } else {
+        li.innerHTML = `<span class="${userColorClass}" ${colorStyle}>${user}</span>: ${text}`;
+      }
 
       ul.appendChild(li);
       ul.scrollTop = ul.scrollHeight;
     }
 
     function clearChat() {
-      const confirmClear = confirm("Are you sure you want to clear the entire public chat?");
+      const confirmClear = confirm("Are you sure you want to clear the chat messages **on your screen**?");
       if (!confirmClear) return;
-      db.ref("messages").remove();
+      // This only clears locally
       document.getElementById("messages").innerHTML = "";
     }
 
@@ -943,167 +931,251 @@
     }
 
     /* =====================================================
-       10) Group DM
+       10) Group Chat (Revamped with Slash Commands)
        ===================================================== */
-    function updateGroupDMUI() {
-      const warn = document.getElementById("groupLoginWarning");
-      const ui = document.getElementById("groupDMUI");
-      if (currentUsername && currentPassHash) {
-        warn.style.display = "none";
-        ui.style.display = "block";
-      } else {
-        warn.style.display = "block";
-        ui.style.display = "none";
-      }
-    }
+    /*
+      Commands:
+        /createroom [roomName]
+        /join [roomName]
+        /invite [accountName]
+        /leave
+    */
+    async function handleSlashCommand(text) {
+      const parts = text.split(" ");
+      const cmd = parts[0].toLowerCase(); 
+      const arg = parts[1] ? parts[1].trim().toLowerCase() : null;
 
-    function showGroupDMSetup() {
-      document.getElementById("groupDMSetup").style.display = "block";
-    }
-
-    async function createGroupDM() {
-      const typed = document.getElementById("groupDMParticipantsInput").value.trim();
-      if (!typed) {
-        alert("Type at least one user (plus yourself).");
-        return;
-      }
-      let participants = typed.split(",").map(s => s.trim().toLowerCase()).filter(s => s);
-      if (currentUsername && !participants.includes(currentUsername)) {
-        participants.push(currentUsername);
-      }
-      if (participants.length < 2) {
-        alert("Need at least 2 total participants (you + 1).");
+      // If user is OP, check OP commands first (/mute, /unmute)
+      if (isCurrentUserOP() && (cmd === "/mute" || cmd === "/unmute")) {
+        handleOpCommand(cmd, arg);
         return;
       }
 
-      const groupKey = "group_" + Date.now();
-      currentGroupDMKey = groupKey;
+      // Group commands
+      switch(cmd) {
+        case "/createroom":
+          if (!arg) {
+            alert("Usage: /createroom [roomName]");
+            return;
+          }
+          await createGroupRoom(arg);
+          break;
+
+        case "/join":
+          if (!arg) {
+            alert("Usage: /join [roomName]");
+            return;
+          }
+          await joinGroupRoom(arg);
+          break;
+
+        case "/invite":
+          if (!arg) {
+            alert("Usage: /invite [accountName]");
+            return;
+          }
+          await inviteToGroup(arg);
+          break;
+
+        case "/leave":
+          leaveGroupRoom();
+          break;
+
+        default:
+          alert("Unknown command.");
+      }
+    }
+
+    async function createGroupRoom(roomName) {
+      if (!currentUsername || !currentPassHash) {
+        alert("You must be logged in to create a group room.");
+        return;
+      }
+      // Check if room exists
+      const snap = await db.ref("groupRooms/" + roomName).once("value");
+      if (snap.exists()) {
+        alert("That room name already exists. Choose a different one.");
+        return;
+      }
       const groupObj = {
-        participants: participants,
+        participants: [currentUsername.toLowerCase()],
         createdAt: Date.now(),
         messages: {
           dummy: { system: "Group created" }
         }
       };
-      try {
-        await db.ref("groupDms/" + groupKey).set(groupObj);
-        alert("Group DM created: " + groupKey);
-        openGroupDM(groupKey);
-      } catch (err) {
-        alert("Error creating group DM: " + err);
-      }
+      await db.ref("groupRooms/" + roomName).set(groupObj);
+      alert(`Group room "${roomName}" created. You are now inside it.`);
+
+      // Join it immediately
+      joinGroupRoom(roomName);
     }
 
-    function openGroupDM(gKey) {
-      if (groupDMListener) {
-        db.ref("groupDms/" + currentGroupDMKey + "/messages").off("child_added", groupDMListener);
+    async function joinGroupRoom(roomName) {
+      if (!currentUsername || !currentPassHash) {
+        alert("You must be logged in to join a group room.");
+        return;
       }
-      currentGroupDMKey = gKey;
-      document.getElementById("groupDMMessages").innerHTML = "";
-      document.getElementById("groupDMKeyDisplay").textContent = gKey;
-      document.getElementById("activeGroupDM").style.display = "block";
-      document.getElementById("groupDMSetup").style.display = "none";
 
-      groupDMListener = db.ref("groupDms/" + gKey + "/messages").on("child_added", (snap) => {
-        const val = snap.val();
+      // Check if room exists
+      const snap = await db.ref("groupRooms/" + roomName).once("value");
+      if (!snap.exists()) {
+        alert("That room does not exist.");
+        return;
+      }
+      const roomData = snap.val();
+      const me = currentUsername.toLowerCase();
+      if (!roomData.participants || !roomData.participants.includes(me)) {
+        alert("You are not invited to this room. Ask someone to /invite you.");
+        return;
+      }
+
+      // Switch to group chat mode
+      inGroupChat = true;
+      currentGroupRoomName = roomName;
+
+      // Stop listening to old group (if any)
+      if (groupListener) {
+        db.ref("groupRooms/" + roomName + "/messages").off("child_added", groupListener);
+      }
+      document.getElementById("messages").innerHTML = "";
+      groupListener = db.ref("groupRooms/" + roomName + "/messages").on("child_added", (snapMsg) => {
+        const val = snapMsg.val();
         if (val.user && val.text) {
-          // If user is muted, skip
+          // Mute check
           if (mutedUsers[val.user.toLowerCase()]) return;
-          displayGroupDMMessage(val.user, val.text);
+          displayMessage(val.user, val.text, true, false);
         } else if (val.system) {
-          displayGroupDMMessage("System", val.system);
+          displayMessage("System", val.system, false, false);
         }
       });
+
+      alert(`You joined group room "${roomName}". All your messages will now go there.`);
     }
 
-    function displayGroupDMMessage(sender, text) {
-      const ul = document.getElementById("groupDMMessages");
-      const li = document.createElement("li");
-      li.textContent = `${sender}: ${text}`;
-      li.classList.add("message-enter");
-      ul.appendChild(li);
-      ul.scrollTop = ul.scrollHeight;
+    async function inviteToGroup(accountName) {
+      if (!inGroupChat || !currentGroupRoomName) {
+        alert("You are not in a group room. Use /join [roomName] first.");
+        return;
+      }
+      // Add user to participants array
+      const roomRef = db.ref("groupRooms/" + currentGroupRoomName + "/participants");
+      const snap = await roomRef.once("value");
+      const participants = snap.val() || [];
+      if (!participants.includes(accountName)) {
+        participants.push(accountName);
+      }
+      await roomRef.set(participants);
+      // Add a system message
+      db.ref("groupRooms/" + currentGroupRoomName + "/messages").push({
+        system: `${accountName} has been invited.`
+      });
+      alert(`${accountName} invited to "${currentGroupRoomName}".`);
     }
 
-    function sendGroupDM() {
-      if (!currentGroupDMKey) {
-        alert("No group DM open yet.");
+    function leaveGroupRoom() {
+      if (!inGroupChat) {
+        alert("You are not in a group room.");
         return;
       }
-
-      // If the current user is muted, block sending
-      if (currentUsername && mutedUsers[currentUsername.toLowerCase()]) {
-        alert("You are muted and cannot send messages.");
-        return;
+      // Remove group listener
+      if (groupListener) {
+        db.ref("groupRooms/" + currentGroupRoomName + "/messages").off("child_added", groupListener);
       }
-
-      const currentTime = Date.now();
-      if (currentTime - lastMessageTime < RATE_LIMIT_MS) {
-        const secLeft = Math.ceil((RATE_LIMIT_MS - (currentTime - lastMessageTime)) / 1000);
-        alert(`Wait ${secLeft} second(s).`);
-        return;
-      }
-      const inp = document.getElementById("groupDMMessageInput");
-      let text = inp.value.trim();
-      if (!text) return;
-      text = filterBadWords(text);
-
-      const finalName = currentUsername || "Unknown";
-      const msgData = {
-        user: finalName,
-        text: text,
-        timestamp: firebase.database.ServerValue.TIMESTAMP
-      };
-      db.ref("groupDms/" + currentGroupDMKey + "/messages").push(msgData);
-      inp.value = "";
-      inp.style.height = "40px";
-      lastMessageTime = currentTime;
-    }
-
-    function showAddPeopleUI() {
-      document.getElementById("addPeopleUI").style.display = "block";
-    }
-
-    async function addMorePeople() {
-      if (!currentGroupDMKey) {
-        alert("No group DM open to add people.");
-        return;
-      }
-      const typed = document.getElementById("addGroupDMParticipantsInput").value.trim();
-      if (!typed) {
-        alert("No participants typed.");
-        return;
-      }
-      let newNames = typed.split(",").map(s => s.trim().toLowerCase()).filter(s => s);
-      if (newNames.length === 0) {
-        alert("No valid usernames found.");
-        return;
-      }
-      const snap = await db.ref("groupDms/" + currentGroupDMKey + "/participants").once("value");
-      const oldList = snap.val() || [];
-      const merged = Array.from(new Set(oldList.concat(newNames)));
-      try {
-        await db.ref("groupDms/" + currentGroupDMKey + "/participants").set(merged);
-        const text = newNames.join(", ") + " added to the group.";
-        db.ref("groupDms/" + currentGroupDMKey + "/messages").push({ system: text });
-        alert("Added: " + newNames.join(", "));
-      } catch (err) {
-        alert("Error adding participants: " + err);
-      }
-      document.getElementById("addPeopleUI").style.display = "none";
+      inGroupChat = false;
+      currentGroupRoomName = null;
+      document.getElementById("messages").innerHTML = "";
+      alert("You left the group room. You are back to public chat.");
     }
 
     /* =====================================================
-       11) Return to Main Screen
+       11) OP Commands & Tools
+       ===================================================== */
+    function isCurrentUserOP() {
+      return currentUsername && OP_LIST.includes(currentUsername.toLowerCase());
+    }
+
+    function checkIfOP() {
+      const opSection = document.getElementById("opSection");
+      if (isCurrentUserOP()) {
+        opSection.style.display = "block";
+      } else {
+        opSection.style.display = "none";
+      }
+    }
+
+    // OP slash commands: /mute [name], /unmute [name]
+    function handleOpCommand(cmd, target) {
+      if (!target) {
+        alert("Usage: " + cmd + " [username]");
+        return;
+      }
+      if (cmd === "/mute") {
+        db.ref("mutedUsers/" + target).set(true);
+        alert(`User "${target}" has been muted.`);
+      } else if (cmd === "/unmute") {
+        db.ref("mutedUsers/" + target).remove();
+        alert(`User "${target}" has been unmuted.`);
+      }
+    }
+
+    // Clear Chat for Everyone (including broadcasts)
+    function clearChatForEveryone() {
+      const confirmClear = confirm("Are you sure you want to clear the entire public chat AND all broadcasts for EVERYONE?");
+      if (!confirmClear) return;
+      // Remove all messages
+      db.ref("messages").remove();
+      // Remove all broadcasts
+      db.ref("broadcasts").remove();
+
+      // Locally clear
+      document.getElementById("messages").innerHTML = "";
+      alert("All messages and broadcasts cleared for everyone.");
+    }
+
+    // Broadcast
+    function sendBroadcast() {
+      if (!isCurrentUserOP()) {
+        alert("You are not an OP!");
+        return;
+      }
+      const broadcastInput = document.getElementById("opBroadcastInput");
+      const text = broadcastInput.value.trim();
+      if (!text) return;
+
+      // Send to "broadcasts"
+      db.ref("broadcasts").push({
+        user: currentUsername,
+        text: text,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      });
+      broadcastInput.value = "";
+      alert("Broadcast sent!");
+    }
+
+    // Let OP set their color in the DB
+    function setOpColor() {
+      if (!isCurrentUserOP()) {
+        alert("You are not an OP!");
+        return;
+      }
+      const colorPicker = document.getElementById("opColorPicker");
+      const chosenColor = colorPicker.value;
+      db.ref("accountColors/" + currentUsername.toLowerCase()).set(chosenColor);
+      alert("Your chat color has been updated to: " + chosenColor);
+    }
+
+    /* =====================================================
+       12) Return to Main Screen
        ===================================================== */
     function returnToLogin() {
       document.getElementById("chatDiv").style.display = "none";
       document.getElementById("loginDiv").style.display = "block";
-      checkIfOP(); // updates OP section in case we changed user
+      checkIfOP();
     }
 
     /* =====================================================
-       12) Settings Navigation
+       13) Settings Navigation
        ===================================================== */
     function showSettingsFromLogin() {
       document.getElementById("loginDiv").style.display = "none";
@@ -1117,7 +1189,7 @@
     }
 
     /* =====================================================
-       13) Dark Mode Toggle
+       14) Dark Mode Toggle
        ===================================================== */
     function toggleDarkMode() {
       document.body.classList.toggle("dark-mode");
@@ -1126,7 +1198,7 @@
     }
 
     /* =====================================================
-       14) GUI Size
+       15) GUI Size
        ===================================================== */
     function updateGuiSize() {
       const scale = document.getElementById("guiSizeRange").value;
@@ -1141,7 +1213,7 @@
     }
 
     /* =====================================================
-       15) Custom Font
+       16) Custom Font
        ===================================================== */
     function updateFont() {
       document.body.classList.remove(
@@ -1159,44 +1231,6 @@
       const selectedFont = document.getElementById("fontSelect").value;
       document.body.classList.add(selectedFont);
       localStorage.setItem("selectedFont", selectedFont);
-    }
-
-    /* =====================================================
-       16) OP Features
-       - Clear Chat Server-Side
-       - Color Picker for OP name color
-       ===================================================== */
-    function checkIfOP() {
-      // If user is in OP_LIST, show the opSection in the main menu
-      const opSection = document.getElementById("opSection");
-      if (currentUsername && OP_LIST.includes(currentUsername.toLowerCase())) {
-        opSection.style.display = "block";
-      } else {
-        opSection.style.display = "none";
-      }
-    }
-
-    function isCurrentUserOP() {
-      return currentUsername && OP_LIST.includes(currentUsername.toLowerCase());
-    }
-
-    function clearChatForEveryone() {
-      const confirmClear = confirm("Are you sure you want to clear the entire public chat for EVERYONE?");
-      if (!confirmClear) return;
-      db.ref("messages").remove();
-      document.getElementById("messages").innerHTML = "";
-    }
-
-    // Let OP set their color in the DB
-    function setOpColor() {
-      if (!isCurrentUserOP()) {
-        alert("You are not an OP!");
-        return;
-      }
-      const colorPicker = document.getElementById("opColorPicker");
-      const chosenColor = colorPicker.value;
-      db.ref("accountColors/" + currentUsername.toLowerCase()).set(chosenColor);
-      alert("Your chat color has been updated to: " + chosenColor);
     }
   </script>
 </body>
