@@ -2,10 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-
-  <!-- 1) Add viewport meta for mobile scaling -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>yaproom (official)</title>
   <style>
     /* ----------------------------------------
@@ -21,7 +18,7 @@
 
     /* Rounded corners for UI elements */
     #loginDiv, #chatDiv, #settingsDiv,
-    #messages, #dmMessages,
+    #messages, #dmMessages, #dm2Messages, #dm3Messages,
     textarea, button, select {
       border-radius: 8px; 
     }
@@ -190,14 +187,15 @@
     }
 
     /* ----------------------------------------
-       5) DM Section (Single User DM)
+       5) DM Section (Multiple DMs)
        ---------------------------------------- */
     #dmSection {
       margin-top: 20px;
       border-top: 1px solid #ccc;
       padding-top: 10px;
     }
-    #dmMessages {
+    /* Each DM box gets its own messages container */
+    #dmMessages, #dm2Messages, #dm3Messages {
       list-style-type: none;
       padding: 0;
       max-height: 200px;
@@ -205,7 +203,7 @@
       margin-bottom: 10px;
       border: 1px solid #ddd;
     }
-    #dmMessages li {
+    #dmMessages li, #dm2Messages li, #dm3Messages li {
       padding: 8px;
       border-bottom: 1px solid #eee;
       margin: 0 4px;
@@ -276,10 +274,11 @@
        =============================== -->
   <div id="changelogOverlay">
     <div id="changelogModal">
-      <h2>Changelog (v1.1.7)</h2>
+      <h2>Changelog (v1.2.0)</h2>
       <ul>
-        <li>UI auto-scales to fit phone/tablet/desktop by default.</li>
-        <li>User can still override with the GUI Size slider.</li>
+        <li>Fixed group chat bug (no more public chat leaking into private group).</li>
+        <li>Leaving a group does not remove public chat anymore.</li>
+        <li>Added multiple direct message boxes</li>
       </ul>
       <button onclick="closeChangelog()">Close</button>
     </div>
@@ -291,6 +290,7 @@
   <div id="loginDiv">
     <h2>Enter Chat</h2>
     <p>Anonymous / Temporary Name:</p>
+    <!-- If user is logged in, this becomes read-only -->
     <input type="text" id="anonymousInput" class="username-input" placeholder="Anonymous Name" />
     <button onclick="startChatting()" class="enter-chat-btn">Start Chatting</button>
 
@@ -342,6 +342,10 @@
       <label for="opColorPicker">Change Your Name Color:</label><br/>
       <input type="color" id="opColorPicker" value="#4A94DA" />
       <button onclick="setOpColor()">Set Name Color</button>
+      <br /><br />
+
+      <!-- Debug button to clear all 'typing' states -->
+      <button onclick="clearAllTyping()" style="background:#9c27b0; color:#fff;">Clear All 'Typing' (Server-Side)</button>
     </div>
   </div>
 
@@ -351,7 +355,7 @@
   <div id="chatDiv">
     <h2>Yap Room</h2>
 
-    <!-- Quick list of room commands -->
+    <!-- Quick list of room commands (OP commands hidden) -->
     <div class="tutorial-box">
       <strong>Group Chat Commands:</strong><br/>
       /createroom [roomName]<br/>
@@ -370,14 +374,15 @@
       <button onclick="clearChat()">Clear Chat</button>
     </div>
 
-    <!-- 2B) Direct Messages Section (Single DM) -->
+    <!-- 2B) Direct Messages Section (MULTIPLE DM BOXES) -->
     <div id="dmSection">
       <h3>Direct Messages</h3>
       <div id="dmLoginWarning" style="color:red; display:none;">
         You must be logged in to use DMs.
       </div>
       <div id="dmUI" style="display:none;">
-        <p>Type a single username to DM:</p>
+        <!-- DM #1 -->
+        <p><strong>DM #1</strong> – Type a single username to DM:</p>
         <input type="text" id="dmTargetInput" placeholder="username to DM" style="width:100%; margin-bottom:5px;" />
         <button onclick="openDM()">Open DM</button>
 
@@ -386,6 +391,36 @@
           <div class="dm-controls">
             <textarea id="dmMessageInput" placeholder="Type a direct message" oninput="handleTyping()"></textarea>
             <button onclick="sendDM()">Send DM</button>
+          </div>
+        </div>
+
+        <hr/>
+
+        <!-- DM #2 -->
+        <p><strong>DM #2</strong> – Type a single username to DM:</p>
+        <input type="text" id="dm2TargetInput" placeholder="username to DM" style="width:100%; margin-bottom:5px;" />
+        <button onclick="openDM2()">Open DM #2</button>
+
+        <div id="dm2Conversation" style="margin-top:10px; display:none;">
+          <ul id="dm2Messages"></ul>
+          <div class="dm-controls">
+            <textarea id="dm2MessageInput" placeholder="Type a direct message" oninput="handleTyping()"></textarea>
+            <button onclick="sendDM2()">Send DM #2</button>
+          </div>
+        </div>
+
+        <hr/>
+
+        <!-- DM #3 -->
+        <p><strong>DM #3</strong> – Type a single username to DM:</p>
+        <input type="text" id="dm3TargetInput" placeholder="username to DM" style="width:100%; margin-bottom:5px;" />
+        <button onclick="openDM3()">Open DM #3</button>
+
+        <div id="dm3Conversation" style="margin-top:10px; display:none;">
+          <ul id="dm3Messages"></ul>
+          <div class="dm-controls">
+            <textarea id="dm3MessageInput" placeholder="Type a direct message" oninput="handleTyping()"></textarea>
+            <button onclick="sendDM3()">Send DM #3</button>
           </div>
         </div>
       </div>
@@ -456,7 +491,7 @@
       authDomain: "yaproom-14cfe.firebaseapp.com",
       databaseURL: "https://yaproom-14cfe-default-rtdb.firebaseio.com",
       projectId: "yaproom-14cfe",
-      storageBucket: "yaproom-14cfe.firebasestorage.app",
+      storageBucket: "yaproom-14cfe.firebaseapp.com",
       messagingSenderId: "5332542311",
       appId: "1:5332542311:web:f1a1ab2fb81bf62b0b45c2"
     };
@@ -466,19 +501,29 @@
     /* =====================================================
        2) Global Variables & OP List
        ===================================================== */
-    // Add more OP usernames here if needed
-    const OP_LIST = ["god", "pasta"]; 
+    const OP_LIST = ["god", "nubunknown", "pasta"];  // Hidden commands, but still recognized for OP usage
 
     let lastMessageTime = 0;
     const RATE_LIMIT_MS = 2000; // 2-second limit
-    const badWords = ["shit","fuck","bitch", "nigga", "fucking", "shitting", "negro", "bullshit", "pussy"]; // Expand as needed
+    const badWords = ["shit","fuck","bitch","nigga","fucking","shitting","negro","bullshit","pussy"];
 
     let currentUsername = null;
     let currentPassHash = null;
 
-    // DM
+    // For account deletion listening
+    let accountDeletedRef = null;  // We'll store a reference to detach later
+
+    // For DM #1
     let currentDMPath = null;
     let dmListener = null;
+
+    // For DM #2
+    let currentDM2Path = null;
+    let dm2Listener = null;
+
+    // For DM #3
+    let currentDM3Path = null;
+    let dm3Listener = null;
 
     // Group Chat 
     let inGroupChat = false;
@@ -494,74 +539,60 @@
     // OP color system
     let accountColors = {};
 
-    // Track if user changed GUI scale manually
-    let userOverrodeScale = false;
+    // We'll store all public messages here so we can re-show them after leaving a group.
+    let publicMessages = [];
+    let publicListenerAdd = null;
+    let publicListenerRemove = null;
 
     /* =====================================================
        3) On Page Load: Always show Changelog
        ===================================================== */
     window.onload = function() {
-      // Always show the overlay on every refresh or new tab
       document.getElementById("changelogOverlay").style.display = "flex";
 
-      // A) Auto-scale for device (only if user hasn't set a custom scale)
-      // We'll call autoScaleUI() first. Then if there's a localStorage scale, that overrides it.
-      autoScaleUI();
-
-      // B) Dark Mode
+      // A) Dark Mode
       const darkModeEnabled = localStorage.getItem("darkModeEnabled") === "true";
       if (darkModeEnabled) document.body.classList.add("dark-mode");
       document.getElementById("themeToggle").checked = darkModeEnabled;
 
-      // C) GUI Size from localStorage
+      // B) GUI Size
       const savedScale = localStorage.getItem("uiScale");
       if (savedScale) {
-        userOverrodeScale = true; // user previously set a custom scale
         document.documentElement.style.fontSize = (16 * savedScale) + "px";
         document.getElementById("guiSizeRange").value = savedScale;
       }
       updateGuiSizeDisplay();
 
-      // D) Font
+      // C) Font
       const savedFont = localStorage.getItem("selectedFont") || "font-arial";
       document.body.classList.add(savedFont);
       document.getElementById("fontSelect").value = savedFont;
 
-      // E) Account
+      // D) Account
       currentUsername = localStorage.getItem("acc_username");
       currentPassHash = localStorage.getItem("acc_passHash");
       updateAccountUI();
 
-      // F) Listen for public chat (child_added + child_removed)
-      db.ref("messages").on("child_added", (snapshot) => {
-        const msg = snapshot.val();
-        // If user is muted, skip
-        if (msg.user && mutedUsers[msg.user.toLowerCase()]) return;
-        displayMessage(msg.user, msg.text, msg.isAccount, false, snapshot.key);
-      });
-      db.ref("messages").on("child_removed", (snap) => {
-        const removedKey = snap.key;
-        const li = document.querySelector(`li[data-key="${removedKey}"]`);
-        if (li) li.remove();
-      });
+      // E) Start listening to public chat
+      startPublicChatListeners();
 
-      // G) Listen for "typing" updates
+      // F) Listen for typed updates
       db.ref("typing").on("value", (snap) => {
         const typingObj = snap.val() || {};
         showTypingStatus(typingObj);
       });
 
-      // H) Listen for muted users
+      // G) Listen for muted users
       db.ref("mutedUsers").on("value", (snap) => {
         mutedUsers = snap.val() || {};
       });
 
-      // I) Listen for account colors
+      // H) Listen for account colors
       db.ref("accountColors").on("value", (snap) => {
         accountColors = snap.val() || {};
       });
 
-      // J) Listen for OP broadcasts (child_added + child_removed)
+      // I) Listen for OP broadcasts
       db.ref("broadcasts").on("child_added", (snap) => {
         const bData = snap.val();
         displayMessage(bData.user, bData.text, true, true, snap.key); 
@@ -582,7 +613,7 @@
       });
       msgInput.addEventListener("input", autoResize);
 
-      // SHIFT+ENTER for DM
+      // SHIFT+ENTER for DM #1
       const dmInput = document.getElementById("dmMessageInput");
       dmInput.addEventListener("keydown", function(e) {
         if (e.key === "Enter" && !e.shiftKey) {
@@ -592,49 +623,42 @@
       });
       dmInput.addEventListener("input", autoResize);
 
-      // K) Restore Notifications Setting
+      // SHIFT+ENTER for DM #2
+      const dm2Input = document.getElementById("dm2MessageInput");
+      dm2Input.addEventListener("keydown", function(e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendDM2();
+        }
+      });
+      dm2Input.addEventListener("input", autoResize);
+
+      // SHIFT+ENTER for DM #3
+      const dm3Input = document.getElementById("dm3MessageInput");
+      dm3Input.addEventListener("keydown", function(e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendDM3();
+        }
+      });
+      dm3Input.addEventListener("input", autoResize);
+
+      // J) Notifications Setting
       const notificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
       const notificationsToggle = document.getElementById("notificationsToggle");
       if (notificationsToggle) {
         notificationsToggle.checked = notificationsEnabled;
       }
 
-      // L) Listen for window resize to auto-scale if user hasn't overridden
-      window.addEventListener("resize", function() {
-        if (!userOverrodeScale) {
-          autoScaleUI();
-        }
-      });
+      // Also remove "typing" if user closes the tab/window
+      window.onbeforeunload = function() {
+        removeUserTyping();
+      };
     };
 
-    /* Close the changelog overlay each time */
+    /* Close the changelog overlay */
     function closeChangelog() {
       document.getElementById("changelogOverlay").style.display = "none";
-    }
-
-    /* =====================================================
-       Auto-Scale the UI Based on Screen Size
-       ===================================================== */
-    function autoScaleUI() {
-      // Example breakpoints, adjust as you prefer
-      const width = window.innerWidth;
-
-      let scale = 1.0;
-      if (width < 480) {
-        // phone
-        scale = 0.8;
-      } else if (width < 768) {
-        // small tablet
-        scale = 0.9;
-      } else {
-        // bigger screens
-        scale = 1.0;
-      }
-
-      document.documentElement.style.fontSize = (16 * scale) + "px";
-      document.getElementById("guiSizeRange").value = scale;
-      localStorage.setItem("uiScale", scale);
-      updateGuiSizeDisplay();
     }
 
     /* Auto-resize logic for textareas */
@@ -642,6 +666,44 @@
       const textarea = event.target;
       textarea.style.height = "auto";
       textarea.style.height = (textarea.scrollHeight) + "px";
+    }
+
+    /* =====================================================
+       PUBLIC CHAT LISTENER
+       ===================================================== */
+    function startPublicChatListeners() {
+      // Remove old listeners if any
+      db.ref("messages").off("child_added", publicListenerAdd);
+      db.ref("messages").off("child_removed", publicListenerRemove);
+      publicMessages = [];
+      document.getElementById("messages").innerHTML = "";
+
+      // Listen for new public messages
+      publicListenerAdd = db.ref("messages").on("child_added", (snapshot) => {
+        const msg = snapshot.val();
+        const key = snapshot.key;
+        // If user is muted, skip
+        if (msg.user && mutedUsers[msg.user.toLowerCase()]) return;
+
+        publicMessages.push({ key, ...msg });
+        // Only display if we are NOT in a group
+        if (!inGroupChat) {
+          displayMessage(msg.user, msg.text, msg.isAccount, false, key);
+        }
+      });
+
+      // Listen for removed public messages
+      publicListenerRemove = db.ref("messages").on("child_removed", (snap) => {
+        const removedKey = snap.key;
+        // Remove from array
+        publicMessages = publicMessages.filter(m => m.key !== removedKey);
+
+        // If we're currently in public mode, remove from UI
+        if (!inGroupChat) {
+          const li = document.querySelector(`li[data-key="${removedKey}"]`);
+          if (li) li.remove();
+        }
+      });
     }
 
     /* =====================================================
@@ -691,37 +753,76 @@
       const anonInput = document.getElementById("anonymousInput");
 
       if (currentUsername && currentPassHash) {
-        // Logged in
         notLoggedInUI.style.display = "none";
         loggedInUI.style.display = "block";
         loggedInName.textContent = currentUsername;
 
-        // Make the "anonymous name" box read-only, showing the current username
+        // Make the "anonymous name" box read-only
         anonInput.value = currentUsername;
         anonInput.disabled = true;
+
+        // Listen for account deletion in real-time
+        listenForAccountDeletion();
       } else {
-        // Not logged in
         notLoggedInUI.style.display = "block";
         loggedInUI.style.display = "none";
-
-        // Reset the anonymous input
         anonInput.value = "";
         anonInput.disabled = false;
+
+        // Stop listening if we logged out
+        if (accountDeletedRef) {
+          accountDeletedRef.off("value");
+          accountDeletedRef = null;
+        }
       }
       updateDMUI();
       checkIfOP();
     }
 
-    async function logOutAccount() {
-      if (currentUsername) {
-        db.ref("typing/" + currentUsername).remove();
+    /* Force-logout if the account is removed from DB */
+    function listenForAccountDeletion() {
+      // If we had an old reference, detach it
+      if (accountDeletedRef) {
+        accountDeletedRef.off("value");
+        accountDeletedRef = null;
       }
+      if (!currentUsername) return;
+
+      // Listen to "accounts/[username]" 
+      accountDeletedRef = db.ref("accounts/" + currentUsername);
+      accountDeletedRef.on("value", (snap) => {
+        // If the snapshot doesn't exist, the account was removed => forcibly log out
+        if (!snap.exists()) {
+          alert("Your account has been terminated!");
+          // forcibly log out
+          logOutAccount();
+        }
+      });
+    }
+
+    async function logOutAccount() {
+      removeUserTyping();
+
+      // Remove account deletion listener if it exists
+      if (accountDeletedRef) {
+        accountDeletedRef.off("value");
+        accountDeletedRef = null;
+      }
+
       localStorage.removeItem("acc_username");
       localStorage.removeItem("acc_passHash");
       currentUsername = null;
       currentPassHash = null;
       alert("Logged out.");
+
       updateAccountUI();
+    }
+
+    /* Remove current user's "typing" ref from DB */
+    function removeUserTyping() {
+      if (currentUsername) {
+        db.ref("typing/" + currentUsername).remove();
+      }
     }
 
     /* =====================================================
@@ -854,14 +955,15 @@
       let finalName = currentUsername || "Unknown";
       const isAccount = (currentUsername && currentPassHash);
 
-      // Are we in a group chat?
       if (inGroupChat && currentGroupRoomName) {
+        // Group chat
         db.ref("groupRooms/" + currentGroupRoomName + "/messages").push({
           user: finalName,
           text: text,
           timestamp: firebase.database.ServerValue.TIMESTAMP
         });
       } else {
+        // Public chat
         db.ref("messages").push({
           user: finalName,
           text: text,
@@ -894,7 +996,6 @@
       if (accountColors[user?.toLowerCase()]) {
         colorStyle = `style="color:${accountColors[user.toLowerCase()]}; font-weight:bold;"`;
       } else if (isAccount) {
-        // default for account is a blue color
         colorStyle = `style="color:rgb(74, 148, 218);"`;
       }
 
@@ -939,7 +1040,7 @@
     }
 
     /* =====================================================
-       9) Single DM
+       9) Multiple DM Support
        ===================================================== */
     function updateDMUI() {
       const warn = document.getElementById("dmLoginWarning");
@@ -953,7 +1054,9 @@
       }
     }
 
-    // Avoid duplicate DM messages by removing old listener before creating new
+    // ---------------------------
+    // DM #1
+    // ---------------------------
     function openDM() {
       const typedName = document.getElementById("dmTargetInput").value.trim().toLowerCase();
       if (!typedName) {
@@ -965,7 +1068,7 @@
         return;
       }
 
-      // Remove old listener
+      // Remove old DM listener if any
       if (dmListener && currentDMPath) {
         db.ref(currentDMPath).off("child_added", dmListener);
       }
@@ -982,6 +1085,7 @@
         const val = snap.val();
         displayDMMessage(val.user, val.text);
 
+        // Show notification if it's not our own message
         if (val.user !== currentUsername) {
           showDMNotification(val.user, val.text);
         }
@@ -1025,20 +1129,181 @@
       inp.style.height = "40px"; 
     }
 
+    // ---------------------------
+    // DM #2
+    // ---------------------------
+    function openDM2() {
+      const typedName = document.getElementById("dm2TargetInput").value.trim().toLowerCase();
+      if (!typedName) {
+        alert("Please type a username to DM (DM #2).");
+        return;
+      }
+      if (!currentUsername || !currentPassHash) {
+        alert("You must be logged in to DM.");
+        return;
+      }
+
+      // Remove old DM listener if any
+      if (dm2Listener && currentDM2Path) {
+        db.ref(currentDM2Path).off("child_added", dm2Listener);
+      }
+
+      const userA = currentUsername.toLowerCase();
+      const userB = typedName;
+      const dmKey = (userA < userB) ? (userA + "_" + userB) : (userB + "_" + userA);
+      currentDM2Path = "dms/" + dmKey;
+
+      document.getElementById("dm2Messages").innerHTML = "";
+      document.getElementById("dm2Conversation").style.display = "block";
+
+      dm2Listener = db.ref(currentDM2Path).on("child_added", (snap) => {
+        const val = snap.val();
+        displayDM2Message(val.user, val.text);
+
+        // Show notification if it's not our own message
+        if (val.user !== currentUsername) {
+          showDMNotification(val.user, val.text);
+        }
+      });
+    }
+
+    function displayDM2Message(sender, text) {
+      const ul = document.getElementById("dm2Messages");
+      const li = document.createElement("li");
+      li.textContent = `${sender}: ${text}`;
+      li.classList.add("message-enter");
+      ul.appendChild(li);
+      ul.scrollTop = ul.scrollHeight;
+    }
+
+    function sendDM2() {
+      if (!currentDM2Path) {
+        alert("No DM #2 open. Type a username and 'Open DM #2' first.");
+        return;
+      }
+      const inp = document.getElementById("dm2MessageInput");
+      let text = inp.value.trim();
+      if (!text) return;
+
+      text = filterBadWords(text);
+
+      if (currentUsername && mutedUsers[currentUsername.toLowerCase()]) {
+        alert("You are muted and cannot send messages.");
+        inp.value = "";
+        inp.style.height = "40px";
+        return;
+      }
+
+      const finalName = currentUsername || "Unknown";
+      db.ref(currentDM2Path).push({
+        user: finalName,
+        text: text,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      });
+      inp.value = "";
+      inp.style.height = "40px"; 
+    }
+
+    // ---------------------------
+    // DM #3
+    // ---------------------------
+    function openDM3() {
+      const typedName = document.getElementById("dm3TargetInput").value.trim().toLowerCase();
+      if (!typedName) {
+        alert("Please type a username to DM (DM #3).");
+        return;
+      }
+      if (!currentUsername || !currentPassHash) {
+        alert("You must be logged in to DM.");
+        return;
+      }
+
+      // Remove old DM listener if any
+      if (dm3Listener && currentDM3Path) {
+        db.ref(currentDM3Path).off("child_added", dm3Listener);
+      }
+
+      const userA = currentUsername.toLowerCase();
+      const userB = typedName;
+      const dmKey = (userA < userB) ? (userA + "_" + userB) : (userB + "_" + userA);
+      currentDM3Path = "dms/" + dmKey;
+
+      document.getElementById("dm3Messages").innerHTML = "";
+      document.getElementById("dm3Conversation").style.display = "block";
+
+      dm3Listener = db.ref(currentDM3Path).on("child_added", (snap) => {
+        const val = snap.val();
+        displayDM3Message(val.user, val.text);
+
+        // Show notification if it's not our own message
+        if (val.user !== currentUsername) {
+          showDMNotification(val.user, val.text);
+        }
+      });
+    }
+
+    function displayDM3Message(sender, text) {
+      const ul = document.getElementById("dm3Messages");
+      const li = document.createElement("li");
+      li.textContent = `${sender}: ${text}`;
+      li.classList.add("message-enter");
+      ul.appendChild(li);
+      ul.scrollTop = ul.scrollHeight;
+    }
+
+    function sendDM3() {
+      if (!currentDM3Path) {
+        alert("No DM #3 open. Type a username and 'Open DM #3' first.");
+        return;
+      }
+      const inp = document.getElementById("dm3MessageInput");
+      let text = inp.value.trim();
+      if (!text) return;
+
+      text = filterBadWords(text);
+
+      if (currentUsername && mutedUsers[currentUsername.toLowerCase()]) {
+        alert("You are muted and cannot send messages.");
+        inp.value = "";
+        inp.style.height = "40px";
+        return;
+      }
+
+      const finalName = currentUsername || "Unknown";
+      db.ref(currentDM3Path).push({
+        user: finalName,
+        text: text,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      });
+      inp.value = "";
+      inp.style.height = "40px"; 
+    }
+
     /* =====================================================
-       10) Group Chat (Revamped with Slash Commands)
+       10) Group Chat (Slash Commands)
        ===================================================== */
     async function handleSlashCommand(text) {
       const parts = text.split(" ");
       const cmd = parts[0].toLowerCase(); 
       const arg = parts[1] ? parts[1].trim().toLowerCase() : null;
 
-      // If user is OP, check OP commands first (/mute, /unmute)
-      if (isCurrentUserOP() && (cmd === "/mute" || cmd === "/unmute")) {
-        handleOpCommand(cmd, arg);
-        return;
+      // OP commands (hidden from tutorial, but still functional for OPs)
+      if (isCurrentUserOP()) {
+        if (cmd === "/mute" || cmd === "/unmute") {
+          handleOpCommand(cmd, arg);
+          return;
+        }
+        if (cmd === "/terminate") {
+          if (!arg) {
+            alert("Usage: /terminate [accountName]");
+          } else {
+            terminateAccount(arg);
+          }
+          return;
+        }
       }
 
+      // Regular group commands
       switch(cmd) {
         case "/createroom":
           if (!arg) {
@@ -1111,24 +1376,28 @@
         return;
       }
 
+      // Turn OFF public chat display
       inGroupChat = true;
-      currentGroupRoomName = roomName;
-
-      if (groupListener) {
-        db.ref("groupRooms/" + roomName + "/messages").off("child_added", groupListener);
-      }
+      // Clear the main messages UI
       document.getElementById("messages").innerHTML = "";
+
+      // Stop listening to group if any
+      if (groupListener) {
+        db.ref("groupRooms/" + currentGroupRoomName + "/messages").off("child_added", groupListener);
+      }
+
+      currentGroupRoomName = roomName;
       groupListener = db.ref("groupRooms/" + roomName + "/messages").on("child_added", (snapMsg) => {
         const val = snapMsg.val();
         if (val.user && val.text) {
           if (mutedUsers[val.user.toLowerCase()]) return;
-          displayMessage(val.user, val.text, true, false);
+          displayMessage(val.user, val.text, true, false, snapMsg.key);
         } else if (val.system) {
-          displayMessage("System", val.system, false, false);
+          displayMessage("System", val.system, false, false, snapMsg.key);
         }
       });
 
-      alert(`You joined group room "${roomName}". All your messages will now go there.`);
+      alert(`You joined group room "${roomName}". All your new messages will now go there.`);
     }
 
     async function inviteToGroup(accountName) {
@@ -1154,12 +1423,22 @@
         alert("You are not in a group room.");
         return;
       }
-      if (groupListener) {
+      // Remove group listener
+      if (groupListener && currentGroupRoomName) {
         db.ref("groupRooms/" + currentGroupRoomName + "/messages").off("child_added", groupListener);
       }
+
+      // Clear UI
+      document.getElementById("messages").innerHTML = "";
       inGroupChat = false;
       currentGroupRoomName = null;
-      document.getElementById("messages").innerHTML = "";
+
+      // We are back to public chat mode
+      // Re-show all stored public messages
+      publicMessages.forEach(msg => {
+        displayMessage(msg.user, msg.text, msg.isAccount, false, msg.key);
+      });
+
       alert("You left the group room. You are back to public chat.");
     }
 
@@ -1193,12 +1472,74 @@
       }
     }
 
-    function clearChatForEveryone() {
+    // Permanently terminate an account + all signs of them
+    async function terminateAccount(target) {
+      const confirmTerm = confirm(`Are you sure you want to TERMINATE the account "${target}"? This is permanent!`);
+      if (!confirmTerm) return;
+      try {
+        // Remove from /accounts
+        await db.ref("accounts/" + target).remove();
+        // Remove from /accountColors, /typing, /mutedUsers
+        await db.ref("accountColors/" + target).remove();
+        await db.ref("typing/" + target).remove();
+        await db.ref("mutedUsers/" + target).remove();
+
+        // Remove from public chat messages
+        const msgsSnap = await db.ref("messages").once("value");
+        msgsSnap.forEach((childSnap) => {
+          const val = childSnap.val();
+          if (val.user && val.user.toLowerCase() === target.toLowerCase()) {
+            childSnap.ref.remove();
+          }
+        });
+
+        // Remove from DMs
+        const dmsSnap = await db.ref("dms").once("value");
+        dmsSnap.forEach((dmRoomSnap) => {
+          dmRoomSnap.forEach((msgSnap) => {
+            const msgVal = msgSnap.val();
+            if (msgVal.user && msgVal.user.toLowerCase() === target.toLowerCase()) {
+              msgSnap.ref.remove();
+            }
+          });
+        });
+
+        // Remove from groupRooms
+        const groupsSnap = await db.ref("groupRooms").once("value");
+        groupsSnap.forEach((roomSnap) => {
+          const roomData = roomSnap.val();
+          if (!roomData) return;
+          // Remove from participants
+          if (roomData.participants) {
+            const updated = roomData.participants.filter(p => p.toLowerCase() !== target.toLowerCase());
+            if (updated.length !== roomData.participants.length) {
+              roomSnap.ref.child("participants").set(updated);
+            }
+          }
+          // Remove any messages from that user
+          if (roomData.messages) {
+            Object.keys(roomData.messages).forEach((mKey) => {
+              const mVal = roomData.messages[mKey];
+              if (mVal.user && mVal.user.toLowerCase() === target.toLowerCase()) {
+                roomSnap.ref.child("messages").child(mKey).remove();
+              }
+            });
+          }
+        });
+
+        alert(`Account "${target}" has been TERMINATED. That user is now forcefully logged out (if they were online).`);
+      } catch (err) {
+        alert("Error terminating account: " + err);
+      }
+    }
+
+    async function clearChatForEveryone() {
       const confirmClear = confirm("Are you sure you want to clear the entire public chat AND all broadcasts for EVERYONE?");
       if (!confirmClear) return;
-      db.ref("messages").remove();
-      db.ref("broadcasts").remove();
+      await db.ref("messages").remove();
+      await db.ref("broadcasts").remove();
       document.getElementById("messages").innerHTML = "";
+      publicMessages = [];
       alert("All messages and broadcasts cleared for everyone.");
     }
 
@@ -1230,10 +1571,23 @@
       alert("Your chat color has been updated to: " + chosenColor);
     }
 
+    /* New debug function to clear all "typing" statuses for everyone */
+    function clearAllTyping() {
+      if (!isCurrentUserOP()) {
+        alert("You are not an OP!");
+        return;
+      }
+      db.ref("typing").remove();
+      alert("All 'typing' statuses have been cleared for everyone.");
+    }
+
     /* =====================================================
        12) Return to Main Screen
        ===================================================== */
     function returnToLogin() {
+      // Remove from typing if you exit the chat
+      removeUserTyping();
+
       document.getElementById("chatDiv").style.display = "none";
       document.getElementById("loginDiv").style.display = "block";
       checkIfOP();
@@ -1265,7 +1619,6 @@
        15) GUI Size
        ===================================================== */
     function updateGuiSize() {
-      userOverrodeScale = true; // user is overriding the auto-scale
       const scale = document.getElementById("guiSizeRange").value;
       document.documentElement.style.fontSize = (16 * scale) + "px";
       localStorage.setItem("uiScale", scale);
@@ -1304,7 +1657,6 @@
     function toggleNotifications() {
       const isChecked = document.getElementById("notificationsToggle").checked;
       localStorage.setItem("notificationsEnabled", isChecked);
-
       if (isChecked) {
         requestNotificationPermission();
       }
