@@ -272,13 +272,9 @@
        =============================== -->
   <div id="changelogOverlay">
     <div id="changelogModal">
-      <h2>Changelog (v1.1.5)</h2>
+      <h2>Changelog (v1.1.6)</h2>
       <ul>
-        <li>Tutorial box now supports dark mode.</li>
-        <li>Server-side Clear now removes broadcasts & messages instantly for all.</li>
-        <li>Notifications Added (not working D:)</li>
-        <li>Change Password Button Added</li>
-        <li>Overall QOL</li>
+        <li>Fixed duplicate DM messages when switching between DM conversations.</li>
       </ul>
       <button onclick="closeChangelog()">Close</button>
     </div>
@@ -290,10 +286,7 @@
   <div id="loginDiv">
     <h2>Enter Chat</h2>
     <p>Anonymous / Temporary Name:</p>
-    <!-- 
-      If user is logged in, this will be read-only and show their username.
-      Otherwise, the user can type a name for anonymous chat.
-    -->
+    <!-- If user is logged in, this becomes read-only. Otherwise, user can type. -->
     <input type="text" id="anonymousInput" class="username-input" placeholder="Anonymous Name" />
     <button onclick="startChatting()" class="enter-chat-btn">Start Chatting</button>
 
@@ -360,7 +353,11 @@
       /createroom [roomName]<br/>
       /join [roomName]<br/>
       /invite [accountName]<br/>
-      /leave
+      /leave<br/>
+      <strong>OP Commands:</strong><br/>
+      /mute [username]<br/>
+      /unmute [username]<br/>
+      /terminate [username] 
     </div>
 
     <!-- A) Messages + "Who is typing" indicator -->
@@ -469,7 +466,6 @@
     /* =====================================================
        2) Global Variables & OP List
        ===================================================== */
-    // Add more OP usernames here if needed
     const OP_LIST = ["god", "pasta"]; 
 
     let lastMessageTime = 0;
@@ -527,7 +523,7 @@
       currentPassHash = localStorage.getItem("acc_passHash");
       updateAccountUI();
 
-      // E) Listen for public chat (child_added + child_removed)
+      // E) Listen for public chat
       db.ref("messages").on("child_added", (snapshot) => {
         const msg = snapshot.val();
         // If user is muted, skip
@@ -535,7 +531,6 @@
         displayMessage(msg.user, msg.text, msg.isAccount, false, snapshot.key);
       });
       db.ref("messages").on("child_removed", (snap) => {
-        // Remove from UI if present
         const removedKey = snap.key;
         const li = document.querySelector(`li[data-key="${removedKey}"]`);
         if (li) li.remove();
@@ -557,13 +552,12 @@
         accountColors = snap.val() || {};
       });
 
-      // I) Listen for OP broadcasts (child_added + child_removed)
+      // I) Listen for OP broadcasts
       db.ref("broadcasts").on("child_added", (snap) => {
         const bData = snap.val();
         displayMessage(bData.user, bData.text, true, true, snap.key); 
       });
       db.ref("broadcasts").on("child_removed", (snap) => {
-        // Remove broadcast from UI
         const removedKey = snap.key;
         const li = document.querySelector(`li[data-key="${removedKey}"]`);
         if (li) li.remove();
@@ -597,7 +591,6 @@
       }
     };
 
-    /* Close the changelog overlay each time */
     function closeChangelog() {
       document.getElementById("changelogOverlay").style.display = "none";
     }
@@ -661,7 +654,7 @@
         loggedInUI.style.display = "block";
         loggedInName.textContent = currentUsername;
 
-        // Make the "anonymous name" box read-only, showing the current username
+        // Make the "anonymous name" box read-only
         anonInput.value = currentUsername;
         anonInput.disabled = true;
       } else {
@@ -669,7 +662,6 @@
         notLoggedInUI.style.display = "block";
         loggedInUI.style.display = "none";
 
-        // Reset the anonymous input for potential new user
         anonInput.value = "";
         anonInput.disabled = false;
       }
@@ -746,7 +738,6 @@
       const newPassHash = sha256(newPass);
 
       try {
-        // update the existing account
         await db.ref("accounts/" + currentUsername).update({
           passwordHash: newPassHash
         });
@@ -794,7 +785,7 @@
       let text = inp.value.trim();
       if (!text) return;
 
-      // If user typed a slash command, handle it (Group or OP commands)
+      // If user typed a slash command, handle it
       if (text.startsWith("/")) {
         handleSlashCommand(text);
         inp.value = "";
@@ -818,7 +809,6 @@
         return;
       }
 
-      // Filter bad words
       text = filterBadWords(text);
 
       let finalName = currentUsername || "Unknown";
@@ -826,22 +816,19 @@
 
       // Are we in a group chat?
       if (inGroupChat && currentGroupRoomName) {
-        // Send to group chat
-        const msgData = {
+        db.ref("groupRooms/" + currentGroupRoomName + "/messages").push({
           user: finalName,
           text: text,
           timestamp: firebase.database.ServerValue.TIMESTAMP
-        };
-        db.ref("groupRooms/" + currentGroupRoomName + "/messages").push(msgData);
+        });
       } else {
-        // Send to public chat
-        const msgData = {
+        // Public chat
+        db.ref("messages").push({
           user: finalName,
           text: text,
           isAccount: isAccount,
           timestamp: firebase.database.ServerValue.TIMESTAMP
-        };
-        db.ref("messages").push(msgData);
+        });
       }
 
       inp.value = "";
@@ -853,32 +840,26 @@
       }
     }
 
-    // Add an optional param "messageKey" so we can store data-key for removal
     function displayMessage(user, text, isAccount, isBroadcast, messageKey) {
       const ul = document.getElementById("messages");
       const li = document.createElement("li");
       li.classList.add("message-enter");
 
-      // Attach the data-key
       if (messageKey) {
         li.setAttribute("data-key", messageKey);
       }
 
-      // color code name
       let userColorClass = isAccount ? "account-user" : "anonymous-user";
       let colorStyle = "";
 
-      // If the user has a custom color
       if (accountColors[user?.toLowerCase()]) {
         colorStyle = `style="color:${accountColors[user.toLowerCase()]}; font-weight:bold;"`;
-      } 
-      else if (isAccount) {
-        // default for account is a blue color
+      } else if (isAccount) {
+        // default color for account
         colorStyle = `style="color:rgb(74, 148, 218);"`;
       }
 
       if (isBroadcast) {
-        // This is a broadcast message
         li.innerHTML = `<span class="broadcast-msg">[BROADCAST from ${user}]</span> ${text}`;
       } else {
         li.innerHTML = `<span class="${userColorClass}" ${colorStyle}>${user}</span>: ${text}`;
@@ -891,7 +872,6 @@
     function clearChat() {
       const confirmClear = confirm("Are you sure you want to clear the chat messages **on your screen**?");
       if (!confirmClear) return;
-      // This only clears locally
       document.getElementById("messages").innerHTML = "";
     }
 
@@ -934,6 +914,8 @@
       }
     }
 
+    // Fix for duplicate DM messages:
+    // We remove the OLD listener (if any) *before* setting the new DM path.
     function openDM() {
       const typedName = document.getElementById("dmTargetInput").value.trim().toLowerCase();
       if (!typedName) {
@@ -944,6 +926,13 @@
         alert("You must be logged in to DM.");
         return;
       }
+
+      // Remove old listener first
+      if (dmListener && currentDMPath) {
+        db.ref(currentDMPath).off("child_added", dmListener);
+      }
+
+      // Compute the new DM path
       const userA = currentUsername.toLowerCase();
       const userB = typedName;
       const dmKey = (userA < userB) ? (userA + "_" + userB) : (userB + "_" + userA);
@@ -952,9 +941,7 @@
       document.getElementById("dmMessages").innerHTML = "";
       document.getElementById("dmConversation").style.display = "block";
 
-      if (dmListener) {
-        db.ref(currentDMPath).off("child_added", dmListener);
-      }
+      // Attach a fresh listener for the new DM path
       dmListener = db.ref(currentDMPath).on("child_added", (snap) => {
         const val = snap.val();
         displayDMMessage(val.user, val.text);
@@ -983,9 +970,9 @@
       const inp = document.getElementById("dmMessageInput");
       let text = inp.value.trim();
       if (!text) return;
+
       text = filterBadWords(text);
 
-      // If the current user is muted, block sending
       if (currentUsername && mutedUsers[currentUsername.toLowerCase()]) {
         alert("You are muted and cannot send messages.");
         inp.value = "";
@@ -994,28 +981,37 @@
       }
 
       const finalName = currentUsername || "Unknown";
-      const msgData = {
+      db.ref(currentDMPath).push({
         user: finalName,
         text: text,
         timestamp: firebase.database.ServerValue.TIMESTAMP
-      };
-      db.ref(currentDMPath).push(msgData);
+      });
       inp.value = "";
       inp.style.height = "40px"; 
     }
 
     /* =====================================================
-       10) Group Chat (Revamped with Slash Commands)
+       10) Group Chat (Slash Commands)
        ===================================================== */
     async function handleSlashCommand(text) {
       const parts = text.split(" ");
       const cmd = parts[0].toLowerCase(); 
       const arg = parts[1] ? parts[1].trim().toLowerCase() : null;
 
-      // If user is OP, check OP commands first (/mute, /unmute)
-      if (isCurrentUserOP() && (cmd === "/mute" || cmd === "/unmute")) {
-        handleOpCommand(cmd, arg);
-        return;
+      // If user is OP, check OP commands first
+      if (isCurrentUserOP()) {
+        if (cmd === "/mute" || cmd === "/unmute") {
+          handleOpCommand(cmd, arg);
+          return;
+        }
+        if (cmd === "/terminate") {
+          if (!arg) {
+            alert("Usage: /terminate [username]");
+            return;
+          }
+          terminateAccount(arg);
+          return;
+        }
       }
 
       switch(cmd) {
@@ -1057,23 +1053,19 @@
         alert("You must be logged in to create a group room.");
         return;
       }
-      // Check if room exists
       const snap = await db.ref("groupRooms/" + roomName).once("value");
       if (snap.exists()) {
         alert("That room name already exists. Choose a different one.");
         return;
       }
-      const groupObj = {
+      await db.ref("groupRooms/" + roomName).set({
         participants: [currentUsername.toLowerCase()],
         createdAt: Date.now(),
         messages: {
           dummy: { system: "Group created" }
         }
-      };
-      await db.ref("groupRooms/" + roomName).set(groupObj);
+      });
       alert(`Group room "${roomName}" created. You are now inside it.`);
-
-      // Join it immediately
       joinGroupRoom(roomName);
     }
 
@@ -1082,8 +1074,6 @@
         alert("You must be logged in to join a group room.");
         return;
       }
-
-      // Check if room exists
       const snap = await db.ref("groupRooms/" + roomName).once("value");
       if (!snap.exists()) {
         alert("That room does not exist.");
@@ -1096,11 +1086,9 @@
         return;
       }
 
-      // Switch to group chat mode
       inGroupChat = true;
       currentGroupRoomName = roomName;
 
-      // Stop listening to old group (if any)
       if (groupListener) {
         db.ref("groupRooms/" + roomName + "/messages").off("child_added", groupListener);
       }
@@ -1108,7 +1096,6 @@
       groupListener = db.ref("groupRooms/" + roomName + "/messages").on("child_added", (snapMsg) => {
         const val = snapMsg.val();
         if (val.user && val.text) {
-          // Mute check
           if (mutedUsers[val.user.toLowerCase()]) return;
           displayMessage(val.user, val.text, true, false);
         } else if (val.system) {
@@ -1124,7 +1111,6 @@
         alert("You are not in a group room. Use /join [roomName] first.");
         return;
       }
-      // Add user to participants array
       const roomRef = db.ref("groupRooms/" + currentGroupRoomName + "/participants");
       const snap = await roomRef.once("value");
       const participants = snap.val() || [];
@@ -1132,7 +1118,6 @@
         participants.push(accountName);
       }
       await roomRef.set(participants);
-      // Add a system message
       db.ref("groupRooms/" + currentGroupRoomName + "/messages").push({
         system: `${accountName} has been invited.`
       });
@@ -1144,7 +1129,6 @@
         alert("You are not in a group room.");
         return;
       }
-      // Remove group listener
       if (groupListener) {
         db.ref("groupRooms/" + currentGroupRoomName + "/messages").off("child_added", groupListener);
       }
@@ -1184,15 +1168,11 @@
       }
     }
 
-    function clearChatForEveryone() {
+    async function clearChatForEveryone() {
       const confirmClear = confirm("Are you sure you want to clear the entire public chat AND all broadcasts for EVERYONE?");
       if (!confirmClear) return;
-      // Remove all messages
-      db.ref("messages").remove();
-      // Remove all broadcasts
-      db.ref("broadcasts").remove();
-
-      // Locally clear
+      await db.ref("messages").remove();
+      await db.ref("broadcasts").remove();
       document.getElementById("messages").innerHTML = "";
       alert("All messages and broadcasts cleared for everyone.");
     }
@@ -1205,8 +1185,6 @@
       const broadcastInput = document.getElementById("opBroadcastInput");
       const text = broadcastInput.value.trim();
       if (!text) return;
-
-      // Send to "broadcasts"
       db.ref("broadcasts").push({
         user: currentUsername,
         text: text,
@@ -1227,6 +1205,81 @@
       alert("Your chat color has been updated to: " + chosenColor);
     }
 
+    /*
+      /terminate [accountName]
+      Permanently removes the account from DB so others can reuse that name.
+      Also removes all references:
+        - accounts/<user>
+        - accountColors/<user>
+        - typing/<user>
+        - mutedUsers/<user>
+        - public chat messages from that user
+        - direct messages from that user
+        - groupRooms references (participants + messages from that user)
+    */
+    async function terminateAccount(target) {
+      const confirmTerm = confirm(`Are you sure you want to TERMINATE the account "${target}"? This cannot be undone!`);
+      if (!confirmTerm) return;
+
+      try {
+        // 1) Remove from /accounts
+        await db.ref("accounts/" + target).remove();
+
+        // 2) Remove from accountColors, typing, mutedUsers
+        await db.ref("accountColors/" + target).remove();
+        await db.ref("typing/" + target).remove();
+        await db.ref("mutedUsers/" + target).remove();
+
+        // 3) Remove public messages by that user
+        const msgsSnap = await db.ref("messages").once("value");
+        msgsSnap.forEach((childSnap) => {
+          const val = childSnap.val();
+          if (val.user && val.user.toLowerCase() === target.toLowerCase()) {
+            childSnap.ref.remove();
+          }
+        });
+
+        // 4) Remove DM messages from that user
+        const dmsSnap = await db.ref("dms").once("value");
+        dmsSnap.forEach((dmRoomSnap) => {
+          dmRoomSnap.forEach((msgSnap) => {
+            const msgVal = msgSnap.val();
+            if (msgVal.user && msgVal.user.toLowerCase() === target.toLowerCase()) {
+              msgSnap.ref.remove();
+            }
+          });
+        });
+
+        // 5) Remove references in groupRooms
+        const groupsSnap = await db.ref("groupRooms").once("value");
+        groupsSnap.forEach((roomSnap) => {
+          const roomData = roomSnap.val();
+          if (!roomData) return;
+
+          // A) Remove from participants
+          if (roomData.participants) {
+            const updated = roomData.participants.filter(p => p.toLowerCase() !== target.toLowerCase());
+            if (updated.length !== roomData.participants.length) {
+              roomSnap.ref.child("participants").set(updated);
+            }
+          }
+          // B) Remove any messages from this user
+          if (roomData.messages) {
+            Object.keys(roomData.messages).forEach((mKey) => {
+              const mVal = roomData.messages[mKey];
+              if (mVal.user && mVal.user.toLowerCase() === target.toLowerCase()) {
+                roomSnap.ref.child("messages").child(mKey).remove();
+              }
+            });
+          }
+        });
+
+        alert(`Account "${target}" has been terminated and all traces removed.`);
+      } catch (err) {
+        alert("Error terminating account: " + err);
+      }
+    }
+
     /* =====================================================
        12) Return to Main Screen
        ===================================================== */
@@ -1245,7 +1298,6 @@
     }
 
     function goBack() {
-      // Always go back to the main screen (loginDiv)
       document.getElementById("settingsDiv").style.display = "none";
       document.getElementById("loginDiv").style.display = "block";
     }
@@ -1298,30 +1350,23 @@
     /* =====================================================
        17) Desktop Notifications
        ===================================================== */
-
-    // Toggle from the Settings checkbox
     function toggleNotifications() {
       const isChecked = document.getElementById("notificationsToggle").checked;
       localStorage.setItem("notificationsEnabled", isChecked);
-
-      // If user just turned ON notifications, request permission
       if (isChecked) {
         requestNotificationPermission();
       }
     }
 
-    // Request permission for notifications
     function requestNotificationPermission() {
       if (!("Notification" in window)) {
         alert("This browser does not support desktop notifications.");
         return;
       }
-
       if (Notification.permission !== "granted") {
         Notification.requestPermission().then((permission) => {
           if (permission !== "granted") {
             alert("You blocked notifications in your browser settings.");
-            // Turn off toggle if user denied
             document.getElementById("notificationsToggle").checked = false;
             localStorage.setItem("notificationsEnabled", false);
           }
@@ -1329,17 +1374,15 @@
       }
     }
 
-    // Display a desktop notification for new DM
     function showDMNotification(user, text) {
       const isNotificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
-      // If notifications are off or not supported, do nothing
       if (!("Notification" in window) || !isNotificationsEnabled) return;
 
       // Only show if document is not in focus
       if (document.hidden && Notification.permission === "granted") {
         new Notification("New DM from " + user, {
           body: text,
-          icon: "https://via.placeholder.com/50" // Optional icon URL
+          icon: "https://via.placeholder.com/50" // optional icon
         });
       }
     }
