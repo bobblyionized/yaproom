@@ -2,6 +2,10 @@
 <html>
 <head>
   <meta charset="UTF-8" />
+
+  <!-- 1) Add viewport meta for mobile scaling -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>yaproom (official)</title>
   <style>
     /* ----------------------------------------
@@ -272,9 +276,10 @@
        =============================== -->
   <div id="changelogOverlay">
     <div id="changelogModal">
-      <h2>Changelog (v1.1.6)</h2>
+      <h2>Changelog (v1.1.7)</h2>
       <ul>
-        <li>Fixed duplicate DM messages when switching between DM conversations.</li>
+        <li>UI auto-scales to fit phone/tablet/desktop by default.</li>
+        <li>User can still override with the GUI Size slider.</li>
       </ul>
       <button onclick="closeChangelog()">Close</button>
     </div>
@@ -286,7 +291,6 @@
   <div id="loginDiv">
     <h2>Enter Chat</h2>
     <p>Anonymous / Temporary Name:</p>
-    <!-- If user is logged in, this becomes read-only. Otherwise, user can type. -->
     <input type="text" id="anonymousInput" class="username-input" placeholder="Anonymous Name" />
     <button onclick="startChatting()" class="enter-chat-btn">Start Chatting</button>
 
@@ -353,7 +357,7 @@
       /createroom [roomName]<br/>
       /join [roomName]<br/>
       /invite [accountName]<br/>
-      /leave<br/>
+      /leave
     </div>
 
     <!-- A) Messages + "Who is typing" indicator -->
@@ -462,6 +466,7 @@
     /* =====================================================
        2) Global Variables & OP List
        ===================================================== */
+    // Add more OP usernames here if needed
     const OP_LIST = ["god", "pasta"]; 
 
     let lastMessageTime = 0;
@@ -489,6 +494,9 @@
     // OP color system
     let accountColors = {};
 
+    // Track if user changed GUI scale manually
+    let userOverrodeScale = false;
+
     /* =====================================================
        3) On Page Load: Always show Changelog
        ===================================================== */
@@ -496,30 +504,35 @@
       // Always show the overlay on every refresh or new tab
       document.getElementById("changelogOverlay").style.display = "flex";
 
-      // A) Dark Mode
+      // A) Auto-scale for device (only if user hasn't set a custom scale)
+      // We'll call autoScaleUI() first. Then if there's a localStorage scale, that overrides it.
+      autoScaleUI();
+
+      // B) Dark Mode
       const darkModeEnabled = localStorage.getItem("darkModeEnabled") === "true";
       if (darkModeEnabled) document.body.classList.add("dark-mode");
       document.getElementById("themeToggle").checked = darkModeEnabled;
 
-      // B) GUI Size
+      // C) GUI Size from localStorage
       const savedScale = localStorage.getItem("uiScale");
       if (savedScale) {
+        userOverrodeScale = true; // user previously set a custom scale
         document.documentElement.style.fontSize = (16 * savedScale) + "px";
         document.getElementById("guiSizeRange").value = savedScale;
       }
       updateGuiSizeDisplay();
 
-      // C) Font
+      // D) Font
       const savedFont = localStorage.getItem("selectedFont") || "font-arial";
       document.body.classList.add(savedFont);
       document.getElementById("fontSelect").value = savedFont;
 
-      // D) Account
+      // E) Account
       currentUsername = localStorage.getItem("acc_username");
       currentPassHash = localStorage.getItem("acc_passHash");
       updateAccountUI();
 
-      // E) Listen for public chat
+      // F) Listen for public chat (child_added + child_removed)
       db.ref("messages").on("child_added", (snapshot) => {
         const msg = snapshot.val();
         // If user is muted, skip
@@ -532,23 +545,23 @@
         if (li) li.remove();
       });
 
-      // F) Listen for "typing" updates
+      // G) Listen for "typing" updates
       db.ref("typing").on("value", (snap) => {
         const typingObj = snap.val() || {};
         showTypingStatus(typingObj);
       });
 
-      // G) Listen for muted users
+      // H) Listen for muted users
       db.ref("mutedUsers").on("value", (snap) => {
         mutedUsers = snap.val() || {};
       });
 
-      // H) Listen for account colors
+      // I) Listen for account colors
       db.ref("accountColors").on("value", (snap) => {
         accountColors = snap.val() || {};
       });
 
-      // I) Listen for OP broadcasts
+      // J) Listen for OP broadcasts (child_added + child_removed)
       db.ref("broadcasts").on("child_added", (snap) => {
         const bData = snap.val();
         displayMessage(bData.user, bData.text, true, true, snap.key); 
@@ -579,16 +592,49 @@
       });
       dmInput.addEventListener("input", autoResize);
 
-      // J) Restore Notifications Setting
+      // K) Restore Notifications Setting
       const notificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
       const notificationsToggle = document.getElementById("notificationsToggle");
       if (notificationsToggle) {
         notificationsToggle.checked = notificationsEnabled;
       }
+
+      // L) Listen for window resize to auto-scale if user hasn't overridden
+      window.addEventListener("resize", function() {
+        if (!userOverrodeScale) {
+          autoScaleUI();
+        }
+      });
     };
 
+    /* Close the changelog overlay each time */
     function closeChangelog() {
       document.getElementById("changelogOverlay").style.display = "none";
+    }
+
+    /* =====================================================
+       Auto-Scale the UI Based on Screen Size
+       ===================================================== */
+    function autoScaleUI() {
+      // Example breakpoints, adjust as you prefer
+      const width = window.innerWidth;
+
+      let scale = 1.0;
+      if (width < 480) {
+        // phone
+        scale = 0.8;
+      } else if (width < 768) {
+        // small tablet
+        scale = 0.9;
+      } else {
+        // bigger screens
+        scale = 1.0;
+      }
+
+      document.documentElement.style.fontSize = (16 * scale) + "px";
+      document.getElementById("guiSizeRange").value = scale;
+      localStorage.setItem("uiScale", scale);
+      updateGuiSizeDisplay();
     }
 
     /* Auto-resize logic for textareas */
@@ -650,7 +696,7 @@
         loggedInUI.style.display = "block";
         loggedInName.textContent = currentUsername;
 
-        // Make the "anonymous name" box read-only
+        // Make the "anonymous name" box read-only, showing the current username
         anonInput.value = currentUsername;
         anonInput.disabled = true;
       } else {
@@ -658,12 +704,11 @@
         notLoggedInUI.style.display = "block";
         loggedInUI.style.display = "none";
 
+        // Reset the anonymous input
         anonInput.value = "";
         anonInput.disabled = false;
       }
-      // Show or hide DM UI
       updateDMUI();
-      // Show or hide OP tools
       checkIfOP();
     }
 
@@ -781,7 +826,6 @@
       let text = inp.value.trim();
       if (!text) return;
 
-      // If user typed a slash command, handle it
       if (text.startsWith("/")) {
         handleSlashCommand(text);
         inp.value = "";
@@ -818,7 +862,6 @@
           timestamp: firebase.database.ServerValue.TIMESTAMP
         });
       } else {
-        // Public chat
         db.ref("messages").push({
           user: finalName,
           text: text,
@@ -851,7 +894,7 @@
       if (accountColors[user?.toLowerCase()]) {
         colorStyle = `style="color:${accountColors[user.toLowerCase()]}; font-weight:bold;"`;
       } else if (isAccount) {
-        // default color for account
+        // default for account is a blue color
         colorStyle = `style="color:rgb(74, 148, 218);"`;
       }
 
@@ -910,8 +953,7 @@
       }
     }
 
-    // Fix for duplicate DM messages:
-    // We remove the OLD listener (if any) *before* setting the new DM path.
+    // Avoid duplicate DM messages by removing old listener before creating new
     function openDM() {
       const typedName = document.getElementById("dmTargetInput").value.trim().toLowerCase();
       if (!typedName) {
@@ -923,12 +965,11 @@
         return;
       }
 
-      // Remove old listener first
+      // Remove old listener
       if (dmListener && currentDMPath) {
         db.ref(currentDMPath).off("child_added", dmListener);
       }
 
-      // Compute the new DM path
       const userA = currentUsername.toLowerCase();
       const userB = typedName;
       const dmKey = (userA < userB) ? (userA + "_" + userB) : (userB + "_" + userA);
@@ -937,12 +978,10 @@
       document.getElementById("dmMessages").innerHTML = "";
       document.getElementById("dmConversation").style.display = "block";
 
-      // Attach a fresh listener for the new DM path
       dmListener = db.ref(currentDMPath).on("child_added", (snap) => {
         const val = snap.val();
         displayDMMessage(val.user, val.text);
 
-        // If it's not our own message, show a desktop notification (if enabled)
         if (val.user !== currentUsername) {
           showDMNotification(val.user, val.text);
         }
@@ -987,27 +1026,17 @@
     }
 
     /* =====================================================
-       10) Group Chat (Slash Commands)
+       10) Group Chat (Revamped with Slash Commands)
        ===================================================== */
     async function handleSlashCommand(text) {
       const parts = text.split(" ");
       const cmd = parts[0].toLowerCase(); 
       const arg = parts[1] ? parts[1].trim().toLowerCase() : null;
 
-      // If user is OP, check OP commands first
-      if (isCurrentUserOP()) {
-        if (cmd === "/mute" || cmd === "/unmute") {
-          handleOpCommand(cmd, arg);
-          return;
-        }
-        if (cmd === "/terminate") {
-          if (!arg) {
-            alert("Usage: /terminate [username]");
-            return;
-          }
-          terminateAccount(arg);
-          return;
-        }
+      // If user is OP, check OP commands first (/mute, /unmute)
+      if (isCurrentUserOP() && (cmd === "/mute" || cmd === "/unmute")) {
+        handleOpCommand(cmd, arg);
+        return;
       }
 
       switch(cmd) {
@@ -1164,11 +1193,11 @@
       }
     }
 
-    async function clearChatForEveryone() {
+    function clearChatForEveryone() {
       const confirmClear = confirm("Are you sure you want to clear the entire public chat AND all broadcasts for EVERYONE?");
       if (!confirmClear) return;
-      await db.ref("messages").remove();
-      await db.ref("broadcasts").remove();
+      db.ref("messages").remove();
+      db.ref("broadcasts").remove();
       document.getElementById("messages").innerHTML = "";
       alert("All messages and broadcasts cleared for everyone.");
     }
@@ -1199,81 +1228,6 @@
       const chosenColor = colorPicker.value;
       db.ref("accountColors/" + currentUsername.toLowerCase()).set(chosenColor);
       alert("Your chat color has been updated to: " + chosenColor);
-    }
-
-    /*
-      /terminate [accountName]
-      Permanently removes the account from DB so others can reuse that name.
-      Also removes all references:
-        - accounts/<user>
-        - accountColors/<user>
-        - typing/<user>
-        - mutedUsers/<user>
-        - public chat messages from that user
-        - direct messages from that user
-        - groupRooms references (participants + messages from that user)
-    */
-    async function terminateAccount(target) {
-      const confirmTerm = confirm(`Are you sure you want to TERMINATE the account "${target}"? This cannot be undone!`);
-      if (!confirmTerm) return;
-
-      try {
-        // 1) Remove from /accounts
-        await db.ref("accounts/" + target).remove();
-
-        // 2) Remove from accountColors, typing, mutedUsers
-        await db.ref("accountColors/" + target).remove();
-        await db.ref("typing/" + target).remove();
-        await db.ref("mutedUsers/" + target).remove();
-
-        // 3) Remove public messages by that user
-        const msgsSnap = await db.ref("messages").once("value");
-        msgsSnap.forEach((childSnap) => {
-          const val = childSnap.val();
-          if (val.user && val.user.toLowerCase() === target.toLowerCase()) {
-            childSnap.ref.remove();
-          }
-        });
-
-        // 4) Remove DM messages from that user
-        const dmsSnap = await db.ref("dms").once("value");
-        dmsSnap.forEach((dmRoomSnap) => {
-          dmRoomSnap.forEach((msgSnap) => {
-            const msgVal = msgSnap.val();
-            if (msgVal.user && msgVal.user.toLowerCase() === target.toLowerCase()) {
-              msgSnap.ref.remove();
-            }
-          });
-        });
-
-        // 5) Remove references in groupRooms
-        const groupsSnap = await db.ref("groupRooms").once("value");
-        groupsSnap.forEach((roomSnap) => {
-          const roomData = roomSnap.val();
-          if (!roomData) return;
-
-          // A) Remove from participants
-          if (roomData.participants) {
-            const updated = roomData.participants.filter(p => p.toLowerCase() !== target.toLowerCase());
-            if (updated.length !== roomData.participants.length) {
-              roomSnap.ref.child("participants").set(updated);
-            }
-          }
-          // B) Remove any messages from this user
-          if (roomData.messages) {
-            Object.keys(roomData.messages).forEach((mKey) => {
-              const mVal = roomData.messages[mKey];
-              if (mVal.user && mVal.user.toLowerCase() === target.toLowerCase()) {
-                roomSnap.ref.child("messages").child(mKey).remove();
-              }
-            });
-          }
-        });
-
-        alert(`Account "${target}" has been terminated and all traces removed.`);
-      } catch (err) {
-        alert("Error terminating account: " + err);
-      }
     }
 
     /* =====================================================
@@ -1311,6 +1265,7 @@
        15) GUI Size
        ===================================================== */
     function updateGuiSize() {
+      userOverrodeScale = true; // user is overriding the auto-scale
       const scale = document.getElementById("guiSizeRange").value;
       document.documentElement.style.fontSize = (16 * scale) + "px";
       localStorage.setItem("uiScale", scale);
@@ -1349,6 +1304,7 @@
     function toggleNotifications() {
       const isChecked = document.getElementById("notificationsToggle").checked;
       localStorage.setItem("notificationsEnabled", isChecked);
+
       if (isChecked) {
         requestNotificationPermission();
       }
