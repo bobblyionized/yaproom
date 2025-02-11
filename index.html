@@ -5,245 +5,227 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>yaproom (official)</title>
   <style>
-    /* ----------------------------------------
-       1) Base Styles (Light Mode by default)
-       ---------------------------------------- */
-    body {
-      font-family: Arial, sans-serif; /* Fallback font */
-      margin: 10px;
-      background: #f7f7f7;
-      color: #000;
-      transition: background 0.3s, color 0.3s, font-family 0.3s;
-    }
-
-    /* Rounded corners for UI elements */
-    #loginDiv, #chatDiv, #settingsDiv,
-    #messages, #dmMessages, #dm2Messages, #dm3Messages,
-    textarea, button, select {
-      border-radius: 8px; 
-    }
-
-    #loginDiv, #chatDiv, #settingsDiv {
-      max-width: 400px;
-      margin: 0 auto;
-      background: #fff;
-      padding: 20px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-
-    #chatDiv {
-      display: none; /* Hidden until user enters or logs in */
-    }
-    #settingsDiv {
-      display: none; /* Hidden until the "Settings" button is clicked */
-    }
-
-    #messages {
-      list-style-type: none;
-      padding: 0;
-      max-height: 300px;
-      overflow-y: auto;
-      margin-bottom: 10px;
-      border: 1px solid #ddd;
-    }
-    #messages li {
-      padding: 8px;
-      border-bottom: 1px solid #eee;
-      margin: 0 4px;
-    }
-
-    /* If user is an account, color the name in blue by default; if anon, black. */
-    .account-user {
-      color: rgb(74, 148, 218);
-      font-weight: bold;
-    }
-    .anonymous-user {
-      color: #000;
-      font-weight: normal;
-    }
-
-    /* Special style for broadcast messages. */
-    .broadcast-msg {
-      background: #ffeb3b;
-      color: #000;
-      font-weight: bold;
-      padding: 4px;
-      border-radius: 4px;
-    }
-
-    /* Typing status area */
-    #typingStatus {
-      color: #777;
-      font-style: italic;
-      margin-bottom: 10px;
-      min-height: 18px; 
-    }
-
-    /* Chat controls use <textarea> now */
-    .chat-controls {
-      display: flex;
-      gap: 5px;
-      margin-bottom: 20px; 
-    }
-    textarea {
-      padding: 8px;
+    /* GENERAL RESET & CONTAINER */
+    * {
       box-sizing: border-box;
-      resize: none; /* We'll do auto-resize in JS */
-      width: 100%;
-      height: auto;
-      min-height: 40px;
-      max-height: 200px;
-      overflow-y: auto;
+      margin: 0;
+      padding: 0;
     }
-    button {
-      padding: 8px;
-      cursor: pointer;
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f8f8f8;
+      color: #333;
+      padding: 10px;
+      transition: background 0.3s, color 0.3s;
     }
-
-    .username-input,
-    .enter-chat-btn {
-      width: 100% !important;
-      margin-top: 8px;
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 10px;
     }
-
-    /* ----------------------------------------
-       2) Dark Mode
-       ---------------------------------------- */
+    /* CONTAINERS (Login, Chat, Settings) */
+    #loginDiv, #chatDiv, #settingsDiv {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    /* DARK MODE */
     body.dark-mode {
-      background: #111;
-      color: #eee;
+      background: #2f3136;
+      color: #dcdcdc;
     }
     body.dark-mode #loginDiv,
     body.dark-mode #chatDiv,
     body.dark-mode #settingsDiv {
-      background: #222;
-      color: #eee;
+      background: #36393f;
+      color: #dcdcdc;
     }
     body.dark-mode textarea {
-      background: #333;
-      color: #eee;
-      border: 1px solid #444;
+      background: #40444b;
+      color: #dcdcdc;
+      border: 1px solid #4f545c;
     }
     body.dark-mode button {
-      background: #444;
-      color: #eee;
-      border: 1px solid #666;
+      background: #4f545c;
+      color: #dcdcdc;
+      border: 1px solid #4f545c;
     }
     body.dark-mode select {
-      background: #333;
-      color: #eee;
-      border: 1px solid #444;
+      background: #40444b;
+      color: #dcdcdc;
+      border: 1px solid #4f545c;
     }
-
-    /* ----------------------------------------
-       3) Custom Font Classes
-       ---------------------------------------- */
-    .font-arial {
-      font-family: Arial, sans-serif;
+    /* FORM ELEMENTS */
+    input[type="text"], textarea, select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
     }
-    .font-georgia {
-      font-family: Georgia, serif;
+    button {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      background: #7289da;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
     }
-    .font-courier {
-      font-family: "Courier New", Courier, monospace;
+    button:hover {
+      background: #677bc4;
     }
-    .font-comic {
-      font-family: "Comic Sans MS", cursive, sans-serif;
+    /* HEADERS & TEXT */
+    h2, h3 {
+      margin-bottom: 12px;
+      font-weight: 600;
     }
-    .font-roboto {
-      font-family: "Roboto", sans-serif;
+    p {
+      margin-bottom: 8px;
+      font-size: 14px;
     }
-    .font-times {
-      font-family: "Times New Roman", Times, serif;
+    .tutorial-box {
+      background: #fafafa;
+      padding: 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      margin-bottom: 8px;
     }
-    .font-verdana {
-      font-family: Verdana, sans-serif;
+    body.dark-mode .tutorial-box {
+      background: #40444b;
+      color: #dcdcdc;
     }
-    .font-trebuchet {
-      font-family: "Trebuchet MS", Helvetica, sans-serif;
+    /* CHAT MESSAGES */
+    #messages {
+      list-style: none;
+      padding: 0;
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: #ffffff;
     }
-    .font-lucida {
-      font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+    body.dark-mode #messages {
+      background: #40444b;
+      border-color: #4f545c;
     }
-    .font-garamond {
-      font-family: Garamond, serif;
+    #messages li {
+      padding: 6px 8px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
     }
-
-    /* ----------------------------------------
-       4) Message Animation
-       ---------------------------------------- */
+    #messages li:last-child {
+      border-bottom: none;
+    }
+    .account-user {
+      color: #7289da;
+      font-weight: bold;
+    }
+    .anonymous-user {
+      color: #333;
+    }
+    .broadcast-msg {
+      background: #ffeb3b;
+      color: #333;
+      font-weight: bold;
+      padding: 4px;
+      border-radius: 4px;
+    }
+    /* TEXTAREA AUTO-RESIZE */
+    textarea {
+      resize: none;
+      min-height: 40px;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+    /* DM SECTION */
+    #dmSection {
+      margin-top: 10px;
+      border-top: 1px solid #ccc;
+      padding-top: 8px;
+    }
+    #dmMessages, #dm2Messages, #dm3Messages {
+      list-style: none;
+      padding: 0;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: #ffffff;
+    }
+    body.dark-mode #dmMessages,
+    body.dark-mode #dm2Messages,
+    body.dark-mode #dm3Messages {
+      background: #40444b;
+      border-color: #4f545c;
+    }
+    #dmMessages li, #dm2Messages li, #dm3Messages li {
+      padding: 6px 8px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+    }
+    /* MEMBER LIST - Expanded & Wider */
+    #memberListContainer {
+      width: 100%;  /* Ensure the container takes full available width */
+      background: #ffffff;
+      padding: 12px;
+      margin-top: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      min-height: 200px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    body.dark-mode #memberListContainer {
+      width: 100%;
+      background: #36393f;
+      border-color: #4f545c;
+      min-height: 200px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    #memberList li {
+      padding: 4px 0;
+      font-size: 14px;
+    }
+    /* MESSAGE ANIMATION */
     @keyframes message-enter {
-      0% {
-        transform: scale(0.8);
-        opacity: 0;
-      }
-      100% {
-        transform: scale(1);
-        opacity: 1;
-      }
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
     }
     .message-enter {
       animation: message-enter 0.3s ease forwards;
     }
+    /* EXTRA SETTINGS HEADINGS */
+    #settingsDiv h3 {
+      margin-top: 16px;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    /* Hide audio elements */
+    audio { display: none; }
 
-    /* ----------------------------------------
-       5) DM Section (Multiple DMs)
-       ---------------------------------------- */
-    #dmSection {
-      margin-top: 20px;
-      border-top: 1px solid #ccc;
-      padding-top: 10px;
-    }
-    /* Each DM box gets its own messages container */
-    #dmMessages, #dm2Messages, #dm3Messages {
-      list-style-type: none;
-      padding: 0;
-      max-height: 200px;
-      overflow-y: auto;
-      margin-bottom: 10px;
-      border: 1px solid #ddd;
-    }
-    #dmMessages li, #dm2Messages li, #dm3Messages li {
-      padding: 8px;
-      border-bottom: 1px solid #eee;
-      margin: 0 4px;
-    }
-    .dm-controls {
-      display: flex;
-      gap: 5px;
-    }
-
-    /* ----------------------------------------
-       Tutorial box styling
-       ---------------------------------------- */
-    .tutorial-box {
-      margin-bottom:10px; 
-      font-size: 0.9em; 
-      background:#fafafa; 
-      padding:6px; 
-      border-radius:5px;
-      transition: background 0.3s, color 0.3s;
-    }
-    body.dark-mode .tutorial-box {
-      background: #333;
-      color: #eee;
-    }
-
-    /* ----------------------------------------
-       7) Changelog Overlay
-       (Always shows on page load)
-       ---------------------------------------- */
+    /* -------------------------------------------------------
+       Changelog Overlay (SWORDBATTLE.IO STYLE - Unchanged, with indented bullets)
+       ------------------------------------------------------- */
     #changelogOverlay {
       position: fixed;
-      top: 0; 
+      top: 0;
       left: 0;
       width: 100%;
       height: 100%;
       background-color: rgba(0,0,0,0.7);
-      display: none; 
+      display: none;
       justify-content: center;
       align-items: center;
-      z-index: 9999; 
+      z-index: 9999;
     }
     #changelogModal {
       background: #fff;
@@ -254,244 +236,218 @@
       color: #000;
       box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     }
-    #changelogModal h2 {
-      margin-top: 0;
-    }
+    /* Indent bullet points */
     #changelogModal ul {
       margin: 10px 0;
-      padding-left: 20px;
+      padding-left: 30px;
     }
-    #changelogModal button {
-      margin-top: 10px;
-    }
-
   </style>
 </head>
 <body>
-
-  <!-- ===============================
-       CHANGELOG POPUP (ALWAYS SHOWS)
-       =============================== -->
-  <div id="changelogOverlay">
-    <div id="changelogModal">
-      <h2>Changelog (v1.2.0)</h2>
-      <ul>
-        <li>Fixed group chat bug (no more public chat leaking into private group).</li>
-        <li>Leaving a group does not remove public chat anymore.</li>
-        <li>Added multiple direct message boxes</li>
-      </ul>
-      <button onclick="closeChangelog()">Close</button>
-    </div>
-  </div>
-
-  <!-- ===============================
-       1) LOGIN SCREEN (loginDiv)
-       =============================== -->
-  <div id="loginDiv">
-    <h2>Enter Chat</h2>
-    <p>Anonymous / Temporary Name:</p>
-    <!-- If user is logged in, this becomes read-only -->
-    <input type="text" id="anonymousInput" class="username-input" placeholder="Anonymous Name" />
-    <button onclick="startChatting()" class="enter-chat-btn">Start Chatting</button>
-
-    <hr />
-    <!-- Account Management (Username + Password) -->
-    <h3>Account</h3>
-    <div id="notLoggedInUI">
-      <input type="text" id="accNameInput" placeholder="Desired username" style="width:100%; margin-bottom:5px;" />
-      <input type="text" id="accPassInput" placeholder="Password" style="width:100%; margin-bottom:5px;" />
-      <button onclick="createOrLoginAccount()">Create/Login Account</button>
-    </div>
-
-    <div id="loggedInUI" style="display:none;">
-      <p>Logged in as: <span id="loggedInName"></span></p>
-
-      <!-- Rename Account -->
-      <input type="text" id="renameInput" placeholder="New username" style="width:100%; margin-bottom:5px;" />
-      <button onclick="renameAccount()">Rename Account</button>
-      <br /><br />
-
-      <!-- Change Password -->
-      <input type="text" id="changePassInput" placeholder="New Password" style="width:100%; margin-bottom:5px;" />
-      <button onclick="changePassword()">Change Password</button>
-      <br /><br />
-
-      <button onclick="logOutAccount()">Log Out</button>
-    </div>
-
-    <hr />
-    <!-- Settings button is only here, in the main screen -->
-    <button onclick="showSettingsFromLogin()">Settings</button>
-
-    <!-- ===============================
-         OP-ONLY SECTION (MAIN MENU BOTTOM)
-         =============================== -->
-    <div id="opSection" style="display:none; margin-top: 20px; border-top:1px solid #ccc; padding-top:10px;">
-      <h3>OP Tools</h3>
-      <!-- Clear Chat Button -->
-      <button onclick="clearChatForEveryone()" style="background:#e00; color:#fff;">Clear Chat (Server-Side)</button>
-      <br /><br />
-
-      <!-- Broadcast -->
-      <label for="opBroadcastInput">Broadcast Message (shown to all):</label><br/>
-      <input type="text" id="opBroadcastInput" style="width:100%; margin-bottom:5px;" />
-      <button onclick="sendBroadcast()" style="background:#2196F3; color:#fff;">Send Broadcast</button>
-      <br /><br />
-
-      <!-- Color Picker (Optional) -->
-      <label for="opColorPicker">Change Your Name Color:</label><br/>
-      <input type="color" id="opColorPicker" value="#4A94DA" />
-      <button onclick="setOpColor()">Set Name Color</button>
-      <br /><br />
-
-      <!-- Debug button to clear all 'typing' states -->
-      <button onclick="clearAllTyping()" style="background:#9c27b0; color:#fff;">Clear All 'Typing' (Server-Side)</button>
-    </div>
-  </div>
-
-  <!-- ================================
-       2) CHAT SCREEN (chatDiv)
-       ================================ -->
-  <div id="chatDiv">
-    <h2>Yap Room</h2>
-
-    <!-- Quick list of room commands (OP commands hidden) -->
-    <div class="tutorial-box">
-      <strong>Group Chat Commands:</strong><br/>
-      /createroom [roomName]<br/>
-      /join [roomName]<br/>
-      /invite [accountName]<br/>
-      /leave
-    </div>
-
-    <!-- A) Messages + "Who is typing" indicator -->
-    <ul id="messages"></ul>
-    <div id="typingStatus"></div>
-
-    <div class="chat-controls">
-      <textarea id="messageInput" placeholder="Type a message" oninput="handleTyping()"></textarea>
-      <button onclick="sendMessage()">Send</button>
-      <button onclick="clearChat()">Clear Chat</button>
-    </div>
-
-    <!-- 2B) Direct Messages Section (MULTIPLE DM BOXES) -->
-    <div id="dmSection">
-      <h3>Direct Messages</h3>
-      <div id="dmLoginWarning" style="color:red; display:none;">
-        You must be logged in to use DMs.
-      </div>
-      <div id="dmUI" style="display:none;">
-        <!-- DM #1 -->
-        <p><strong>DM #1</strong> – Type a single username to DM:</p>
-        <input type="text" id="dmTargetInput" placeholder="username to DM" style="width:100%; margin-bottom:5px;" />
-        <button onclick="openDM()">Open DM</button>
-
-        <div id="dmConversation" style="margin-top:10px; display:none;">
-          <ul id="dmMessages"></ul>
-          <div class="dm-controls">
-            <textarea id="dmMessageInput" placeholder="Type a direct message" oninput="handleTyping()"></textarea>
-            <button onclick="sendDM()">Send DM</button>
-          </div>
-        </div>
-
-        <hr/>
-
-        <!-- DM #2 -->
-        <p><strong>DM #2</strong> – Type a single username to DM:</p>
-        <input type="text" id="dm2TargetInput" placeholder="username to DM" style="width:100%; margin-bottom:5px;" />
-        <button onclick="openDM2()">Open DM #2</button>
-
-        <div id="dm2Conversation" style="margin-top:10px; display:none;">
-          <ul id="dm2Messages"></ul>
-          <div class="dm-controls">
-            <textarea id="dm2MessageInput" placeholder="Type a direct message" oninput="handleTyping()"></textarea>
-            <button onclick="sendDM2()">Send DM #2</button>
-          </div>
-        </div>
-
-        <hr/>
-
-        <!-- DM #3 -->
-        <p><strong>DM #3</strong> – Type a single username to DM:</p>
-        <input type="text" id="dm3TargetInput" placeholder="username to DM" style="width:100%; margin-bottom:5px;" />
-        <button onclick="openDM3()">Open DM #3</button>
-
-        <div id="dm3Conversation" style="margin-top:10px; display:none;">
-          <ul id="dm3Messages"></ul>
-          <div class="dm-controls">
-            <textarea id="dm3MessageInput" placeholder="Type a direct message" oninput="handleTyping()"></textarea>
-            <button onclick="sendDM3()">Send DM #3</button>
-          </div>
-        </div>
+  <div class="container">
+    <!-- Changelog Overlay -->
+    <div id="changelogOverlay">
+      <div id="changelogModal">
+        <h2>Alpha V2.0.0</h2>
+        <ul>
+          <li>Cleaned up the UI for a modern light mode experience.</li>
+          <li>Improved compact layout inspired by Discord mobile.</li>
+          <li>Added background music controls, sound notifications, and message timestamp toggles in settings.</li>
+          <li>Minor bug fixes and performance improvements.</li>
+        </ul>
+        <button onclick="closeChangelog()">Close</button>
       </div>
     </div>
 
-    <!-- 2C) Return to Main Screen -->
-    <div style="margin-top:20px; text-align:center;">
-      <button onclick="returnToLogin()">Return to Main Screen</button>
+    <!-- LOGIN SCREEN -->
+    <div id="loginDiv">
+      <h2>Enter Chat</h2>
+      <p>Anonymous / Temporary Name:</p>
+      <input type="text" id="anonymousInput" class="username-input" placeholder="Anonymous Name" />
+      <button onclick="startChatting()" class="enter-chat-btn">Start Chatting</button>
+      <hr />
+      <h3>Account</h3>
+      <div id="notLoggedInUI">
+        <input type="text" id="accNameInput" placeholder="Desired username" />
+        <input type="text" id="accPassInput" placeholder="Password" />
+        <button onclick="createOrLoginAccount()">Create/Login Account</button>
+      </div>
+      <div id="loggedInUI" style="display:none;">
+        <p>Logged in as: <span id="loggedInName"></span></p>
+        <input type="text" id="renameInput" placeholder="New username" />
+        <button onclick="renameAccount()">Rename Account</button>
+        <br /><br />
+        <input type="text" id="changePassInput" placeholder="New Password" />
+        <button onclick="changePassword()">Change Password</button>
+        <br /><br />
+        <button onclick="logOutAccount()">Log Out</button>
+      </div>
+      <hr />
+      <button onclick="showSettingsFromLogin()">Settings</button>
+      <!-- OP-ONLY Section -->
+      <div id="opSection" style="display:none; margin-top: 10px; border-top:1px solid #ccc; padding-top:10px;">
+        <h3>OP Tools</h3>
+        <button onclick="clearChatForEveryone()">Clear Chat (Server-Side)</button>
+        <br /><br />
+        <label for="opBroadcastInput">Broadcast Message:</label>
+        <input type="text" id="opBroadcastInput" />
+        <button onclick="sendBroadcast()">Send Broadcast</button>
+        <br /><br />
+        <label for="opColorPicker">Change Your Name Color:</label>
+        <input type="color" id="opColorPicker" value="#7289da" />
+        <button onclick="setOpColor()">Set Name Color</button>
+        <br /><br />
+        <button onclick="clearAllTyping()">Clear All 'Typing'</button>
+      </div>
+    </div>
+
+    <!-- CHAT SCREEN -->
+    <div id="chatDiv" style="display:none;">
+      <h2>Yap Room</h2>
+      <div class="tutorial-box">
+        <strong>Group Chat Commands:</strong><br/>
+        /createroom [roomName]<br/>
+        /join [roomName]<br/>
+        /invite [accountName]<br/>
+        /leave
+      </div>
+      <ul id="messages"></ul>
+      <div id="typingStatus"></div>
+      <div class="chat-controls">
+        <textarea id="messageInput" placeholder="Type a message" oninput="handleTyping()"></textarea>
+        <button onclick="sendMessage()">Send</button>
+        <button onclick="clearChat()">Clear Chat</button>
+      </div>
+      <!-- DM Section -->
+      <div id="dmSection">
+        <h3>Direct Messages</h3>
+        <div id="dmLoginWarning" style="color:red; display:none;">You must be logged in to use DMs.</div>
+        <div id="dmUI" style="display:none;">
+          <!-- DM #1 -->
+          <p><strong>DM #1</strong> – Type a username to DM:</p>
+          <input type="text" id="dmTargetInput" placeholder="Username to DM" />
+          <button onclick="openDM()">Open DM</button>
+          <div id="dmConversation" style="display:none; margin-top:10px;">
+            <ul id="dmMessages"></ul>
+            <div class="dm-controls">
+              <textarea id="dmMessageInput" placeholder="Type a direct message" oninput="handleTyping()"></textarea>
+              <button onclick="sendDM()">Send DM</button>
+            </div>
+          </div>
+          <hr/>
+          <!-- DM #2 -->
+          <p><strong>DM #2</strong> – Type a username to DM:</p>
+          <input type="text" id="dm2TargetInput" placeholder="Username to DM" />
+          <button onclick="openDM2()">Open DM #2</button>
+          <div id="dm2Conversation" style="display:none; margin-top:10px;">
+            <ul id="dm2Messages"></ul>
+            <div class="dm-controls">
+              <textarea id="dm2MessageInput" placeholder="Type a direct message" oninput="handleTyping()"></textarea>
+              <button onclick="sendDM2()">Send DM #2</button>
+            </div>
+          </div>
+          <hr/>
+          <!-- DM #3 -->
+          <p><strong>DM #3</strong> – Type a username to DM:</p>
+          <input type="text" id="dm3TargetInput" placeholder="Username to DM" />
+          <button onclick="openDM3()">Open DM #3</button>
+          <div id="dm3Conversation" style="display:none; margin-top:10px;">
+            <ul id="dm3Messages"></ul>
+            <div class="dm-controls">
+              <textarea id="dm3MessageInput" placeholder="Type a direct message" oninput="handleTyping()"></textarea>
+              <button onclick="sendDM3()">Send DM #3</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="memberListContainer">
+        <h3>Members Online</h3>
+        <ul id="memberList"></ul>
+      </div>
+      <div style="text-align:center; margin-top:10px;">
+        <button onclick="returnToLogin()">Return to Main Screen</button>
+      </div>
+    </div>
+
+    <!-- SETTINGS SCREEN -->
+    <div id="settingsDiv" style="display:none;">
+      <h2>Settings</h2>
+      <!-- Basic Settings -->
+      <label>
+        <input type="checkbox" id="themeToggle" onchange="toggleDarkMode()" />
+        Dark Mode
+      </label>
+      <br/><br/>
+      <label for="guiSizeRange">GUI Size</label>
+      <input type="range" id="guiSizeRange" min="0.5" max="2.0" step="0.1" value="1.0" onchange="updateGuiSize()" />
+      <p id="guiSizeValue"></p>
+      <label for="fontSelect">Choose Font:</label>
+      <select id="fontSelect" onchange="updateFont()">
+        <option value="font-arial">Arial</option>
+        <option value="font-georgia">Georgia</option>
+        <option value="font-courier">Courier New</option>
+        <option value="font-comic">Comic Sans MS</option>
+        <option value="font-roboto">Roboto</option>
+        <option value="font-times">Times New Roman</option>
+        <option value="font-verdana">Verdana</option>
+        <option value="font-trebuchet">Trebuchet MS</option>
+        <option value="font-lucida">Lucida Sans Unicode</option>
+        <option value="font-garamond">Garamond</option>
+      </select>
+      <br/><br/>
+      <label>
+        <input type="checkbox" id="notificationsToggle" onchange="toggleNotifications()" />
+        Enable Desktop Notifications
+      </label>
+      <br/><br/>
+      <!-- Extra Settings Features -->
+      <h3>Background Music</h3>
+      <label for="musicFileInput">Upload Music:</label>
+      <input type="file" id="musicFileInput" accept="audio/*" />
+      <br/>
+      <button onclick="toggleMusic()">Play/Pause Music</button>
+      <label>Volume:</label>
+      <input type="range" id="musicVolume" min="0" max="1" step="0.01" value="1" onchange="updateMusicVolume()" />
+      <button onclick="clearMusic()">Remove Music</button>
+      <br/><br/>
+      <h3>Sound Notifications</h3>
+      <label>
+        <input type="checkbox" id="soundToggle" onchange="toggleSoundNotifications()" />
+        Enable Chat Sound Notifications
+      </label>
+      <br/>
+      <label for="soundVolume">Sound Volume:</label>
+      <input type="range" id="soundVolume" min="0" max="1" step="0.01" value="1" onchange="updateSoundVolume()" />
+      <br/><br/>
+      <h3>Message Timestamps</h3>
+      <label>
+        <input type="checkbox" id="timestampToggle" onchange="toggleTimestamps()" />
+        Show Message Timestamps (hover to view)
+      </label>
+      <br/><br/>
+      <button onclick="goBack()">Back</button>
     </div>
   </div>
 
-  <!-- ================================
-       3) SETTINGS SCREEN (settingsDiv)
-       ================================ -->
-  <div id="settingsDiv">
-    <h2>Settings</h2>
-    <label>
-      <input type="checkbox" id="themeToggle" onchange="toggleDarkMode()" />
-      Dark Mode
-    </label>
-    <br><br>
+  <!-- Hidden Audio Elements -->
+  <audio id="bgMusic" loop></audio>
+  <audio id="chatSound" src="https://www.soundjay.com/button/beep-07.wav" preload="auto"></audio>
 
-    <label for="guiSizeRange">GUI Size</label>
-    <input type="range" id="guiSizeRange" min="0.5" max="2.0" step="0.1" value="1.0" onchange="updateGuiSize()" />
-    <p id="guiSizeValue"></p>
-
-    <label for="fontSelect">Choose Font:</label>
-    <select id="fontSelect" onchange="updateFont()">
-      <option value="font-arial">Arial</option>
-      <option value="font-georgia">Georgia</option>
-      <option value="font-courier">Courier New</option>
-      <option value="font-comic">Comic Sans MS</option>
-      <option value="font-roboto">Roboto</option>
-      <option value="font-times">Times New Roman</option>
-      <option value="font-verdana">Verdana</option>
-      <option value="font-trebuchet">Trebuchet MS</option>
-      <option value="font-lucida">Lucida Sans Unicode</option>
-      <option value="font-garamond">Garamond</option>
-    </select>
-    <br><br>
-
-    <!-- Notification toggle -->
-    <label>
-      <input type="checkbox" id="notificationsToggle" onchange="toggleNotifications()" />
-      Enable Desktop Notifications
-    </label>
-    <br><br>
-
-    <button onclick="goBack()">Back</button>
-  </div>
-
-  <!-- ---------------------------------
-       Firebase SDK (Compat versions)
-       --------------------------------->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-database-compat.js"></script>
-
-  <!-- SHA-256 library for hashing passwords -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js"></script>
 
   <script>
     /* =====================================================
-       1) Firebase Configuration & Initialization
-       (DO NOT CHANGE THESE KEYS)
+       Firebase Configuration & Initialization
        ===================================================== */
     const firebaseConfig = {
       apiKey: "AIzaSyBkm5Lf3PaghllqcatG_FymhTm_x7mGa28",
       authDomain: "yaproom-14cfe.firebaseapp.com",
       databaseURL: "https://yaproom-14cfe-default-rtdb.firebaseio.com",
       projectId: "yaproom-14cfe",
-      storageBucket: "yaproom-14cfe.firebaseapp.com",
+      storageBucket: "yaproom-14cfe.appspot.com",
       messagingSenderId: "5332542311",
       appId: "1:5332542311:web:f1a1ab2fb81bf62b0b45c2"
     };
@@ -499,169 +455,126 @@
     const db = firebase.database();
 
     /* =====================================================
-       2) Global Variables & OP List
+       Global Variables & OP List
        ===================================================== */
-    const OP_LIST = ["god", "nubunknown", "pasta"];  // Hidden commands, but still recognized for OP usage
-
-    let lastMessageTime = 0;
-    const RATE_LIMIT_MS = 2000; // 2-second limit
+    const OP_LIST = ["god", "nubunknown", "pasta"];
+    let lastMessageTime = 2000;
+    const RATE_LIMIT_MS = 2000;
     const badWords = ["shit","fuck","bitch","nigga","fucking","shitting","negro","bullshit","pussy"];
-
     let currentUsername = null;
     let currentPassHash = null;
-
-    // For account deletion listening
-    let accountDeletedRef = null;  // We'll store a reference to detach later
-
-    // For DM #1
-    let currentDMPath = null;
-    let dmListener = null;
-
-    // For DM #2
-    let currentDM2Path = null;
-    let dm2Listener = null;
-
-    // For DM #3
-    let currentDM3Path = null;
-    let dm3Listener = null;
-
-    // Group Chat 
-    let inGroupChat = false;
-    let currentGroupRoomName = null;
-    let groupListener = null;
-
-    // Typing
+    let accountDeletedRef = null;
+    let renamingInProgress = false;
+    let currentDMPath = null, dmListener = null;
+    let currentDM2Path = null, dm2Listener = null;
+    let currentDM3Path = null, dm3Listener = null;
+    let inGroupChat = false, currentGroupRoomName = null, groupListener = null;
     let typingTimeout = null;
-
-    // Mute system
     let mutedUsers = {};
-
-    // OP color system
     let accountColors = {};
-
-    // We'll store all public messages here so we can re-show them after leaving a group.
     let publicMessages = [];
-    let publicListenerAdd = null;
-    let publicListenerRemove = null;
+    let publicListenerAdd = null, publicListenerRemove = null;
+    let myPresenceRef = null;
 
     /* =====================================================
-       3) On Page Load: Always show Changelog
+       On Page Load
        ===================================================== */
     window.onload = function() {
       document.getElementById("changelogOverlay").style.display = "flex";
-
-      // A) Dark Mode
+      // Dark Mode
       const darkModeEnabled = localStorage.getItem("darkModeEnabled") === "true";
       if (darkModeEnabled) document.body.classList.add("dark-mode");
       document.getElementById("themeToggle").checked = darkModeEnabled;
-
-      // B) GUI Size
+      // GUI Size
       const savedScale = localStorage.getItem("uiScale");
       if (savedScale) {
         document.documentElement.style.fontSize = (16 * savedScale) + "px";
         document.getElementById("guiSizeRange").value = savedScale;
       }
       updateGuiSizeDisplay();
-
-      // C) Font
+      // Font
       const savedFont = localStorage.getItem("selectedFont") || "font-arial";
       document.body.classList.add(savedFont);
       document.getElementById("fontSelect").value = savedFont;
-
-      // D) Account
+      // Account
       currentUsername = localStorage.getItem("acc_username");
       currentPassHash = localStorage.getItem("acc_passHash");
       updateAccountUI();
-
-      // E) Start listening to public chat
+      // Public Chat Listener
       startPublicChatListeners();
-
-      // F) Listen for typed updates
+      // Typing Updates
       db.ref("typing").on("value", (snap) => {
         const typingObj = snap.val() || {};
         showTypingStatus(typingObj);
       });
-
-      // G) Listen for muted users
-      db.ref("mutedUsers").on("value", (snap) => {
-        mutedUsers = snap.val() || {};
-      });
-
-      // H) Listen for account colors
-      db.ref("accountColors").on("value", (snap) => {
-        accountColors = snap.val() || {};
-      });
-
-      // I) Listen for OP broadcasts
+      // Muted Users
+      db.ref("mutedUsers").on("value", (snap) => { mutedUsers = snap.val() || {}; });
+      // Account Colors
+      db.ref("accountColors").on("value", (snap) => { accountColors = snap.val() || {}; });
+      // Broadcasts
       db.ref("broadcasts").on("child_added", (snap) => {
         const bData = snap.val();
-        displayMessage(bData.user, bData.text, true, true, snap.key); 
+        displayMessage(bData.user, bData.text, true, true, snap.key);
       });
       db.ref("broadcasts").on("child_removed", (snap) => {
         const removedKey = snap.key;
         const li = document.querySelector(`li[data-key="${removedKey}"]`);
         if (li) li.remove();
       });
-
-      // SHIFT+ENTER for main chat
-      const msgInput = document.getElementById("messageInput");
-      msgInput.addEventListener("keydown", function(e) {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          sendMessage();
+      // Presence
+      db.ref("presence").on("value", (snapshot) => {
+        const presenceData = snapshot.val() || {};
+        let members = [];
+        for (let key in presenceData) {
+          if (presenceData[key].username) { members.push(presenceData[key].username); }
         }
+        updateMemberList(members);
       });
-      msgInput.addEventListener("input", autoResize);
-
-      // SHIFT+ENTER for DM #1
-      const dmInput = document.getElementById("dmMessageInput");
-      dmInput.addEventListener("keydown", function(e) {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          sendDM();
-        }
-      });
-      dmInput.addEventListener("input", autoResize);
-
-      // SHIFT+ENTER for DM #2
-      const dm2Input = document.getElementById("dm2MessageInput");
-      dm2Input.addEventListener("keydown", function(e) {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          sendDM2();
-        }
-      });
-      dm2Input.addEventListener("input", autoResize);
-
-      // SHIFT+ENTER for DM #3
-      const dm3Input = document.getElementById("dm3MessageInput");
-      dm3Input.addEventListener("keydown", function(e) {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          sendDM3();
-        }
-      });
-      dm3Input.addEventListener("input", autoResize);
-
-      // J) Notifications Setting
+      // Textarea Shortcuts
+      setupTextareaShortcuts("messageInput", sendMessage);
+      setupTextareaShortcuts("dmMessageInput", sendDM);
+      setupTextareaShortcuts("dm2MessageInput", sendDM2);
+      setupTextareaShortcuts("dm3MessageInput", sendDM3);
+      // Notifications Setting
       const notificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
-      const notificationsToggle = document.getElementById("notificationsToggle");
-      if (notificationsToggle) {
-        notificationsToggle.checked = notificationsEnabled;
+      document.getElementById("notificationsToggle").checked = notificationsEnabled;
+      // Sound Notifications Setting
+      const soundEnabled = localStorage.getItem("soundNotificationsEnabled") === "true";
+      document.getElementById("soundToggle").checked = soundEnabled;
+      const savedSoundVolume = localStorage.getItem("soundVolume");
+      if (savedSoundVolume) {
+        document.getElementById("soundVolume").value = savedSoundVolume;
+        document.getElementById("chatSound").volume = parseFloat(savedSoundVolume);
       }
-
-      // Also remove "typing" if user closes the tab/window
-      window.onbeforeunload = function() {
-        removeUserTyping();
-      };
+      // Message Timestamps Toggle
+      const showTimestamps = localStorage.getItem("showTimestamps") === "true";
+      document.getElementById("timestampToggle").checked = showTimestamps;
+      // Remove typing on unload
+      window.onbeforeunload = () => removeUserTyping();
+      // Background Music
+      const storedMusic = localStorage.getItem("bgMusic");
+      if (storedMusic) {
+        document.getElementById("bgMusic").src = storedMusic;
+        document.getElementById("bgMusic").volume = localStorage.getItem("musicVolume") || 1;
+        document.getElementById("bgMusic").play();
+      }
     };
 
-    /* Close the changelog overlay */
     function closeChangelog() {
       document.getElementById("changelogOverlay").style.display = "none";
     }
 
-    /* Auto-resize logic for textareas */
+    function setupTextareaShortcuts(textareaId, sendCallback) {
+      const textarea = document.getElementById(textareaId);
+      textarea.addEventListener("keydown", function(e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendCallback();
+        }
+      });
+      textarea.addEventListener("input", autoResize);
+    }
+
     function autoResize(event) {
       const textarea = event.target;
       textarea.style.height = "auto";
@@ -669,36 +582,26 @@
     }
 
     /* =====================================================
-       PUBLIC CHAT LISTENER
+       Public Chat Listener
        ===================================================== */
     function startPublicChatListeners() {
-      // Remove old listeners if any
       db.ref("messages").off("child_added", publicListenerAdd);
       db.ref("messages").off("child_removed", publicListenerRemove);
       publicMessages = [];
       document.getElementById("messages").innerHTML = "";
-
-      // Listen for new public messages
       publicListenerAdd = db.ref("messages").on("child_added", (snapshot) => {
         const msg = snapshot.val();
         const key = snapshot.key;
-        // If user is muted, skip
-        if (msg.user && mutedUsers[msg.user.toLowerCase()]) return;
-
+        if (msg.user && mutedUsers[msg.user]) return;
         publicMessages.push({ key, ...msg });
-        // Only display if we are NOT in a group
         if (!inGroupChat) {
-          displayMessage(msg.user, msg.text, msg.isAccount, false, key);
+          displayMessage(msg.user, msg.text, msg.isAccount, false, key, msg.timestamp);
         }
+        if (msg.user && msg.text) { checkForMentionsAndNotify(msg.user, msg.text); }
       });
-
-      // Listen for removed public messages
       publicListenerRemove = db.ref("messages").on("child_removed", (snap) => {
         const removedKey = snap.key;
-        // Remove from array
         publicMessages = publicMessages.filter(m => m.key !== removedKey);
-
-        // If we're currently in public mode, remove from UI
         if (!inGroupChat) {
           const li = document.querySelector(`li[data-key="${removedKey}"]`);
           if (li) li.remove();
@@ -706,29 +609,50 @@
       });
     }
 
+    function checkForMentionsAndNotify(sender, text) {
+      if (!currentUsername || !text) return;
+      const textLower = text.toLowerCase();
+      const mentionString = "@" + currentUsername.toLowerCase();
+      if (textLower.includes(mentionString) && sender !== currentUsername) {
+        showMentionNotification(sender, text);
+      }
+    }
+
+    function showMentionNotification(sender, text) {
+      const isNotificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
+      if (!("Notification" in window) || !isNotificationsEnabled) return;
+      if (document.hidden && Notification.permission === "granted") {
+        new Notification("You were mentioned by " + sender, {
+          body: text,
+          icon: "https://via.placeholder.com/50"
+        });
+      }
+    }
+
     /* =====================================================
-       4) Account Creation / Login
+       Account Creation / Login
        ===================================================== */
     async function createOrLoginAccount() {
-      const desiredName = document.getElementById("accNameInput").value.trim().toLowerCase();
+      const desiredName = document.getElementById("accNameInput").value.trim();
       const desiredPass = document.getElementById("accPassInput").value.trim();
       if (!desiredName || !desiredPass) {
         alert("Please provide both a username and a password.");
         return;
       }
+      if (/\s/.test(desiredName)) {
+        alert("Usernames cannot contain spaces.");
+        return;
+      }
       const passHash = sha256(desiredPass);
-
       try {
         const snap = await db.ref("accounts/" + desiredName).once("value");
         if (!snap.exists()) {
-          // Create new account
           await db.ref("accounts/" + desiredName).set({
             passwordHash: passHash,
             createdAt: Date.now()
           });
           alert("Account created! Logged in as: " + desiredName);
         } else {
-          // Existing account, verify password
           const data = snap.val();
           if (data.passwordHash !== passHash) {
             alert("Incorrect password or name is taken by someone else.");
@@ -751,50 +675,31 @@
       const loggedInUI = document.getElementById("loggedInUI");
       const loggedInName = document.getElementById("loggedInName");
       const anonInput = document.getElementById("anonymousInput");
-
       if (currentUsername && currentPassHash) {
         notLoggedInUI.style.display = "none";
         loggedInUI.style.display = "block";
         loggedInName.textContent = currentUsername;
-
-        // Make the "anonymous name" box read-only
         anonInput.value = currentUsername;
         anonInput.disabled = true;
-
-        // Listen for account deletion in real-time
         listenForAccountDeletion();
       } else {
         notLoggedInUI.style.display = "block";
         loggedInUI.style.display = "none";
         anonInput.value = "";
         anonInput.disabled = false;
-
-        // Stop listening if we logged out
-        if (accountDeletedRef) {
-          accountDeletedRef.off("value");
-          accountDeletedRef = null;
-        }
+        if (accountDeletedRef) { accountDeletedRef.off("value"); accountDeletedRef = null; }
       }
       updateDMUI();
       checkIfOP();
     }
 
-    /* Force-logout if the account is removed from DB */
     function listenForAccountDeletion() {
-      // If we had an old reference, detach it
-      if (accountDeletedRef) {
-        accountDeletedRef.off("value");
-        accountDeletedRef = null;
-      }
+      if (accountDeletedRef) { accountDeletedRef.off("value"); accountDeletedRef = null; }
       if (!currentUsername) return;
-
-      // Listen to "accounts/[username]" 
       accountDeletedRef = db.ref("accounts/" + currentUsername);
       accountDeletedRef.on("value", (snap) => {
-        // If the snapshot doesn't exist, the account was removed => forcibly log out
-        if (!snap.exists()) {
+        if (!snap.exists() && !renamingInProgress) {
           alert("Your account has been terminated!");
-          // forcibly log out
           logOutAccount();
         }
       });
@@ -802,70 +707,80 @@
 
     async function logOutAccount() {
       removeUserTyping();
-
-      // Remove account deletion listener if it exists
-      if (accountDeletedRef) {
-        accountDeletedRef.off("value");
-        accountDeletedRef = null;
-      }
-
+      if (accountDeletedRef) { accountDeletedRef.off("value"); accountDeletedRef = null; }
+      if (myPresenceRef) { myPresenceRef.remove(); myPresenceRef = null; }
       localStorage.removeItem("acc_username");
       localStorage.removeItem("acc_passHash");
       currentUsername = null;
       currentPassHash = null;
       alert("Logged out.");
-
       updateAccountUI();
     }
 
-    /* Remove current user's "typing" ref from DB */
     function removeUserTyping() {
-      if (currentUsername) {
-        db.ref("typing/" + currentUsername).remove();
-      }
+      if (currentUsername) { db.ref("typing/" + currentUsername).remove(); }
     }
 
     /* =====================================================
-       5) Rename Account
+       Rename Account (12-hour lock)
        ===================================================== */
     async function renameAccount() {
       if (!currentUsername || !currentPassHash) {
         alert("You are not logged in, can't rename.");
         return;
       }
-      const newName = document.getElementById("renameInput").value.trim().toLowerCase();
+      const newName = document.getElementById("renameInput").value.trim();
       if (!newName) {
         alert("Enter a new username.");
         return;
       }
-      // Check if taken
+      if (/\s/.test(newName)) {
+        alert("Usernames cannot contain spaces!");
+        return;
+      }
+      const currentAccountSnap = await db.ref("accounts/" + currentUsername).once("value");
+      if (!currentAccountSnap.exists()) {
+        alert("Your account no longer exists or was deleted.");
+        return;
+      }
+      const currentAccData = currentAccountSnap.val();
+      const lastRenamed = currentAccData.lastRenamed || 0;
+      const now = Date.now();
+      const TWELVE_HOURS = 12 * 60 * 60 * 1000;
+      if (now - lastRenamed < TWELVE_HOURS) {
+        const timeLeftMs = TWELVE_HOURS - (now - lastRenamed);
+        const timeLeftHr = Math.ceil(timeLeftMs / (1000 * 60 * 60));
+        alert(`You must wait ${timeLeftHr} more hour(s) before renaming again!`);
+        return;
+      }
       const snap = await db.ref("accounts/" + newName).once("value");
       if (snap.exists()) {
         alert("That username is taken.");
         return;
       }
       try {
-        // remove old
+        renamingInProgress = true;
         await db.ref("accounts/" + currentUsername).remove();
-        // create new
         await db.ref("accounts/" + newName).set({
           passwordHash: currentPassHash,
-          createdAt: Date.now()
+          createdAt: currentAccData.createdAt,
+          lastRenamed: now
         });
-        // remove old typing
         db.ref("typing/" + currentUsername).remove();
-
         currentUsername = newName;
         localStorage.setItem("acc_username", currentUsername);
+        if (myPresenceRef) { myPresenceRef.update({ username: newName }); }
         alert("Renamed to " + newName);
+        renamingInProgress = false;
         updateAccountUI();
       } catch (err) {
+        renamingInProgress = false;
         alert("Error renaming: " + err);
       }
     }
 
     /* =====================================================
-       5B) Change Password
+       Change Password
        ===================================================== */
     async function changePassword() {
       if (!currentUsername || !currentPassHash) {
@@ -878,7 +793,6 @@
         return;
       }
       const newPassHash = sha256(newPass);
-
       try {
         await db.ref("accounts/" + currentUsername).update({
           passwordHash: newPassHash
@@ -893,7 +807,7 @@
     }
 
     /* =====================================================
-       6) Starting the Chat
+       Starting Chat & Presence
        ===================================================== */
     function startChatting() {
       if (!currentUsername) {
@@ -902,15 +816,28 @@
           alert("Please enter a name or create an account.");
           return;
         }
+        if (/\s/.test(anonName)) {
+          alert("Usernames cannot contain spaces.");
+          return;
+        }
         currentUsername = anonName;
       }
       document.getElementById("loginDiv").style.display = "none";
       document.getElementById("chatDiv").style.display = "block";
       updateDMUI();
+      setupPresence();
+    }
+
+    function returnToLogin() {
+      removeUserTyping();
+      if (myPresenceRef) { myPresenceRef.remove(); myPresenceRef = null; }
+      document.getElementById("chatDiv").style.display = "none";
+      document.getElementById("loginDiv").style.display = "block";
+      checkIfOP();
     }
 
     /* =====================================================
-       7) Public Chat
+       Public Chat Send
        ===================================================== */
     function filterBadWords(text) {
       const badWordsLower = badWords.map(word => word.toLowerCase());
@@ -926,44 +853,34 @@
       const inp = document.getElementById("messageInput");
       let text = inp.value.trim();
       if (!text) return;
-
       if (text.startsWith("/")) {
         handleSlashCommand(text);
         inp.value = "";
         inp.style.height = "40px";
         return;
       }
-
-      // Rate limit
       const currentTime = Date.now();
       if (currentTime - lastMessageTime < RATE_LIMIT_MS) {
         const secLeft = Math.ceil((RATE_LIMIT_MS - (currentTime - lastMessageTime)) / 1000);
         alert(`Wait ${secLeft} second(s).`);
         return;
       }
-
-      // Mute check
-      if (currentUsername && mutedUsers[currentUsername.toLowerCase()]) {
+      if (currentUsername && mutedUsers[currentUsername]) {
         alert("You are muted and cannot send messages.");
         inp.value = "";
         inp.style.height = "40px";
         return;
       }
-
       text = filterBadWords(text);
-
       let finalName = currentUsername || "Unknown";
       const isAccount = (currentUsername && currentPassHash);
-
       if (inGroupChat && currentGroupRoomName) {
-        // Group chat
         db.ref("groupRooms/" + currentGroupRoomName + "/messages").push({
           user: finalName,
           text: text,
           timestamp: firebase.database.ServerValue.TIMESTAMP
         });
       } else {
-        // Public chat
         db.ref("messages").push({
           user: finalName,
           text: text,
@@ -971,123 +888,89 @@
           timestamp: firebase.database.ServerValue.TIMESTAMP
         });
       }
-
       inp.value = "";
       inp.style.height = "40px";
       lastMessageTime = currentTime;
-
-      if (currentUsername) {
-        db.ref("typing/" + currentUsername).remove();
-      }
+      if (currentUsername) { db.ref("typing/" + currentUsername).remove(); }
     }
 
-    function displayMessage(user, text, isAccount, isBroadcast, messageKey) {
+    function displayMessage(user, text, isAccount, isBroadcast, messageKey, timestamp) {
       const ul = document.getElementById("messages");
       const li = document.createElement("li");
       li.classList.add("message-enter");
-
-      if (messageKey) {
-        li.setAttribute("data-key", messageKey);
-      }
-
+      if (messageKey) { li.setAttribute("data-key", messageKey); }
       let userColorClass = isAccount ? "account-user" : "anonymous-user";
       let colorStyle = "";
-
-      if (accountColors[user?.toLowerCase()]) {
-        colorStyle = `style="color:${accountColors[user.toLowerCase()]}; font-weight:bold;"`;
+      if (accountColors[user]) {
+        colorStyle = `style="color:${accountColors[user]}; font-weight:bold;"`;
       } else if (isAccount) {
-        colorStyle = `style="color:rgb(74, 148, 218);"`;
+        colorStyle = `style="color:#7289da;"`;
       }
-
       if (isBroadcast) {
         li.innerHTML = `<span class="broadcast-msg">[BROADCAST from ${user}]</span> ${text}`;
       } else {
         li.innerHTML = `<span class="${userColorClass}" ${colorStyle}>${user}</span>: ${text}`;
       }
-
+      if (localStorage.getItem("showTimestamps") === "true" && timestamp) {
+        const date = new Date(timestamp);
+        li.title = date.toLocaleString();
+      }
       ul.appendChild(li);
       ul.scrollTop = ul.scrollHeight;
     }
 
     function clearChat() {
-      const confirmClear = confirm("Are you sure you want to clear the chat messages **on your screen**?");
+      const confirmClear = confirm("Are you sure you want to clear the chat messages on your screen?");
       if (!confirmClear) return;
       document.getElementById("messages").innerHTML = "";
     }
 
     /* =====================================================
-       8) Typing Indicators (Main Chat)
+       Typing Indicators
        ===================================================== */
     function handleTyping() {
       if (!currentUsername) return;
       db.ref("typing/" + currentUsername).set(true);
       if (typingTimeout) clearTimeout(typingTimeout);
-      typingTimeout = setTimeout(() => {
-        db.ref("typing/" + currentUsername).remove();
-      }, 3000);
+      typingTimeout = setTimeout(() => { db.ref("typing/" + currentUsername).remove(); }, 3000);
     }
 
     function showTypingStatus(typingObj) {
-      const keys = Object.keys(typingObj).filter((u) => u !== currentUsername);
+      const keys = Object.keys(typingObj).filter(u => u !== currentUsername);
       const typingDiv = document.getElementById("typingStatus");
-      if (keys.length === 0) {
-        typingDiv.textContent = "";
-      } else if (keys.length === 1) {
-        typingDiv.textContent = `${keys[0]} is typing...`;
-      } else {
-        typingDiv.textContent = `${keys.join(", ")} are typing...`;
-      }
+      if (keys.length === 0) { typingDiv.textContent = ""; }
+      else if (keys.length === 1) { typingDiv.textContent = `${keys[0]} is typing...`; }
+      else { typingDiv.textContent = `${keys.join(", ")} are typing...`; }
     }
 
     /* =====================================================
-       9) Multiple DM Support
+       Multiple DM Support
        ===================================================== */
     function updateDMUI() {
       const warn = document.getElementById("dmLoginWarning");
       const ui = document.getElementById("dmUI");
-      if (currentUsername && currentPassHash) {
-        warn.style.display = "none";
-        ui.style.display = "block";
-      } else {
-        warn.style.display = "block";
-        ui.style.display = "none";
-      }
+      if (currentUsername && currentPassHash) { warn.style.display = "none"; ui.style.display = "block"; }
+      else { warn.style.display = "block"; ui.style.display = "none"; }
     }
 
-    // ---------------------------
     // DM #1
-    // ---------------------------
     function openDM() {
-      const typedName = document.getElementById("dmTargetInput").value.trim().toLowerCase();
-      if (!typedName) {
-        alert("Please type a username to DM.");
-        return;
-      }
-      if (!currentUsername || !currentPassHash) {
-        alert("You must be logged in to DM.");
-        return;
-      }
-
-      // Remove old DM listener if any
-      if (dmListener && currentDMPath) {
-        db.ref(currentDMPath).off("child_added", dmListener);
-      }
-
-      const userA = currentUsername.toLowerCase();
+      const typedName = document.getElementById("dmTargetInput").value.trim();
+      if (!typedName) { alert("Please type a username to DM."); return; }
+      if (!currentUsername || !currentPassHash) { alert("You must be logged in to DM."); return; }
+      if (dmListener && currentDMPath) { db.ref(currentDMPath).off("child_added", dmListener); }
+      const userA = currentUsername;
       const userB = typedName;
       const dmKey = (userA < userB) ? (userA + "_" + userB) : (userB + "_" + userA);
       currentDMPath = "dms/" + dmKey;
-
       document.getElementById("dmMessages").innerHTML = "";
       document.getElementById("dmConversation").style.display = "block";
-
       dmListener = db.ref(currentDMPath).on("child_added", (snap) => {
         const val = snap.val();
         displayDMMessage(val.user, val.text);
-
-        // Show notification if it's not our own message
         if (val.user !== currentUsername) {
           showDMNotification(val.user, val.text);
+          playSoundNotification();
         }
       });
     }
@@ -1102,23 +985,17 @@
     }
 
     function sendDM() {
-      if (!currentDMPath) {
-        alert("No DM open. Type a username and 'Open DM' first.");
-        return;
-      }
+      if (!currentDMPath) { alert("No DM open. Type a username and 'Open DM' first."); return; }
       const inp = document.getElementById("dmMessageInput");
       let text = inp.value.trim();
       if (!text) return;
-
       text = filterBadWords(text);
-
-      if (currentUsername && mutedUsers[currentUsername.toLowerCase()]) {
+      if (currentUsername && mutedUsers[currentUsername]) {
         alert("You are muted and cannot send messages.");
         inp.value = "";
         inp.style.height = "40px";
         return;
       }
-
       const finalName = currentUsername || "Unknown";
       db.ref(currentDMPath).push({
         user: finalName,
@@ -1126,43 +1003,27 @@
         timestamp: firebase.database.ServerValue.TIMESTAMP
       });
       inp.value = "";
-      inp.style.height = "40px"; 
+      inp.style.height = "40px";
     }
 
-    // ---------------------------
     // DM #2
-    // ---------------------------
     function openDM2() {
-      const typedName = document.getElementById("dm2TargetInput").value.trim().toLowerCase();
-      if (!typedName) {
-        alert("Please type a username to DM (DM #2).");
-        return;
-      }
-      if (!currentUsername || !currentPassHash) {
-        alert("You must be logged in to DM.");
-        return;
-      }
-
-      // Remove old DM listener if any
-      if (dm2Listener && currentDM2Path) {
-        db.ref(currentDM2Path).off("child_added", dm2Listener);
-      }
-
-      const userA = currentUsername.toLowerCase();
+      const typedName = document.getElementById("dm2TargetInput").value.trim();
+      if (!typedName) { alert("Please type a username to DM (DM #2)."); return; }
+      if (!currentUsername || !currentPassHash) { alert("You must be logged in to DM."); return; }
+      if (dm2Listener && currentDM2Path) { db.ref(currentDM2Path).off("child_added", dm2Listener); }
+      const userA = currentUsername;
       const userB = typedName;
       const dmKey = (userA < userB) ? (userA + "_" + userB) : (userB + "_" + userA);
       currentDM2Path = "dms/" + dmKey;
-
       document.getElementById("dm2Messages").innerHTML = "";
       document.getElementById("dm2Conversation").style.display = "block";
-
       dm2Listener = db.ref(currentDM2Path).on("child_added", (snap) => {
         const val = snap.val();
         displayDM2Message(val.user, val.text);
-
-        // Show notification if it's not our own message
         if (val.user !== currentUsername) {
           showDMNotification(val.user, val.text);
+          playSoundNotification();
         }
       });
     }
@@ -1177,23 +1038,17 @@
     }
 
     function sendDM2() {
-      if (!currentDM2Path) {
-        alert("No DM #2 open. Type a username and 'Open DM #2' first.");
-        return;
-      }
+      if (!currentDM2Path) { alert("No DM #2 open. Type a username and 'Open DM #2' first."); return; }
       const inp = document.getElementById("dm2MessageInput");
       let text = inp.value.trim();
       if (!text) return;
-
       text = filterBadWords(text);
-
-      if (currentUsername && mutedUsers[currentUsername.toLowerCase()]) {
+      if (currentUsername && mutedUsers[currentUsername]) {
         alert("You are muted and cannot send messages.");
         inp.value = "";
         inp.style.height = "40px";
         return;
       }
-
       const finalName = currentUsername || "Unknown";
       db.ref(currentDM2Path).push({
         user: finalName,
@@ -1201,43 +1056,27 @@
         timestamp: firebase.database.ServerValue.TIMESTAMP
       });
       inp.value = "";
-      inp.style.height = "40px"; 
+      inp.style.height = "40px";
     }
 
-    // ---------------------------
     // DM #3
-    // ---------------------------
     function openDM3() {
-      const typedName = document.getElementById("dm3TargetInput").value.trim().toLowerCase();
-      if (!typedName) {
-        alert("Please type a username to DM (DM #3).");
-        return;
-      }
-      if (!currentUsername || !currentPassHash) {
-        alert("You must be logged in to DM.");
-        return;
-      }
-
-      // Remove old DM listener if any
-      if (dm3Listener && currentDM3Path) {
-        db.ref(currentDM3Path).off("child_added", dm3Listener);
-      }
-
-      const userA = currentUsername.toLowerCase();
+      const typedName = document.getElementById("dm3TargetInput").value.trim();
+      if (!typedName) { alert("Please type a username to DM (DM #3)."); return; }
+      if (!currentUsername || !currentPassHash) { alert("You must be logged in to DM."); return; }
+      if (dm3Listener && currentDM3Path) { db.ref(currentDM3Path).off("child_added", dm3Listener); }
+      const userA = currentUsername;
       const userB = typedName;
       const dmKey = (userA < userB) ? (userA + "_" + userB) : (userB + "_" + userA);
       currentDM3Path = "dms/" + dmKey;
-
       document.getElementById("dm3Messages").innerHTML = "";
       document.getElementById("dm3Conversation").style.display = "block";
-
       dm3Listener = db.ref(currentDM3Path).on("child_added", (snap) => {
         const val = snap.val();
         displayDM3Message(val.user, val.text);
-
-        // Show notification if it's not our own message
         if (val.user !== currentUsername) {
           showDMNotification(val.user, val.text);
+          playSoundNotification();
         }
       });
     }
@@ -1252,23 +1091,17 @@
     }
 
     function sendDM3() {
-      if (!currentDM3Path) {
-        alert("No DM #3 open. Type a username and 'Open DM #3' first.");
-        return;
-      }
+      if (!currentDM3Path) { alert("No DM #3 open. Type a username and 'Open DM' first."); return; }
       const inp = document.getElementById("dm3MessageInput");
       let text = inp.value.trim();
       if (!text) return;
-
       text = filterBadWords(text);
-
-      if (currentUsername && mutedUsers[currentUsername.toLowerCase()]) {
+      if (currentUsername && mutedUsers[currentUsername]) {
         alert("You are muted and cannot send messages.");
         inp.value = "";
         inp.style.height = "40px";
         return;
       }
-
       const finalName = currentUsername || "Unknown";
       db.ref(currentDM3Path).push({
         user: finalName,
@@ -1276,63 +1109,43 @@
         timestamp: firebase.database.ServerValue.TIMESTAMP
       });
       inp.value = "";
-      inp.style.height = "40px"; 
+      inp.style.height = "40px";
     }
 
     /* =====================================================
-       10) Group Chat (Slash Commands)
+       Group Chat (Slash Commands)
        ===================================================== */
     async function handleSlashCommand(text) {
       const parts = text.split(" ");
-      const cmd = parts[0].toLowerCase(); 
-      const arg = parts[1] ? parts[1].trim().toLowerCase() : null;
-
-      // OP commands (hidden from tutorial, but still functional for OPs)
+      const cmd = parts[0].toLowerCase();
+      const arg = parts[1] ? parts[1].trim() : null;
       if (isCurrentUserOP()) {
         if (cmd === "/mute" || cmd === "/unmute") {
           handleOpCommand(cmd, arg);
           return;
         }
         if (cmd === "/terminate") {
-          if (!arg) {
-            alert("Usage: /terminate [accountName]");
-          } else {
-            terminateAccount(arg);
-          }
+          if (!arg) { alert("Usage: /terminate [accountName]"); }
+          else { terminateAccount(arg); }
           return;
         }
       }
-
-      // Regular group commands
       switch(cmd) {
         case "/createroom":
-          if (!arg) {
-            alert("Usage: /createroom [roomName]");
-            return;
-          }
+          if (!arg) { alert("Usage: /createroom [roomName]"); return; }
           await createGroupRoom(arg);
           break;
-
         case "/join":
-          if (!arg) {
-            alert("Usage: /join [roomName]");
-            return;
-          }
+          if (!arg) { alert("Usage: /join [roomName]"); return; }
           await joinGroupRoom(arg);
           break;
-
         case "/invite":
-          if (!arg) {
-            alert("Usage: /invite [accountName]");
-            return;
-          }
+          if (!arg) { alert("Usage: /invite [accountName]"); return; }
           await inviteToGroup(arg);
           break;
-
         case "/leave":
           leaveGroupRoom();
           break;
-
         default:
           alert("Unknown command.");
       }
@@ -1349,11 +1162,9 @@
         return;
       }
       await db.ref("groupRooms/" + roomName).set({
-        participants: [currentUsername.toLowerCase()],
+        participants: [currentUsername],
         createdAt: Date.now(),
-        messages: {
-          dummy: { system: "Group created" }
-        }
+        messages: { dummy: { system: "Group created" } }
       });
       alert(`Group room "${roomName}" created. You are now inside it.`);
       joinGroupRoom(roomName);
@@ -1370,34 +1181,37 @@
         return;
       }
       const roomData = snap.val();
-      const me = currentUsername.toLowerCase();
+      const me = currentUsername;
       if (!roomData.participants || !roomData.participants.includes(me)) {
-        alert("You are not invited to this room. Ask someone to /invite you.");
-        return;
+        if (isCurrentUserOP()) {
+          let updated = roomData.participants || [];
+          if (!updated.includes(me)) {
+            updated.push(me);
+            await db.ref("groupRooms/" + roomName + "/participants").set(updated);
+          }
+          await db.ref("groupRooms/" + roomName + "/messages").push({
+            system: `${currentUsername} (OP) joined the room without invite.`
+          });
+        } else {
+          alert("You are not invited to this room. Ask someone to /invite you.");
+          return;
+        }
       }
-
-      // Turn OFF public chat display
       inGroupChat = true;
-      // Clear the main messages UI
       document.getElementById("messages").innerHTML = "";
-
-      // Stop listening to group if any
-      if (groupListener) {
-        db.ref("groupRooms/" + currentGroupRoomName + "/messages").off("child_added", groupListener);
-      }
-
+      if (groupListener) { db.ref("groupRooms/" + currentGroupRoomName + "/messages").off("child_added", groupListener); }
       currentGroupRoomName = roomName;
       groupListener = db.ref("groupRooms/" + roomName + "/messages").on("child_added", (snapMsg) => {
         const val = snapMsg.val();
         if (val.user && val.text) {
-          if (mutedUsers[val.user.toLowerCase()]) return;
-          displayMessage(val.user, val.text, true, false, snapMsg.key);
+          if (mutedUsers[val.user]) return;
+          displayMessage(val.user, val.text, true, false, snapMsg.key, val.timestamp);
+          checkForMentionsAndNotify(val.user, val.text);
         } else if (val.system) {
           displayMessage("System", val.system, false, false, snapMsg.key);
         }
       });
-
-      alert(`You joined group room "${roomName}". All your new messages will now go there.`);
+      alert(`You joined group room "${roomName}". All new messages go there.`);
     }
 
     async function inviteToGroup(accountName) {
@@ -1408,13 +1222,9 @@
       const roomRef = db.ref("groupRooms/" + currentGroupRoomName + "/participants");
       const snap = await roomRef.once("value");
       const participants = snap.val() || [];
-      if (!participants.includes(accountName)) {
-        participants.push(accountName);
-      }
+      if (!participants.includes(accountName)) { participants.push(accountName); }
       await roomRef.set(participants);
-      db.ref("groupRooms/" + currentGroupRoomName + "/messages").push({
-        system: `${accountName} has been invited.`
-      });
+      db.ref("groupRooms/" + currentGroupRoomName + "/messages").push({ system: `${accountName} has been invited.` });
       alert(`${accountName} invited to "${currentGroupRoomName}".`);
     }
 
@@ -1423,27 +1233,20 @@
         alert("You are not in a group room.");
         return;
       }
-      // Remove group listener
       if (groupListener && currentGroupRoomName) {
         db.ref("groupRooms/" + currentGroupRoomName + "/messages").off("child_added", groupListener);
       }
-
-      // Clear UI
       document.getElementById("messages").innerHTML = "";
       inGroupChat = false;
       currentGroupRoomName = null;
-
-      // We are back to public chat mode
-      // Re-show all stored public messages
       publicMessages.forEach(msg => {
-        displayMessage(msg.user, msg.text, msg.isAccount, false, msg.key);
+        displayMessage(msg.user, msg.text, msg.isAccount, false, msg.key, msg.timestamp);
       });
-
-      alert("You left the group room. You are back to public chat.");
+      alert("You left the group room. Back to public chat.");
     }
 
     /* =====================================================
-       11) OP Commands & Tools
+       OP Commands & Tools
        ===================================================== */
     function isCurrentUserOP() {
       return currentUsername && OP_LIST.includes(currentUsername.toLowerCase());
@@ -1451,18 +1254,11 @@
 
     function checkIfOP() {
       const opSection = document.getElementById("opSection");
-      if (isCurrentUserOP()) {
-        opSection.style.display = "block";
-      } else {
-        opSection.style.display = "none";
-      }
+      opSection.style.display = isCurrentUserOP() ? "block" : "none";
     }
 
     function handleOpCommand(cmd, target) {
-      if (!target) {
-        alert("Usage: " + cmd + " [username]");
-        return;
-      }
+      if (!target) { alert("Usage: " + cmd + " [username]"); return; }
       if (cmd === "/mute") {
         db.ref("mutedUsers/" + target).set(true);
         alert(`User "${target}" has been muted.`);
@@ -1472,69 +1268,49 @@
       }
     }
 
-    // Permanently terminate an account + all signs of them
     async function terminateAccount(target) {
       const confirmTerm = confirm(`Are you sure you want to TERMINATE the account "${target}"? This is permanent!`);
       if (!confirmTerm) return;
       try {
-        // Remove from /accounts
         await db.ref("accounts/" + target).remove();
-        // Remove from /accountColors, /typing, /mutedUsers
         await db.ref("accountColors/" + target).remove();
         await db.ref("typing/" + target).remove();
         await db.ref("mutedUsers/" + target).remove();
-
-        // Remove from public chat messages
         const msgsSnap = await db.ref("messages").once("value");
         msgsSnap.forEach((childSnap) => {
           const val = childSnap.val();
-          if (val.user && val.user.toLowerCase() === target.toLowerCase()) {
-            childSnap.ref.remove();
-          }
+          if (val.user && val.user === target) { childSnap.ref.remove(); }
         });
-
-        // Remove from DMs
         const dmsSnap = await db.ref("dms").once("value");
         dmsSnap.forEach((dmRoomSnap) => {
           dmRoomSnap.forEach((msgSnap) => {
             const msgVal = msgSnap.val();
-            if (msgVal.user && msgVal.user.toLowerCase() === target.toLowerCase()) {
-              msgSnap.ref.remove();
-            }
+            if (msgVal.user && msgVal.user === target) { msgSnap.ref.remove(); }
           });
         });
-
-        // Remove from groupRooms
         const groupsSnap = await db.ref("groupRooms").once("value");
         groupsSnap.forEach((roomSnap) => {
           const roomData = roomSnap.val();
           if (!roomData) return;
-          // Remove from participants
           if (roomData.participants) {
-            const updated = roomData.participants.filter(p => p.toLowerCase() !== target.toLowerCase());
-            if (updated.length !== roomData.participants.length) {
-              roomSnap.ref.child("participants").set(updated);
-            }
+            const updated = roomData.participants.filter(p => p !== target);
+            if (updated.length !== roomData.participants.length) { roomSnap.ref.child("participants").set(updated); }
           }
-          // Remove any messages from that user
           if (roomData.messages) {
             Object.keys(roomData.messages).forEach((mKey) => {
               const mVal = roomData.messages[mKey];
-              if (mVal.user && mVal.user.toLowerCase() === target.toLowerCase()) {
-                roomSnap.ref.child("messages").child(mKey).remove();
-              }
+              if (mVal.user && mVal.user === target) { roomSnap.ref.child("messages").child(mKey).remove(); }
             });
           }
         });
-
-        alert(`Account "${target}" has been TERMINATED. That user is now forcefully logged out (if they were online).`);
+        alert(`Account "${target}" has been TERMINATED.`);
       } catch (err) {
         alert("Error terminating account: " + err);
       }
     }
 
     async function clearChatForEveryone() {
-      const confirmClear = confirm("Are you sure you want to clear the entire public chat AND all broadcasts for EVERYONE?");
+      const confirmClear = confirm("Are you sure you want to clear the public chat AND all broadcasts for EVERYONE?");
       if (!confirmClear) return;
       await db.ref("messages").remove();
       await db.ref("broadcasts").remove();
@@ -1544,10 +1320,7 @@
     }
 
     function sendBroadcast() {
-      if (!isCurrentUserOP()) {
-        alert("You are not an OP!");
-        return;
-      }
+      if (!isCurrentUserOP()) { alert("You are not an OP!"); return; }
       const broadcastInput = document.getElementById("opBroadcastInput");
       const text = broadcastInput.value.trim();
       if (!text) return;
@@ -1561,40 +1334,21 @@
     }
 
     function setOpColor() {
-      if (!isCurrentUserOP()) {
-        alert("You are not an OP!");
-        return;
-      }
+      if (!isCurrentUserOP()) { alert("You are not an OP!"); return; }
       const colorPicker = document.getElementById("opColorPicker");
       const chosenColor = colorPicker.value;
-      db.ref("accountColors/" + currentUsername.toLowerCase()).set(chosenColor);
+      db.ref("accountColors/" + currentUsername).set(chosenColor);
       alert("Your chat color has been updated to: " + chosenColor);
     }
 
-    /* New debug function to clear all "typing" statuses for everyone */
     function clearAllTyping() {
-      if (!isCurrentUserOP()) {
-        alert("You are not an OP!");
-        return;
-      }
+      if (!isCurrentUserOP()) { alert("You are not an OP!"); return; }
       db.ref("typing").remove();
       alert("All 'typing' statuses have been cleared for everyone.");
     }
 
     /* =====================================================
-       12) Return to Main Screen
-       ===================================================== */
-    function returnToLogin() {
-      // Remove from typing if you exit the chat
-      removeUserTyping();
-
-      document.getElementById("chatDiv").style.display = "none";
-      document.getElementById("loginDiv").style.display = "block";
-      checkIfOP();
-    }
-
-    /* =====================================================
-       13) Settings Navigation
+       Settings Navigation
        ===================================================== */
     function showSettingsFromLogin() {
       document.getElementById("loginDiv").style.display = "none";
@@ -1607,7 +1361,7 @@
     }
 
     /* =====================================================
-       14) Dark Mode Toggle
+       Dark Mode Toggle
        ===================================================== */
     function toggleDarkMode() {
       document.body.classList.toggle("dark-mode");
@@ -1616,7 +1370,7 @@
     }
 
     /* =====================================================
-       15) GUI Size
+       GUI Size
        ===================================================== */
     function updateGuiSize() {
       const scale = document.getElementById("guiSizeRange").value;
@@ -1631,20 +1385,12 @@
     }
 
     /* =====================================================
-       16) Custom Font
+       Custom Font
        ===================================================== */
     function updateFont() {
       document.body.classList.remove(
-        "font-arial",
-        "font-georgia",
-        "font-courier",
-        "font-comic",
-        "font-roboto",
-        "font-times",
-        "font-verdana",
-        "font-trebuchet",
-        "font-lucida",
-        "font-garamond"
+        "font-arial", "font-georgia", "font-courier", "font-comic", "font-roboto",
+        "font-times", "font-verdana", "font-trebuchet", "font-lucida", "font-garamond"
       );
       const selectedFont = document.getElementById("fontSelect").value;
       document.body.classList.add(selectedFont);
@@ -1652,14 +1398,12 @@
     }
 
     /* =====================================================
-       17) Desktop Notifications
+       Desktop Notifications
        ===================================================== */
     function toggleNotifications() {
       const isChecked = document.getElementById("notificationsToggle").checked;
       localStorage.setItem("notificationsEnabled", isChecked);
-      if (isChecked) {
-        requestNotificationPermission();
-      }
+      if (isChecked) { requestNotificationPermission(); }
     }
 
     function requestNotificationPermission() {
@@ -1681,14 +1425,96 @@
     function showDMNotification(user, text) {
       const isNotificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
       if (!("Notification" in window) || !isNotificationsEnabled) return;
-
-      // Only show if document is not in focus
       if (document.hidden && Notification.permission === "granted") {
         new Notification("New DM from " + user, {
           body: text,
-          icon: "https://via.placeholder.com/50" // optional icon
+          icon: "https://via.placeholder.com/50"
         });
       }
+    }
+
+    /* =====================================================
+       Member List (Presence)
+       ===================================================== */
+    function setupPresence() {
+      if (myPresenceRef) { myPresenceRef.remove(); myPresenceRef = null; }
+      const userNameForPresence = currentUsername || ("Guest_" + Math.floor(Math.random() * 10000));
+      myPresenceRef = db.ref("presence").push();
+      myPresenceRef.set({
+        username: userNameForPresence,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      });
+      myPresenceRef.onDisconnect().remove();
+    }
+
+    function updateMemberList(members) {
+      const uniqueMembers = {};
+      members.forEach(member => { uniqueMembers[member] = (uniqueMembers[member] || 0) + 1; });
+      const memberListUl = document.getElementById("memberList");
+      memberListUl.innerHTML = "";
+      for (let member in uniqueMembers) {
+        const count = uniqueMembers[member];
+        const li = document.createElement("li");
+        li.textContent = member + (count > 1 ? " (" + count + ")" : "");
+        memberListUl.appendChild(li);
+      }
+    }
+
+    /* =====================================================
+       NEW SETTINGS FEATURES
+       ===================================================== */
+    // --- Background Music Controls ---
+    const bgMusic = document.getElementById("bgMusic");
+    const musicFileInput = document.getElementById("musicFileInput");
+    const musicVolume = document.getElementById("musicVolume");
+    musicFileInput.addEventListener("change", function() {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          bgMusic.src = e.target.result;
+          localStorage.setItem("bgMusic", e.target.result);
+          bgMusic.play();
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+    function toggleMusic() {
+      if (bgMusic.paused) { bgMusic.play(); } else { bgMusic.pause(); }
+    }
+    function updateMusicVolume() {
+      const vol = musicVolume.value;
+      bgMusic.volume = vol;
+      localStorage.setItem("musicVolume", vol);
+    }
+    function clearMusic() {
+      bgMusic.pause();
+      bgMusic.src = "";
+      localStorage.removeItem("bgMusic");
+      alert("Background music removed!");
+    }
+    // --- Chat Sound Notifications ---
+    const chatSound = document.getElementById("chatSound");
+    const soundToggle = document.getElementById("soundToggle");
+    const soundVolume = document.getElementById("soundVolume");
+    function toggleSoundNotifications() {
+      const enabled = soundToggle.checked;
+      localStorage.setItem("soundNotificationsEnabled", enabled);
+    }
+    function updateSoundVolume() {
+      const vol = soundVolume.value;
+      chatSound.volume = vol;
+      localStorage.setItem("soundVolume", vol);
+    }
+    function playSoundNotification() {
+      const enabled = localStorage.getItem("soundNotificationsEnabled") === "true";
+      if (enabled) { chatSound.currentTime = 0; chatSound.play(); }
+    }
+    // --- Message Timestamps Toggle ---
+    function toggleTimestamps() {
+      const enabled = document.getElementById("timestampToggle").checked;
+      localStorage.setItem("showTimestamps", enabled);
+      alert("Message timestamp display " + (enabled ? "enabled" : "disabled") + ". (Hover over messages to see the sent time.)");
     }
   </script>
 </body>
