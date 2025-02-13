@@ -6,11 +6,7 @@
   <title>yaproom (official)</title>
   <style>
     /* GENERAL RESET & CONTAINER */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       background: #f8f8f8;
@@ -18,226 +14,111 @@
       padding: 10px;
       transition: background 0.3s, color 0.3s;
     }
-    .container {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 10px;
-    }
+    .container { max-width: 480px; margin: 0 auto; padding: 10px; }
     /* CONTAINERS (Login, Chat, Settings, Pong Game) */
     #loginDiv, #chatDiv, #settingsDiv, #pongGameDiv {
-      background: #ffffff;
-      border-radius: 8px;
-      padding: 16px;
-      margin-top: 10px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      background: #ffffff; border-radius: 8px; padding: 16px;
+      margin-top: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     /* Make the Pong game div fill the container */
     #pongGameDiv {
-      width: 100%;
-      height: 500px;  /* Adjust height as needed */
-      position: relative;
+      width: 100%; height: 500px; position: relative;
     }
     /* DARK MODE */
     body.dark-mode {
-      background: #2f3136;
-      color: #dcdcdc;
+      background: #2f3136; color: #dcdcdc;
     }
     body.dark-mode #loginDiv,
     body.dark-mode #chatDiv,
     body.dark-mode #settingsDiv,
     body.dark-mode #pongGameDiv {
-      background: #36393f;
-      color: #dcdcdc;
+      background: #36393f; color: #dcdcdc;
     }
-    body.dark-mode textarea {
-      background: #40444b;
-      color: #dcdcdc;
-      border: 1px solid #4f545c;
-    }
-    body.dark-mode button {
-      background: #4f545c;
-      color: #dcdcdc;
-      border: 1px solid #4f545c;
-    }
-    body.dark-mode select {
-      background: #40444b;
-      color: #dcdcdc;
-      border: 1px solid #4f545c;
-    }
+    body.dark-mode textarea { background: #40444b; color: #dcdcdc; border: 1px solid #4f545c; }
+    body.dark-mode button { background: #4f545c; color: #dcdcdc; border: 1px solid #4f545c; }
+    body.dark-mode select { background: #40444b; color: #dcdcdc; border: 1px solid #4f545c; }
     /* FORM ELEMENTS */
     input[type="text"], textarea, select {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 8px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
+      width: 100%; padding: 8px; margin-bottom: 8px;
+      border: 1px solid #ccc; border-radius: 6px; font-size: 14px;
     }
     button {
-      width: 100%;
-      padding: 8px;
-      border: none;
-      border-radius: 6px;
-      background: #7289da;
-      color: #fff;
-      font-size: 14px;
-      cursor: pointer;
+      width: 100%; padding: 8px; border: none; border-radius: 6px;
+      background: #7289da; color: #fff; font-size: 14px; cursor: pointer;
       transition: background 0.2s;
     }
-    button:hover {
-      background: #677bc4;
-    }
+    button:hover { background: #677bc4; }
     /* HEADERS & TEXT */
-    h2, h3 {
-      margin-bottom: 12px;
-      font-weight: 600;
-    }
-    p {
-      margin-bottom: 8px;
-      font-size: 14px;
-    }
+    h2, h3 { margin-bottom: 12px; font-weight: 600; }
+    p { margin-bottom: 8px; font-size: 14px; }
     .tutorial-box {
-      background: #fafafa;
-      padding: 6px;
-      border-radius: 4px;
-      font-size: 13px;
-      margin-bottom: 8px;
+      background: #fafafa; padding: 6px; border-radius: 4px;
+      font-size: 13px; margin-bottom: 8px;
     }
-    body.dark-mode .tutorial-box {
-      background: #40444b;
-      color: #dcdcdc;
-    }
+    body.dark-mode .tutorial-box { background: #40444b; color: #dcdcdc; }
     /* CHAT MESSAGES */
     #messages {
-      list-style: none;
-      padding: 0;
-      max-height: 300px;
-      overflow-y: auto;
-      margin-bottom: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      background: #ffffff;
+      list-style: none; padding: 0; max-height: 300px;
+      overflow-y: auto; margin-bottom: 8px;
+      border: 1px solid #ddd; border-radius: 4px; background: #ffffff;
     }
     body.dark-mode #messages {
-      background: #40444b;
-      border-color: #4f545c;
+      background: #40444b; border-color: #4f545c;
     }
     #messages li {
-      padding: 6px 8px;
-      border-bottom: 1px solid #eee;
-      font-size: 14px;
+      padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 14px;
     }
-    #messages li:last-child {
-      border-bottom: none;
-    }
-    .account-user {
-      color: #7289da;
-      font-weight: bold;
-    }
-    .anonymous-user {
-      color: #333;
-    }
+    #messages li:last-child { border-bottom: none; }
+    .account-user { color: #7289da; font-weight: bold; }
+    .anonymous-user { color: #333; }
     .broadcast-msg {
-      background: #ffeb3b;
-      color: #333;
-      font-weight: bold;
-      padding: 4px;
-      border-radius: 4px;
+      background: #ffeb3b; color: #333; font-weight: bold;
+      padding: 4px; border-radius: 4px;
     }
     /* TEXTAREA AUTO-RESIZE */
-    textarea {
-      resize: none;
-      min-height: 40px;
-      max-height: 120px;
-      overflow-y: auto;
-    }
+    textarea { resize: none; min-height: 40px; max-height: 120px; overflow-y: auto; }
     /* DM SECTION */
-    #dmSection {
-      margin-top: 10px;
-      border-top: 1px solid #ccc;
-      padding-top: 8px;
-    }
+    #dmSection { margin-top: 10px; border-top: 1px solid #ccc; padding-top: 8px; }
     #dmMessages, #dm2Messages, #dm3Messages {
-      list-style: none;
-      padding: 0;
-      max-height: 200px;
-      overflow-y: auto;
-      margin-bottom: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      background: #ffffff;
+      list-style: none; padding: 0; max-height: 200px;
+      overflow-y: auto; margin-bottom: 8px; border: 1px solid #ddd;
+      border-radius: 4px; background: #ffffff;
     }
     body.dark-mode #dmMessages,
     body.dark-mode #dm2Messages,
     body.dark-mode #dm3Messages {
-      background: #40444b;
-      border-color: #4f545c;
+      background: #40444b; border-color: #4f545c;
     }
     #dmMessages li, #dm2Messages li, #dm3Messages li {
-      padding: 6px 8px;
-      border-bottom: 1px solid #eee;
-      font-size: 14px;
+      padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 14px;
     }
     /* MEMBER LIST */
     #memberListContainer {
-      background: #ffffff;
-      padding: 8px;
-      margin-top: 10px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
+      background: #ffffff; padding: 8px; margin-top: 10px;
+      border: 1px solid #ddd; border-radius: 6px;
     }
-    body.dark-mode #memberListContainer {
-      background: #36393f;
-      border-color: #4f545c;
-    }
-    #memberList li {
-      padding: 4px 0;
-      font-size: 14px;
-    }
+    body.dark-mode #memberListContainer { background: #36393f; border-color: #4f545c; }
+    #memberList li { padding: 4px 0; font-size: 14px; }
     /* MESSAGE ANIMATION */
-    @keyframes message-enter {
-      0% { transform: scale(0.8); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    .message-enter {
-      animation: message-enter 0.3s ease forwards;
-    }
+    @keyframes message-enter { 0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; } }
+    .message-enter { animation: message-enter 0.3s ease forwards; }
     /* EXTRA SETTINGS HEADINGS */
-    #settingsDiv h3 {
-      margin-top: 16px;
-      margin-bottom: 8px;
-      font-weight: 600;
-    }
+    #settingsDiv h3 { margin-top: 16px; margin-bottom: 8px; font-weight: 600; }
     /* Hide audio elements */
     audio { display: none; }
-
     /* Changelog Overlay */
     #changelogOverlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.7);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.7); display: none;
+      justify-content: center; align-items: center; z-index: 9999;
     }
     #changelogModal {
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 400px;
-      width: 90%;
-      color: #000;
+      background: #fff; padding: 20px; border-radius: 10px;
+      max-width: 400px; width: 90%; color: #000;
       box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     }
-    #changelogModal ul {
-      margin: 10px 0;
-      padding-left: 30px;
-    }
-    
+    #changelogModal ul { margin: 10px 0; padding-left: 30px; }
     /* Custom Font Classes */
     .font-arial { font-family: Arial, sans-serif; }
     .font-georgia { font-family: Georgia, serif; }
@@ -256,14 +137,10 @@
     .font-open-sans { font-family: "Open Sans", sans-serif; }
     .font-lato { font-family: Lato, sans-serif; }
     .font-montserrat { font-family: Montserrat, sans-serif; }
-    
     /* Pong Game Canvas */
     #pongCanvas {
-      display: block;
-      margin: 0 auto;
-      background: #eee;
-      width: 100%;
-      height: 100%;
+      display: block; margin: 0 auto; background: #eee;
+      width: 100%; height: 100%;
     }
   </style>
 </head>
@@ -421,7 +298,6 @@
         <option value="font-trebuchet">Trebuchet MS</option>
         <option value="font-lucida">Lucida Sans Unicode</option>
         <option value="font-garamond">Garamond</option>
-        <!-- New Fonts -->
         <option value="font-helvetica">Helvetica</option>
         <option value="font-tahoma">Tahoma</option>
         <option value="font-impact">Impact</option>
@@ -524,6 +400,9 @@
     let pongGameId = null;            // current Pong game id
     let isHost = false;               // true if this client is host (challenger)
     let moveUp = false, moveDown = false; // keyboard control flags
+
+    // Set initial ball speed to 1
+    const INITIAL_SPEED = 1;
 
     /* =====================================================
        On Page Load
@@ -1251,18 +1130,15 @@
     function listenForPongChallenges() {
       db.ref("pongChallenges").on("child_changed", function(snapshot) {
          let challenge = snapshot.val();
-         // If I am the challenged and it's pending, alert me.
          if (challenge.challenged.toLowerCase() === currentUsername.toLowerCase() && challenge.status === "pending") {
             pendingPongChallenge = challenge;
             alert(challenge.challenger + " has challenged you to Pong! Type /accept to accept or /decline to decline.");
          }
-         // If I am the challenger and the challenge is now accepted, start the game.
          if (challenge.challenger.toLowerCase() === currentUsername.toLowerCase() && challenge.status === "accepted") {
             acceptedChallenge = challenge;
             startPongGame(challenge.gameId, challenge.challenger, challenge.challenged);
          }
       });
-      // Also listen for new challenges (for the challenged party)
       db.ref("pongChallenges").on("child_added", function(snapshot) {
          let challenge = snapshot.val();
          if (challenge.challenged.toLowerCase() === currentUsername.toLowerCase() && challenge.status === "pending") {
@@ -1278,9 +1154,7 @@
           return;
       }
       let gameId = pendingPongChallenge.gameId;
-      // Update challenge status to accepted.
       db.ref("pongChallenges/" + gameId).update({status: "accepted"});
-      // The challenged client then starts the game.
       startPongGame(gameId, pendingPongChallenge.challenger, pendingPongChallenge.challenged);
     }
 
@@ -1295,7 +1169,6 @@
       alert("Challenge declined.");
     }
 
-    // For challengers: listen for challenges that get accepted.
     function listenForAcceptedPongChallenges() {
       db.ref("pongChallenges").on("child_changed", function(snapshot) {
          let challenge = snapshot.val();
@@ -1308,11 +1181,12 @@
 
     // Start the Pong game for both players.
     function startPongGame(gameId, player1, player2) {
-      // Hide chat, show Pong game UI for both players
       document.getElementById("chatDiv").style.display = "none";
       document.getElementById("pongGameDiv").style.display = "block";
       pongGameId = gameId;
       let gameRef = db.ref("games/pong/" + gameId);
+      let canvasWidth = document.getElementById("pongCanvas").parentNode.clientWidth;
+      let canvasHeight = document.getElementById("pongCanvas").parentNode.clientHeight;
       gameRef.once("value", function(snapshot) {
          if (!snapshot.exists()) {
             gameRef.set({
@@ -1320,25 +1194,28 @@
                    [player1]: { y: 150, score: 0 },
                    [player2]: { y: 150, score: 0 }
                },
-               ball: { x: 300, y: 200, dx: 3, dy: 3 },
+               ball: { 
+                 x: canvasWidth / 2, 
+                 y: canvasHeight / 2, 
+                 dx: INITIAL_SPEED, 
+                 dy: INITIAL_SPEED, 
+                 radius: 8 
+               },
                status: "playing"
             });
          }
          initPongGame(gameId, player1, player2);
       });
-      // Remove the challenge record (optional)
       db.ref("pongChallenges/" + gameId).remove();
     }
 
-    // ---- Pong Game Logic ----
+    /* ---- Pong Game Logic ---- */
     let pongCanvas, pongCtx;
     let localGameState = {};
     function initPongGame(gameId, player1, player2) {
-      // Designate the challenger as host.
       isHost = (currentUsername.toLowerCase() === player1.toLowerCase());
       pongCanvas = document.getElementById("pongCanvas");
       pongCtx = pongCanvas.getContext("2d");
-      // Set canvas size to match its container.
       pongCanvas.width = pongCanvas.parentNode.clientWidth;
       pongCanvas.height = pongCanvas.parentNode.clientHeight;
       document.addEventListener("keydown", pongKeyDownHandler);
@@ -1357,18 +1234,12 @@
     }
 
     function pongKeyDownHandler(e) {
-      if (e.key === "ArrowUp") {
-           moveUp = true;
-      } else if (e.key === "ArrowDown") {
-           moveDown = true;
-      }
+      if (e.key === "ArrowUp") { moveUp = true; }
+      else if (e.key === "ArrowDown") { moveDown = true; }
     }
     function pongKeyUpHandler(e) {
-      if (e.key === "ArrowUp") {
-           moveUp = false;
-      } else if (e.key === "ArrowDown") {
-           moveDown = false;
-      }
+      if (e.key === "ArrowUp") { moveUp = false; }
+      else if (e.key === "ArrowDown") { moveDown = false; }
     }
     function updatePaddlePosition(gameId, player, newY) {
       db.ref("games/pong/" + gameId + "/players/" + player + "/y").set(newY);
@@ -1383,85 +1254,87 @@
          updatePaddlePosition(gameId, currentUsername, paddleY);
       }
     }
-    // Updated host game loop: ball accelerates on each paddle hit.
+    // Host game loop with predictive collision detection and immediate win check.
     function hostGameLoop(gameId, player1, player2) {
       let gameRef = db.ref("games/pong/" + gameId);
-      // Use a speedFactor of 0.5 to make the ball move 2x slower overall.
-      const speedFactor = 0.5;
-      // Acceleration factor applied on each paddle hit.
-      const accelerationFactor = 1.05;
       function loop() {
-          if (!localGameState || localGameState.status !== "playing") {
-              return;
-          }
-          // Host moves their paddle (player1)
+          if (!localGameState || localGameState.status !== "playing") return;
+          // Update left paddle (host)
           let hostPaddleY = localGameState.players[player1].y;
           if (moveUp) hostPaddleY -= 5;
           if (moveDown) hostPaddleY += 5;
           hostPaddleY = Math.max(0, Math.min(pongCanvas.height - 60, hostPaddleY));
           if (hostPaddleY !== localGameState.players[player1].y) {
-             db.ref("games/pong/" + gameId + "/players/" + player1 + "/y").set(hostPaddleY);
+              db.ref("games/pong/" + gameId + "/players/" + player1 + "/y").set(hostPaddleY);
           }
-          // Update ball position (apply speedFactor)
+          // Get ball state
           let ball = localGameState.ball;
-          ball.x += ball.dx * speedFactor;
-          ball.y += ball.dy * speedFactor;
-          if (ball.y <= 0 || ball.y >= pongCanvas.height) {
+          let ballRadius = ball.radius || 8;
+          let nextX = ball.x + ball.dx;
+          let nextY = ball.y + ball.dy;
+          // Bounce off top and bottom
+          if (nextY - ballRadius <= 0 || nextY + ballRadius >= pongCanvas.height) {
               ball.dy = -ball.dy;
+              nextY = ball.y + ball.dy;
           }
-          // Collision with left paddle (player1)
+          // Left paddle collision (player1)
           let leftPaddleY = localGameState.players[player1].y;
-          if (ball.x <= 20) {
-             if (ball.y >= leftPaddleY && ball.y <= leftPaddleY + 60) {
-                 // Invert horizontal direction and accelerate ball.
-                 ball.dx = -ball.dx * accelerationFactor;
-                 ball.dy = ball.dy * accelerationFactor;
-             } else {
-                 let newScore = localGameState.players[player2].score + 1;
-                 db.ref("games/pong/" + gameId + "/players/" + player2 + "/score").set(newScore);
-                 ball.x = pongCanvas.width / 2;
-                 ball.y = pongCanvas.height / 2;
-             }
+          const leftPaddleRightEdge = 20;
+          if (ball.dx < 0 && nextX - ballRadius <= leftPaddleRightEdge) {
+              if (nextY >= leftPaddleY && nextY <= leftPaddleY + 60) {
+                  nextX = leftPaddleRightEdge + ballRadius;
+                  ball.dx = -ball.dx * 1.1;
+                  ball.dy = ball.dy * 1.1;
+              } else {
+                  // Player2 scores
+                  let newScore = localGameState.players[player2].score + 1;
+                  db.ref("games/pong/" + gameId + "/players/" + player2 + "/score").set(newScore);
+                  if(newScore >= 3) {
+                      db.ref("games/pong/" + gameId).update({ status: "ended", winner: player2 });
+                      return;
+                  }
+                  nextX = pongCanvas.width / 2;
+                  nextY = pongCanvas.height / 2;
+                  ball.dx = (Math.random() < 0.5 ? INITIAL_SPEED : -INITIAL_SPEED);
+                  ball.dy = (Math.random() < 0.5 ? INITIAL_SPEED : -INITIAL_SPEED);
+              }
           }
-          // Collision with right paddle (player2)
+          // Right paddle collision (player2)
           let rightPaddleY = localGameState.players[player2].y;
-          if (ball.x >= pongCanvas.width - 20) {
-             if (ball.y >= rightPaddleY && ball.y <= rightPaddleY + 60) {
-                 ball.dx = -ball.dx * accelerationFactor;
-                 ball.dy = ball.dy * accelerationFactor;
-             } else {
-                 let newScore = localGameState.players[player1].score + 1;
-                 db.ref("games/pong/" + gameId + "/players/" + player1 + "/score").set(newScore);
-                 ball.x = pongCanvas.width / 2;
-                 ball.y = pongCanvas.height / 2;
-             }
+          const rightPaddleLeftEdge = pongCanvas.width - 20;
+          if (ball.dx > 0 && nextX + ballRadius >= rightPaddleLeftEdge) {
+              if (nextY >= rightPaddleY && nextY <= rightPaddleY + 60) {
+                  nextX = rightPaddleLeftEdge - ballRadius;
+                  ball.dx = -ball.dx * 1.1;
+                  ball.dy = ball.dy * 1.1;
+              } else {
+                  // Player1 scores
+                  let newScore = localGameState.players[player1].score + 1;
+                  db.ref("games/pong/" + gameId + "/players/" + player1 + "/score").set(newScore);
+                  if(newScore >= 3) {
+                      db.ref("games/pong/" + gameId).update({ status: "ended", winner: player1 });
+                      return;
+                  }
+                  nextX = pongCanvas.width / 2;
+                  nextY = pongCanvas.height / 2;
+                  ball.dx = (Math.random() < 0.5 ? INITIAL_SPEED : -INITIAL_SPEED);
+                  ball.dy = (Math.random() < 0.5 ? INITIAL_SPEED : -INITIAL_SPEED);
+              }
           }
-          // Check for win condition (first to 3)
-          let score1 = localGameState.players[player1].score;
-          let score2 = localGameState.players[player2].score;
-          if (score1 >= 3) {
-              db.ref("games/pong/" + gameId).update({status:"ended", winner: player1});
-              return;
-          }
-          if (score2 >= 3) {
-              db.ref("games/pong/" + gameId).update({status:"ended", winner: player2});
-              return;
-          }
+          // Update ball state in the database
           db.ref("games/pong/" + gameId + "/ball").set({
-              x: ball.x,
-              y: ball.y,
+              x: nextX,
+              y: nextY,
               dx: ball.dx,
-              dy: ball.dy
+              dy: ball.dy,
+              radius: ballRadius
           });
           setTimeout(loop, 30);
       }
       loop();
     }
     function pongRenderLoop() {
-      if (!localGameState) {
-         requestAnimationFrame(pongRenderLoop);
-         return;
-      }
+      if (!localGameState) { requestAnimationFrame(pongRenderLoop); return; }
       pongCtx.clearRect(0, 0, pongCanvas.width, pongCanvas.height);
       // Draw center line
       pongCtx.setLineDash([5, 5]);
@@ -1481,16 +1354,14 @@
       pongCtx.fillRect(pongCanvas.width - 20, rightPaddleY, 10, 60);
       // Draw ball
       pongCtx.beginPath();
-      pongCtx.arc(localGameState.ball.x, localGameState.ball.y, 8, 0, Math.PI * 2);
+      pongCtx.arc(localGameState.ball.x, localGameState.ball.y, localGameState.ball.radius || 8, 0, Math.PI * 2);
       pongCtx.fillStyle = "black";
       pongCtx.fill();
       // Draw scores
       pongCtx.font = "20px Arial";
       pongCtx.fillText(localGameState.players[player1].score, 50, 30);
       pongCtx.fillText(localGameState.players[player2].score, pongCanvas.width - 70, 30);
-      if (!isHost) {
-         nonHostPaddleUpdate(pongGameId);
-      }
+      if (!isHost) { nonHostPaddleUpdate(pongGameId); }
       requestAnimationFrame(pongRenderLoop);
     }
     function endPongGame(winner) {
@@ -1507,12 +1378,10 @@
     function isCurrentUserOP() {
       return currentUsername && OP_LIST.includes(currentUsername.toLowerCase());
     }
-
     function checkIfOP() {
       const opSection = document.getElementById("opSection");
       opSection.style.display = isCurrentUserOP() ? "block" : "none";
     }
-
     function handleOpCommand(cmd, target) {
       if (!target) { alert("Usage: " + cmd + " [username]"); return; }
       if (cmd === "/mute") {
@@ -1523,7 +1392,6 @@
         alert(`User "${target}" has been unmuted.`);
       }
     }
-
     async function terminateAccount(target) {
       const confirmTerm = confirm(`Are you sure you want to TERMINATE the account "${target}"? This is permanent!`);
       if (!confirmTerm) return;
@@ -1564,7 +1432,6 @@
         alert("Error terminating account: " + err);
       }
     }
-
     async function clearChatForEveryone() {
       const confirmClear = confirm("Are you sure you want to clear the public chat AND all broadcasts for EVERYONE?");
       if (!confirmClear) return;
@@ -1574,7 +1441,6 @@
       publicMessages = [];
       alert("All messages and broadcasts cleared for everyone.");
     }
-
     function sendBroadcast() {
       if (!isCurrentUserOP()) { alert("You are not an OP!"); return; }
       const broadcastInput = document.getElementById("opBroadcastInput");
@@ -1588,7 +1454,6 @@
       broadcastInput.value = "";
       alert("Broadcast sent!");
     }
-
     function setOpColor() {
       if (!isCurrentUserOP()) { alert("You are not an OP!"); return; }
       const colorPicker = document.getElementById("opColorPicker");
@@ -1596,13 +1461,11 @@
       db.ref("accountColors/" + currentUsername).set(chosenColor);
       alert("Your chat color has been updated to: " + chosenColor);
     }
-
     function clearAllTyping() {
       if (!isCurrentUserOP()) { alert("You are not an OP!"); return; }
       db.ref("typing").remove();
       alert("All 'typing' statuses have been cleared for everyone.");
     }
-
     /* =====================================================
        Settings Navigation
        ===================================================== */
@@ -1610,12 +1473,10 @@
       document.getElementById("loginDiv").style.display = "none";
       document.getElementById("settingsDiv").style.display = "block";
     }
-
     function goBack() {
       document.getElementById("settingsDiv").style.display = "none";
       document.getElementById("loginDiv").style.display = "block";
     }
-
     /* =====================================================
        Dark Mode Toggle
        ===================================================== */
@@ -1624,7 +1485,6 @@
       const isDark = document.body.classList.contains("dark-mode");
       localStorage.setItem("darkModeEnabled", isDark);
     }
-
     /* =====================================================
        GUI Size
        ===================================================== */
@@ -1634,12 +1494,10 @@
       localStorage.setItem("uiScale", scale);
       updateGuiSizeDisplay();
     }
-
     function updateGuiSizeDisplay() {
       const val = document.getElementById("guiSizeRange").value;
       document.getElementById("guiSizeValue").textContent = `Current Scale: ${val}x`;
     }
-
     /* =====================================================
        Custom Font
        ===================================================== */
@@ -1653,7 +1511,6 @@
       document.body.classList.add(selectedFont);
       localStorage.setItem("selectedFont", selectedFont);
     }
-
     /* =====================================================
        Desktop Notifications
        ===================================================== */
@@ -1662,7 +1519,6 @@
       localStorage.setItem("notificationsEnabled", isChecked);
       if (isChecked) { requestNotificationPermission(); }
     }
-
     function requestNotificationPermission() {
       if (!("Notification" in window)) {
         alert("This browser does not support desktop notifications.");
@@ -1678,7 +1534,6 @@
         });
       }
     }
-
     function showDMNotification(user, text) {
       const isNotificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
       if (!("Notification" in window) || !isNotificationsEnabled) return;
@@ -1689,7 +1544,6 @@
         });
       }
     }
-
     /* =====================================================
        Member List (Presence)
        ===================================================== */
@@ -1703,7 +1557,6 @@
       });
       myPresenceRef.onDisconnect().remove();
     }
-
     function updateMemberList(members) {
       const uniqueMembers = {};
       members.forEach(member => {
@@ -1721,7 +1574,6 @@
         memberListUl.appendChild(li);
       }
     }
-
     /* =====================================================
        NEW SETTINGS FEATURES
        ===================================================== */
