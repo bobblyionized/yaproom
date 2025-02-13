@@ -23,13 +23,19 @@
       margin: 0 auto;
       padding: 10px;
     }
-    /* CONTAINERS (Login, Chat, Settings) */
-    #loginDiv, #chatDiv, #settingsDiv {
+    /* CONTAINERS (Login, Chat, Settings, Pong Game) */
+    #loginDiv, #chatDiv, #settingsDiv, #pongGameDiv {
       background: #ffffff;
       border-radius: 8px;
       padding: 16px;
       margin-top: 10px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    /* Make the Pong game div fill the container */
+    #pongGameDiv {
+      width: 100%;
+      height: 500px;  /* Adjust height as needed */
+      position: relative;
     }
     /* DARK MODE */
     body.dark-mode {
@@ -38,7 +44,8 @@
     }
     body.dark-mode #loginDiv,
     body.dark-mode #chatDiv,
-    body.dark-mode #settingsDiv {
+    body.dark-mode #settingsDiv,
+    body.dark-mode #pongGameDiv {
       background: #36393f;
       color: #dcdcdc;
     }
@@ -171,25 +178,17 @@
       border-bottom: 1px solid #eee;
       font-size: 14px;
     }
-    /* MEMBER LIST - Expanded & Wider */
+    /* MEMBER LIST */
     #memberListContainer {
-      width: 100%;  /* Ensure the container takes full available width */
       background: #ffffff;
-      padding: 12px;
+      padding: 8px;
       margin-top: 10px;
       border: 1px solid #ddd;
       border-radius: 6px;
-      min-height: 200px;
-      max-height: 300px;
-      overflow-y: auto;
     }
     body.dark-mode #memberListContainer {
-      width: 100%;
       background: #36393f;
       border-color: #4f545c;
-      min-height: 200px;
-      max-height: 300px;
-      overflow-y: auto;
     }
     #memberList li {
       padding: 4px 0;
@@ -212,9 +211,7 @@
     /* Hide audio elements */
     audio { display: none; }
 
-    /* -------------------------------------------------------
-       Changelog Overlay (SWORDBATTLE.IO STYLE - Unchanged, with indented bullets)
-       ------------------------------------------------------- */
+    /* Changelog Overlay */
     #changelogOverlay {
       position: fixed;
       top: 0;
@@ -236,10 +233,37 @@
       color: #000;
       box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     }
-    /* Indent bullet points */
     #changelogModal ul {
       margin: 10px 0;
       padding-left: 30px;
+    }
+    
+    /* Custom Font Classes */
+    .font-arial { font-family: Arial, sans-serif; }
+    .font-georgia { font-family: Georgia, serif; }
+    .font-courier { font-family: "Courier New", monospace; }
+    .font-comic { font-family: "Comic Sans MS", cursive, sans-serif; }
+    .font-roboto { font-family: Roboto, sans-serif; }
+    .font-times { font-family: "Times New Roman", Times, serif; }
+    .font-verdana { font-family: Verdana, sans-serif; }
+    .font-trebuchet { font-family: "Trebuchet MS", sans-serif; }
+    .font-lucida { font-family: "Lucida Sans Unicode", sans-serif; }
+    .font-garamond { font-family: Garamond, serif; }
+    .font-helvetica { font-family: Helvetica, sans-serif; }
+    .font-tahoma { font-family: Tahoma, sans-serif; }
+    .font-impact { font-family: Impact, sans-serif; }
+    .font-futura { font-family: Futura, sans-serif; }
+    .font-open-sans { font-family: "Open Sans", sans-serif; }
+    .font-lato { font-family: Lato, sans-serif; }
+    .font-montserrat { font-family: Montserrat, sans-serif; }
+    
+    /* Pong Game Canvas */
+    #pongCanvas {
+      display: block;
+      margin: 0 auto;
+      background: #eee;
+      width: 100%;
+      height: 100%;
     }
   </style>
 </head>
@@ -254,6 +278,7 @@
           <li>Improved compact layout inspired by Discord mobile.</li>
           <li>Added background music controls, sound notifications, and message timestamp toggles in settings.</li>
           <li>Minor bug fixes and performance improvements.</li>
+          <li><strong>New:</strong> Real-time Pong duel game via /duelpong command!</li>
         </ul>
         <button onclick="closeChangelog()">Close</button>
       </div>
@@ -309,7 +334,10 @@
         /createroom [roomName]<br/>
         /join [roomName]<br/>
         /invite [accountName]<br/>
-        /leave
+        /leave<br/><br/>
+        <strong>Pong Duel Command:</strong><br/>
+        /duelpong [account]<br/>
+        (Then the challenged user can type /accept or /decline.)
       </div>
       <ul id="messages"></ul>
       <div id="typingStatus"></div>
@@ -393,6 +421,14 @@
         <option value="font-trebuchet">Trebuchet MS</option>
         <option value="font-lucida">Lucida Sans Unicode</option>
         <option value="font-garamond">Garamond</option>
+        <!-- New Fonts -->
+        <option value="font-helvetica">Helvetica</option>
+        <option value="font-tahoma">Tahoma</option>
+        <option value="font-impact">Impact</option>
+        <option value="font-futura">Futura</option>
+        <option value="font-open-sans">Open Sans</option>
+        <option value="font-lato">Lato</option>
+        <option value="font-montserrat">Montserrat</option>
       </select>
       <br/><br/>
       <label>
@@ -426,6 +462,12 @@
       </label>
       <br/><br/>
       <button onclick="goBack()">Back</button>
+    </div>
+    
+    <!-- PONG GAME UI -->
+    <div id="pongGameDiv" style="display:none;">
+      <h2>Pong Duel</h2>
+      <canvas id="pongCanvas"></canvas>
     </div>
   </div>
 
@@ -475,6 +517,13 @@
     let publicMessages = [];
     let publicListenerAdd = null, publicListenerRemove = null;
     let myPresenceRef = null;
+
+    // ---- Global variables for Pong ----
+    let pendingPongChallenge = null;  // if a challenge involves me as challenged
+    let acceptedChallenge = null;     // if a challenge involving me is accepted
+    let pongGameId = null;            // current Pong game id
+    let isHost = false;               // true if this client is host (challenger)
+    let moveUp = false, moveDown = false; // keyboard control flags
 
     /* =====================================================
        On Page Load
@@ -558,6 +607,8 @@
         document.getElementById("bgMusic").volume = localStorage.getItem("musicVolume") || 1;
         document.getElementById("bgMusic").play();
       }
+      // Listen for any accepted Pong challenges (for challengers)
+      listenForAcceptedPongChallenges();
     };
 
     function closeChangelog() {
@@ -682,6 +733,8 @@
         anonInput.value = currentUsername;
         anonInput.disabled = true;
         listenForAccountDeletion();
+        // Start listening for Pong challenges (as challenged or challenger)
+        listenForPongChallenges();
       } else {
         notLoggedInUI.style.display = "block";
         loggedInUI.style.display = "none";
@@ -1113,12 +1166,13 @@
     }
 
     /* =====================================================
-       Group Chat (Slash Commands)
+       Group Chat (Slash Commands) & Pong Challenge Commands
        ===================================================== */
     async function handleSlashCommand(text) {
       const parts = text.split(" ");
       const cmd = parts[0].toLowerCase();
       const arg = parts[1] ? parts[1].trim() : null;
+      // OP commands
       if (isCurrentUserOP()) {
         if (cmd === "/mute" || cmd === "/unmute") {
           handleOpCommand(cmd, arg);
@@ -1130,6 +1184,25 @@
           return;
         }
       }
+      // Pong challenge commands
+      if (cmd === "/duelpong") {
+         if (!arg) { alert("Usage: /duelpong [account]"); return; }
+         initiatePongChallenge(arg);
+         return;
+      }
+      if (cmd === "/accept") {
+         if (pendingPongChallenge) {
+            acceptPongChallenge();
+            return;
+         } else { alert("No pending Pong challenge to accept."); }
+      }
+      if (cmd === "/decline") {
+         if (pendingPongChallenge) {
+            declinePongChallenge();
+            return;
+         } else { alert("No pending Pong challenge to decline."); }
+      }
+      // Other group chat commands
       switch(cmd) {
         case "/createroom":
           if (!arg) { alert("Usage: /createroom [roomName]"); return; }
@@ -1151,98 +1224,281 @@
       }
     }
 
-    async function createGroupRoom(roomName) {
-      if (!currentUsername || !currentPassHash) {
-        alert("You must be logged in to create a group room.");
-        return;
+    /* ---- Pong Challenge Functions ---- */
+    // Store each challenge under "pongChallenges/<gameId>".
+    function initiatePongChallenge(target) {
+      if (!currentUsername) {
+         alert("You must be logged in to challenge someone.");
+         return;
       }
-      const snap = await db.ref("groupRooms/" + roomName).once("value");
-      if (snap.exists()) {
-        alert("That room name already exists. Choose a different one.");
-        return;
+      if (target.toLowerCase() === currentUsername.toLowerCase()) {
+         alert("You cannot challenge yourself!");
+         return;
       }
-      await db.ref("groupRooms/" + roomName).set({
-        participants: [currentUsername],
-        createdAt: Date.now(),
-        messages: { dummy: { system: "Group created" } }
-      });
-      alert(`Group room "${roomName}" created. You are now inside it.`);
-      joinGroupRoom(roomName);
+      let gameId = db.ref("games/pong").push().key;
+      let challengeData = {
+         challenger: currentUsername,
+         challenged: target,
+         status: "pending",
+         gameId: gameId,
+         timestamp: firebase.database.ServerValue.TIMESTAMP
+      };
+      db.ref("pongChallenges/" + gameId).set(challengeData);
+      alert("Pong challenge sent to " + target + "!");
     }
 
-    async function joinGroupRoom(roomName) {
-      if (!currentUsername || !currentPassHash) {
-        alert("You must be logged in to join a group room.");
-        return;
-      }
-      const snap = await db.ref("groupRooms/" + roomName).once("value");
-      if (!snap.exists()) {
-        alert("That room does not exist.");
-        return;
-      }
-      const roomData = snap.val();
-      const me = currentUsername;
-      if (!roomData.participants || !roomData.participants.includes(me)) {
-        if (isCurrentUserOP()) {
-          let updated = roomData.participants || [];
-          if (!updated.includes(me)) {
-            updated.push(me);
-            await db.ref("groupRooms/" + roomName + "/participants").set(updated);
-          }
-          await db.ref("groupRooms/" + roomName + "/messages").push({
-            system: `${currentUsername} (OP) joined the room without invite.`
-          });
-        } else {
-          alert("You are not invited to this room. Ask someone to /invite you.");
+    // Listen for any challenge where I am either the challenged or the challenger.
+    function listenForPongChallenges() {
+      db.ref("pongChallenges").on("child_changed", function(snapshot) {
+         let challenge = snapshot.val();
+         // If I am the challenged and it's pending, alert me.
+         if (challenge.challenged.toLowerCase() === currentUsername.toLowerCase() && challenge.status === "pending") {
+            pendingPongChallenge = challenge;
+            alert(challenge.challenger + " has challenged you to Pong! Type /accept to accept or /decline to decline.");
+         }
+         // If I am the challenger and the challenge is now accepted, start the game.
+         if (challenge.challenger.toLowerCase() === currentUsername.toLowerCase() && challenge.status === "accepted") {
+            acceptedChallenge = challenge;
+            startPongGame(challenge.gameId, challenge.challenger, challenge.challenged);
+         }
+      });
+      // Also listen for new challenges (for the challenged party)
+      db.ref("pongChallenges").on("child_added", function(snapshot) {
+         let challenge = snapshot.val();
+         if (challenge.challenged.toLowerCase() === currentUsername.toLowerCase() && challenge.status === "pending") {
+            pendingPongChallenge = challenge;
+            alert(challenge.challenger + " has challenged you to Pong! Type /accept to accept or /decline to decline.");
+         }
+      });
+    }
+
+    function acceptPongChallenge() {
+      if (!pendingPongChallenge) {
+          alert("No pending challenge.");
           return;
-        }
       }
-      inGroupChat = true;
-      document.getElementById("messages").innerHTML = "";
-      if (groupListener) { db.ref("groupRooms/" + currentGroupRoomName + "/messages").off("child_added", groupListener); }
-      currentGroupRoomName = roomName;
-      groupListener = db.ref("groupRooms/" + roomName + "/messages").on("child_added", (snapMsg) => {
-        const val = snapMsg.val();
-        if (val.user && val.text) {
-          if (mutedUsers[val.user]) return;
-          displayMessage(val.user, val.text, true, false, snapMsg.key, val.timestamp);
-          checkForMentionsAndNotify(val.user, val.text);
-        } else if (val.system) {
-          displayMessage("System", val.system, false, false, snapMsg.key);
-        }
-      });
-      alert(`You joined group room "${roomName}". All new messages go there.`);
+      let gameId = pendingPongChallenge.gameId;
+      // Update challenge status to accepted.
+      db.ref("pongChallenges/" + gameId).update({status: "accepted"});
+      // The challenged client then starts the game.
+      startPongGame(gameId, pendingPongChallenge.challenger, pendingPongChallenge.challenged);
     }
 
-    async function inviteToGroup(accountName) {
-      if (!inGroupChat || !currentGroupRoomName) {
-        alert("You are not in a group room. Use /join [roomName] first.");
-        return;
+    function declinePongChallenge() {
+      if (!pendingPongChallenge) {
+          alert("No pending challenge.");
+          return;
       }
-      const roomRef = db.ref("groupRooms/" + currentGroupRoomName + "/participants");
-      const snap = await roomRef.once("value");
-      const participants = snap.val() || [];
-      if (!participants.includes(accountName)) { participants.push(accountName); }
-      await roomRef.set(participants);
-      db.ref("groupRooms/" + currentGroupRoomName + "/messages").push({ system: `${accountName} has been invited.` });
-      alert(`${accountName} invited to "${currentGroupRoomName}".`);
+      let gameId = pendingPongChallenge.gameId;
+      db.ref("pongChallenges/" + gameId).remove();
+      pendingPongChallenge = null;
+      alert("Challenge declined.");
     }
 
-    function leaveGroupRoom() {
-      if (!inGroupChat) {
-        alert("You are not in a group room.");
-        return;
-      }
-      if (groupListener && currentGroupRoomName) {
-        db.ref("groupRooms/" + currentGroupRoomName + "/messages").off("child_added", groupListener);
-      }
-      document.getElementById("messages").innerHTML = "";
-      inGroupChat = false;
-      currentGroupRoomName = null;
-      publicMessages.forEach(msg => {
-        displayMessage(msg.user, msg.text, msg.isAccount, false, msg.key, msg.timestamp);
+    // For challengers: listen for challenges that get accepted.
+    function listenForAcceptedPongChallenges() {
+      db.ref("pongChallenges").on("child_changed", function(snapshot) {
+         let challenge = snapshot.val();
+         if (challenge.challenger.toLowerCase() === currentUsername.toLowerCase() && challenge.status === "accepted") {
+             acceptedChallenge = challenge;
+             startPongGame(challenge.gameId, challenge.challenger, challenge.challenged);
+         }
       });
-      alert("You left the group room. Back to public chat.");
+    }
+
+    // Start the Pong game for both players.
+    function startPongGame(gameId, player1, player2) {
+      // Hide chat, show Pong game UI for both players
+      document.getElementById("chatDiv").style.display = "none";
+      document.getElementById("pongGameDiv").style.display = "block";
+      pongGameId = gameId;
+      let gameRef = db.ref("games/pong/" + gameId);
+      gameRef.once("value", function(snapshot) {
+         if (!snapshot.exists()) {
+            gameRef.set({
+               players: {
+                   [player1]: { y: 150, score: 0 },
+                   [player2]: { y: 150, score: 0 }
+               },
+               ball: { x: 300, y: 200, dx: 3, dy: 3 },
+               status: "playing"
+            });
+         }
+         initPongGame(gameId, player1, player2);
+      });
+      // Remove the challenge record (optional)
+      db.ref("pongChallenges/" + gameId).remove();
+    }
+
+    // ---- Pong Game Logic ----
+    let pongCanvas, pongCtx;
+    let localGameState = {};
+    function initPongGame(gameId, player1, player2) {
+      // Designate the challenger as host.
+      isHost = (currentUsername.toLowerCase() === player1.toLowerCase());
+      pongCanvas = document.getElementById("pongCanvas");
+      pongCtx = pongCanvas.getContext("2d");
+      // Set canvas size to match its container.
+      pongCanvas.width = pongCanvas.parentNode.clientWidth;
+      pongCanvas.height = pongCanvas.parentNode.clientHeight;
+      document.addEventListener("keydown", pongKeyDownHandler);
+      document.addEventListener("keyup", pongKeyUpHandler);
+      let gameRef = db.ref("games/pong/" + gameId);
+      gameRef.on("value", function(snapshot) {
+         localGameState = snapshot.val();
+         if (localGameState && localGameState.status === "ended") {
+           endPongGame(localGameState.winner);
+         }
+      });
+      if (isHost) {
+         hostGameLoop(gameId, player1, player2);
+      }
+      requestAnimationFrame(pongRenderLoop);
+    }
+
+    function pongKeyDownHandler(e) {
+      if (e.key === "ArrowUp") {
+           moveUp = true;
+      } else if (e.key === "ArrowDown") {
+           moveDown = true;
+      }
+    }
+    function pongKeyUpHandler(e) {
+      if (e.key === "ArrowUp") {
+           moveUp = false;
+      } else if (e.key === "ArrowDown") {
+           moveDown = false;
+      }
+    }
+    function updatePaddlePosition(gameId, player, newY) {
+      db.ref("games/pong/" + gameId + "/players/" + player + "/y").set(newY);
+    }
+    function nonHostPaddleUpdate(gameId) {
+      if (isHost) return;
+      let paddleY = localGameState.players[currentUsername].y;
+      if (moveUp) paddleY -= 5;
+      if (moveDown) paddleY += 5;
+      paddleY = Math.max(0, Math.min(pongCanvas.height - 60, paddleY));
+      if (paddleY !== localGameState.players[currentUsername].y) {
+         updatePaddlePosition(gameId, currentUsername, paddleY);
+      }
+    }
+    // Updated host game loop: ball accelerates on each paddle hit.
+    function hostGameLoop(gameId, player1, player2) {
+      let gameRef = db.ref("games/pong/" + gameId);
+      // Use a speedFactor of 0.5 to make the ball move 2x slower overall.
+      const speedFactor = 0.5;
+      // Acceleration factor applied on each paddle hit.
+      const accelerationFactor = 1.05;
+      function loop() {
+          if (!localGameState || localGameState.status !== "playing") {
+              return;
+          }
+          // Host moves their paddle (player1)
+          let hostPaddleY = localGameState.players[player1].y;
+          if (moveUp) hostPaddleY -= 5;
+          if (moveDown) hostPaddleY += 5;
+          hostPaddleY = Math.max(0, Math.min(pongCanvas.height - 60, hostPaddleY));
+          if (hostPaddleY !== localGameState.players[player1].y) {
+             db.ref("games/pong/" + gameId + "/players/" + player1 + "/y").set(hostPaddleY);
+          }
+          // Update ball position (apply speedFactor)
+          let ball = localGameState.ball;
+          ball.x += ball.dx * speedFactor;
+          ball.y += ball.dy * speedFactor;
+          if (ball.y <= 0 || ball.y >= pongCanvas.height) {
+              ball.dy = -ball.dy;
+          }
+          // Collision with left paddle (player1)
+          let leftPaddleY = localGameState.players[player1].y;
+          if (ball.x <= 20) {
+             if (ball.y >= leftPaddleY && ball.y <= leftPaddleY + 60) {
+                 // Invert horizontal direction and accelerate ball.
+                 ball.dx = -ball.dx * accelerationFactor;
+                 ball.dy = ball.dy * accelerationFactor;
+             } else {
+                 let newScore = localGameState.players[player2].score + 1;
+                 db.ref("games/pong/" + gameId + "/players/" + player2 + "/score").set(newScore);
+                 ball.x = pongCanvas.width / 2;
+                 ball.y = pongCanvas.height / 2;
+             }
+          }
+          // Collision with right paddle (player2)
+          let rightPaddleY = localGameState.players[player2].y;
+          if (ball.x >= pongCanvas.width - 20) {
+             if (ball.y >= rightPaddleY && ball.y <= rightPaddleY + 60) {
+                 ball.dx = -ball.dx * accelerationFactor;
+                 ball.dy = ball.dy * accelerationFactor;
+             } else {
+                 let newScore = localGameState.players[player1].score + 1;
+                 db.ref("games/pong/" + gameId + "/players/" + player1 + "/score").set(newScore);
+                 ball.x = pongCanvas.width / 2;
+                 ball.y = pongCanvas.height / 2;
+             }
+          }
+          // Check for win condition (first to 3)
+          let score1 = localGameState.players[player1].score;
+          let score2 = localGameState.players[player2].score;
+          if (score1 >= 3) {
+              db.ref("games/pong/" + gameId).update({status:"ended", winner: player1});
+              return;
+          }
+          if (score2 >= 3) {
+              db.ref("games/pong/" + gameId).update({status:"ended", winner: player2});
+              return;
+          }
+          db.ref("games/pong/" + gameId + "/ball").set({
+              x: ball.x,
+              y: ball.y,
+              dx: ball.dx,
+              dy: ball.dy
+          });
+          setTimeout(loop, 30);
+      }
+      loop();
+    }
+    function pongRenderLoop() {
+      if (!localGameState) {
+         requestAnimationFrame(pongRenderLoop);
+         return;
+      }
+      pongCtx.clearRect(0, 0, pongCanvas.width, pongCanvas.height);
+      // Draw center line
+      pongCtx.setLineDash([5, 5]);
+      pongCtx.beginPath();
+      pongCtx.moveTo(pongCanvas.width/2, 0);
+      pongCtx.lineTo(pongCanvas.width/2, pongCanvas.height);
+      pongCtx.stroke();
+      pongCtx.setLineDash([]);
+      // Draw paddles
+      let players = Object.keys(localGameState.players);
+      let player1 = players[0], player2 = players[1];
+      let leftPaddleY = localGameState.players[player1].y;
+      let rightPaddleY = localGameState.players[player2].y;
+      pongCtx.fillStyle = "blue";
+      pongCtx.fillRect(10, leftPaddleY, 10, 60);
+      pongCtx.fillStyle = "red";
+      pongCtx.fillRect(pongCanvas.width - 20, rightPaddleY, 10, 60);
+      // Draw ball
+      pongCtx.beginPath();
+      pongCtx.arc(localGameState.ball.x, localGameState.ball.y, 8, 0, Math.PI * 2);
+      pongCtx.fillStyle = "black";
+      pongCtx.fill();
+      // Draw scores
+      pongCtx.font = "20px Arial";
+      pongCtx.fillText(localGameState.players[player1].score, 50, 30);
+      pongCtx.fillText(localGameState.players[player2].score, pongCanvas.width - 70, 30);
+      if (!isHost) {
+         nonHostPaddleUpdate(pongGameId);
+      }
+      requestAnimationFrame(pongRenderLoop);
+    }
+    function endPongGame(winner) {
+      alert(winner + " has won!");
+      document.removeEventListener("keydown", pongKeyDownHandler);
+      document.removeEventListener("keyup", pongKeyUpHandler);
+      document.getElementById("pongGameDiv").style.display = "none";
+      document.getElementById("chatDiv").style.display = "block";
     }
 
     /* =====================================================
@@ -1390,7 +1646,8 @@
     function updateFont() {
       document.body.classList.remove(
         "font-arial", "font-georgia", "font-courier", "font-comic", "font-roboto",
-        "font-times", "font-verdana", "font-trebuchet", "font-lucida", "font-garamond"
+        "font-times", "font-verdana", "font-trebuchet", "font-lucida", "font-garamond",
+        "font-helvetica", "font-tahoma", "font-impact", "font-futura", "font-open-sans", "font-lato", "font-montserrat"
       );
       const selectedFont = document.getElementById("fontSelect").value;
       document.body.classList.add(selectedFont);
@@ -1449,7 +1706,12 @@
 
     function updateMemberList(members) {
       const uniqueMembers = {};
-      members.forEach(member => { uniqueMembers[member] = (uniqueMembers[member] || 0) + 1; });
+      members.forEach(member => {
+        if (!member || member.trim() === "" || member.toLowerCase().includes("anoynumus")) {
+          member = "Anonymous Player";
+        }
+        uniqueMembers[member] = (uniqueMembers[member] || 0) + 1;
+      });
       const memberListUl = document.getElementById("memberList");
       memberListUl.innerHTML = "";
       for (let member in uniqueMembers) {
