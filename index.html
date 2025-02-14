@@ -6,7 +6,11 @@
   <title>yaproom (official)</title>
   <style>
     /* GENERAL RESET & CONTAINER */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
     body {
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       background: #f8f8f8;
@@ -14,111 +18,271 @@
       padding: 10px;
       transition: background 0.3s, color 0.3s;
     }
-    .container { max-width: 480px; margin: 0 auto; padding: 10px; }
-    /* CONTAINERS (Login, Chat, Settings, Pong Game) */
-    #loginDiv, #chatDiv, #settingsDiv, #pongGameDiv {
-      background: #ffffff; border-radius: 8px; padding: 16px;
-      margin-top: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 10px;
     }
-    /* Make the Pong game div fill the container */
-    #pongGameDiv {
-      width: 100%; height: 500px; position: relative;
+    /* CONTAINERS (Login, Chat, Settings, Duel Speed Game, RPS Game) */
+    #loginDiv, #chatDiv, #settingsDiv, #duelSpeedGameDiv, #rpsGameDiv {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    /* Duel Speed Game UI */
+    #duelSpeedGameDiv {
+      text-align: center;
+    }
+    #duelSpeedCounters p {
+      font-size: 18px;
+      margin: 8px 0;
+    }
+    #duelSpeedClickButton {
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      background: #7289da;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #duelSpeedClickButton:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    /* RPS Game UI */
+    #rpsGameDiv {
+      text-align: center;
+    }
+    #rpsChoices button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      background: #7289da;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #rpsChoices button:hover {
+      background: #677bc4;
+    }
+    #rpsResult {
+      margin-top: 10px;
+      font-size: 16px;
+      font-weight: bold;
     }
     /* DARK MODE */
     body.dark-mode {
-      background: #2f3136; color: #dcdcdc;
+      background: #2f3136;
+      color: #dcdcdc;
     }
     body.dark-mode #loginDiv,
     body.dark-mode #chatDiv,
     body.dark-mode #settingsDiv,
-    body.dark-mode #pongGameDiv {
-      background: #36393f; color: #dcdcdc;
+    body.dark-mode #duelSpeedGameDiv,
+    body.dark-mode #rpsGameDiv {
+      background: #36393f;
+      color: #dcdcdc;
     }
-    body.dark-mode textarea { background: #40444b; color: #dcdcdc; border: 1px solid #4f545c; }
-    body.dark-mode button { background: #4f545c; color: #dcdcdc; border: 1px solid #4f545c; }
-    body.dark-mode select { background: #40444b; color: #dcdcdc; border: 1px solid #4f545c; }
+    body.dark-mode textarea {
+      background: #40444b;
+      color: #dcdcdc;
+      border: 1px solid #4f545c;
+    }
+    body.dark-mode button {
+      background: #4f545c;
+      color: #dcdcdc;
+      border: 1px solid #4f545c;
+    }
+    body.dark-mode select {
+      background: #40444b;
+      color: #dcdcdc;
+      border: 1px solid #4f545c;
+    }
     /* FORM ELEMENTS */
     input[type="text"], textarea, select {
-      width: 100%; padding: 8px; margin-bottom: 8px;
-      border: 1px solid #ccc; border-radius: 6px; font-size: 14px;
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
     }
     button {
-      width: 100%; padding: 8px; border: none; border-radius: 6px;
-      background: #7289da; color: #fff; font-size: 14px; cursor: pointer;
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      background: #7289da;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
       transition: background 0.2s;
     }
-    button:hover { background: #677bc4; }
-    /* HEADERS & TEXT */
-    h2, h3 { margin-bottom: 12px; font-weight: 600; }
-    p { margin-bottom: 8px; font-size: 14px; }
-    .tutorial-box {
-      background: #fafafa; padding: 6px; border-radius: 4px;
-      font-size: 13px; margin-bottom: 8px;
+    button:hover {
+      background: #677bc4;
     }
-    body.dark-mode .tutorial-box { background: #40444b; color: #dcdcdc; }
+    /* HEADERS & TEXT */
+    h2, h3 {
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    p {
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .tutorial-box {
+      background: #fafafa;
+      padding: 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    body.dark-mode .tutorial-box {
+      background: #40444b;
+      color: #dcdcdc;
+    }
     /* CHAT MESSAGES */
     #messages {
-      list-style: none; padding: 0; max-height: 300px;
-      overflow-y: auto; margin-bottom: 8px;
-      border: 1px solid #ddd; border-radius: 4px; background: #ffffff;
+      list-style: none;
+      padding: 0;
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: #ffffff;
     }
     body.dark-mode #messages {
-      background: #40444b; border-color: #4f545c;
+      background: #40444b;
+      border-color: #4f545c;
     }
     #messages li {
-      padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 14px;
+      padding: 6px 8px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
     }
-    #messages li:last-child { border-bottom: none; }
-    .account-user { color: #7289da; font-weight: bold; }
-    .anonymous-user { color: #333; }
+    #messages li:last-child {
+      border-bottom: none;
+    }
+    .account-user {
+      color: #7289da;
+      font-weight: bold;
+    }
+    .anonymous-user {
+      color: #333;
+    }
     .broadcast-msg {
-      background: #ffeb3b; color: #333; font-weight: bold;
-      padding: 4px; border-radius: 4px;
+      background: #ffeb3b;
+      color: #333;
+      font-weight: bold;
+      padding: 4px;
+      border-radius: 4px;
     }
     /* TEXTAREA AUTO-RESIZE */
-    textarea { resize: none; min-height: 40px; max-height: 120px; overflow-y: auto; }
+    textarea {
+      resize: none;
+      min-height: 40px;
+      max-height: 120px;
+      overflow-y: auto;
+    }
     /* DM SECTION */
-    #dmSection { margin-top: 10px; border-top: 1px solid #ccc; padding-top: 8px; }
+    #dmSection {
+      margin-top: 10px;
+      border-top: 1px solid #ccc;
+      padding-top: 8px;
+    }
     #dmMessages, #dm2Messages, #dm3Messages {
-      list-style: none; padding: 0; max-height: 200px;
-      overflow-y: auto; margin-bottom: 8px; border: 1px solid #ddd;
-      border-radius: 4px; background: #ffffff;
+      list-style: none;
+      padding: 0;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: #ffffff;
     }
     body.dark-mode #dmMessages,
     body.dark-mode #dm2Messages,
     body.dark-mode #dm3Messages {
-      background: #40444b; border-color: #4f545c;
+      background: #40444b;
+      border-color: #4f545c;
     }
     #dmMessages li, #dm2Messages li, #dm3Messages li {
-      padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 14px;
+      padding: 6px 8px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
     }
     /* MEMBER LIST */
     #memberListContainer {
-      background: #ffffff; padding: 8px; margin-top: 10px;
-      border: 1px solid #ddd; border-radius: 6px;
+      background: #ffffff;
+      padding: 8px;
+      margin-top: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
     }
-    body.dark-mode #memberListContainer { background: #36393f; border-color: #4f545c; }
-    #memberList li { padding: 4px 0; font-size: 14px; }
+    body.dark-mode #memberListContainer {
+      background: #36393f;
+      border-color: #4f545c;
+    }
+    #memberList li {
+      padding: 4px 0;
+      font-size: 14px;
+    }
+    /* Member count header */
+    #memberCountHeader {
+      margin-bottom: 8px;
+    }
     /* MESSAGE ANIMATION */
-    @keyframes message-enter { 0% { transform: scale(0.8); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; } }
-    .message-enter { animation: message-enter 0.3s ease forwards; }
+    @keyframes message-enter {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .message-enter {
+      animation: message-enter 0.3s ease forwards;
+    }
     /* EXTRA SETTINGS HEADINGS */
-    #settingsDiv h3 { margin-top: 16px; margin-bottom: 8px; font-weight: 600; }
+    #settingsDiv h3 {
+      margin-top: 16px;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
     /* Hide audio elements */
     audio { display: none; }
-    /* Changelog Overlay */
-    #changelogOverlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background-color: rgba(0,0,0,0.7); display: none;
-      justify-content: center; align-items: center; z-index: 9999;
+
+    /* Changelog & Help Modal Overlays */
+    #changelogOverlay, #helpModal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.3s ease;
     }
-    #changelogModal {
-      background: #fff; padding: 20px; border-radius: 10px;
-      max-width: 400px; width: 90%; color: #000;
+    #changelogModal, #helpModalContent {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 400px;
+      width: 90%;
+      color: #000;
       box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     }
-    #changelogModal ul { margin: 10px 0; padding-left: 30px; }
+    #changelogModal ul, #helpModalContent ul {
+      margin: 10px 0;
+      padding-left: 30px;
+    }
+    
     /* Custom Font Classes */
     .font-arial { font-family: Arial, sans-serif; }
     .font-georgia { font-family: Georgia, serif; }
@@ -137,11 +301,6 @@
     .font-open-sans { font-family: "Open Sans", sans-serif; }
     .font-lato { font-family: Lato, sans-serif; }
     .font-montserrat { font-family: Montserrat, sans-serif; }
-    /* Pong Game Canvas */
-    #pongCanvas {
-      display: block; margin: 0 auto; background: #eee;
-      width: 100%; height: 100%;
-    }
   </style>
 </head>
 <body>
@@ -155,9 +314,34 @@
           <li>Improved compact layout inspired by Discord mobile.</li>
           <li>Added background music controls, sound notifications, and message timestamp toggles in settings.</li>
           <li>Minor bug fixes and performance improvements.</li>
-          <li><strong>New:</strong> Real-time Pong duel game via /duelpong command!</li>
+          <li><strong>New:</strong> Duel Speed minigame via /duelspeed command (first to 100 clicks wins)!</li>
+          <li><strong>New:</strong> Rock–Paper–Scissors minigame via /rps command!</li>
         </ul>
         <button onclick="closeChangelog()">Close</button>
+      </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal">
+      <div id="helpModalContent">
+        <h2>Help &amp; Commands</h2>
+        <ul>
+          <li>/createroom [roomName] - Create a group chat room</li>
+          <li>/join [roomName] - Join a group chat room</li>
+          <li>/invite [accountName] - Invite someone to a group chat room</li>
+          <li>/leave - Leave the current group chat room</li>
+          <li>/duelspeed [account] - Challenge someone to a Duel Speed game</li>
+          <li>/rps [account] - Challenge someone to a Rock-Paper-Scissors game</li>
+          <li>/accept - Accept a pending challenge</li>
+          <li>/decline - Decline a pending challenge</li>
+          <!-- OP commands container -->
+          <span id="opHelp" style="display:none;">
+            <li>/mute [username] - (OP Only) Mute a user</li>
+            <li>/unmute [username] - (OP Only) Unmute a user</li>
+            <li>/terminate [accountName] - (OP Only) Terminate an account</li>
+          </span>
+        </ul>
+        <button onclick="closeHelpModal()">Close</button>
       </div>
     </div>
 
@@ -212,9 +396,12 @@
         /join [roomName]<br/>
         /invite [accountName]<br/>
         /leave<br/><br/>
-        <strong>Pong Duel Command:</strong><br/>
-        /duelpong [account]<br/>
-        (Then the challenged user can type /accept or /decline.)
+        <strong>Duel Speed Command:</strong><br/>
+        /duelspeed [account]<br/>
+        (Then type /accept or /decline.)<br/><br/>
+        <strong>Rock–Paper–Scissors Command:</strong><br/>
+        /rps [account]<br/>
+        (Then type /accept or /decline.)
       </div>
       <ul id="messages"></ul>
       <div id="typingStatus"></div>
@@ -266,11 +453,12 @@
         </div>
       </div>
       <div id="memberListContainer">
-        <h3>Members Online</h3>
+        <h3 id="memberCountHeader">Members Online</h3>
         <ul id="memberList"></ul>
       </div>
       <div style="text-align:center; margin-top:10px;">
         <button onclick="returnToLogin()">Return to Main Screen</button>
+        <button onclick="openHelpModal()">Help</button>
       </div>
     </div>
 
@@ -340,10 +528,29 @@
       <button onclick="goBack()">Back</button>
     </div>
     
-    <!-- PONG GAME UI -->
-    <div id="pongGameDiv" style="display:none;">
-      <h2>Pong Duel</h2>
-      <canvas id="pongCanvas"></canvas>
+    <!-- DUEL SPEED GAME UI -->
+    <div id="duelSpeedGameDiv" style="display:none;">
+      <h2>Duel Speed</h2>
+      <div id="duelSpeedStatus">Get Ready...</div>
+      <div id="duelSpeedCounters">
+        <p id="player1Counter"></p>
+        <p id="player2Counter"></p>
+      </div>
+      <button id="duelSpeedClickButton" onclick="registerDuelSpeedClick()">Click Me!</button>
+    </div>
+
+    <!-- ROCK-PAPER-SCISSORS GAME UI -->
+    <div id="rpsGameDiv" style="display:none;">
+      <h2>Rock–Paper–Scissors</h2>
+      <div id="rpsStatus">Make your choice:</div>
+      <div id="rpsChoices">
+        <button onclick="makeRPSChoice('rock')">Rock ✊</button>
+        <button onclick="makeRPSChoice('paper')">Paper ✋</button>
+        <button onclick="makeRPSChoice('scissors')">Scissors ✌️</button>
+      </div>
+      <div id="rpsResult"></div>
+      <!-- The "Play Again" button remains hidden because the game auto-returns to chat -->
+      <button id="rpsPlayAgainButton" style="display:none;" onclick="resetRPSGame()">Play Again</button>
     </div>
   </div>
 
@@ -394,15 +601,32 @@
     let publicListenerAdd = null, publicListenerRemove = null;
     let myPresenceRef = null;
 
-    // ---- Global variables for Pong ----
-    let pendingPongChallenge = null;  // if a challenge involves me as challenged
-    let acceptedChallenge = null;     // if a challenge involving me is accepted
-    let pongGameId = null;            // current Pong game id
-    let isHost = false;               // true if this client is host (challenger)
-    let moveUp = false, moveDown = false; // keyboard control flags
+    // ---- Global variables for Duel Speed minigame ----
+    let pendingDuelSpeedChallenge = null;
+    let acceptedDuelSpeedChallenge = null;
+    let duelSpeedGameId = null;
+    let isDuelSpeedHost = false;
+    let duelSpeedGameRef = null;
+    let duelSpeedCountdownInterval = null;
 
-    // Set initial ball speed to 1
-    const INITIAL_SPEED = 1;
+    // ---- Global variables for Rock-Paper–Scissors (RPS) minigame ----
+    let pendingRPSChallenge = null;
+    let acceptedRPSChallenge = null;
+    let rpsGameId = null;
+    let isRPSHost = false;
+    let rpsGameRef = null;
+    let rpsPlayer1 = "";
+    let rpsPlayer2 = "";
+    // Global timeout for auto-returning to chat after an RPS game ends
+    let rpsGameEndTimeout = null;
+
+    // Utility function to get emoji for a choice
+    function getEmoji(choice) {
+      if (choice === "rock") return "✊";
+      if (choice === "paper") return "✋";
+      if (choice === "scissors") return "✌️";
+      return "";
+    }
 
     /* =====================================================
        On Page Load
@@ -486,12 +710,41 @@
         document.getElementById("bgMusic").volume = localStorage.getItem("musicVolume") || 1;
         document.getElementById("bgMusic").play();
       }
-      // Listen for any accepted Pong challenges (for challengers)
-      listenForAcceptedPongChallenges();
+      // Listen for Duel Speed and RPS challenges
+      listenForDuelSpeedChallenges();
+      listenForRPSChallenges();
+
+      // Keyboard shortcut: Escape to close help modal if open
+      window.addEventListener("keydown", function(e) {
+        if (e.key === "Escape") {
+          if (document.getElementById("helpModal").style.display !== "none") {
+            closeHelpModal();
+          }
+        }
+      });
     };
 
     function closeChangelog() {
       document.getElementById("changelogOverlay").style.display = "none";
+    }
+    
+    function openHelpModal() {
+      document.getElementById("helpModal").style.display = "flex";
+      updateHelpModalVisibility();
+    }
+    
+    function closeHelpModal() {
+      document.getElementById("helpModal").style.display = "none";
+    }
+    
+    // Only show OP commands in the help modal if current user is an OP
+    function updateHelpModalVisibility() {
+      var opHelpContainer = document.getElementById("opHelp");
+      if (isCurrentUserOP()) {
+        opHelpContainer.style.display = "block";
+      } else {
+        opHelpContainer.style.display = "none";
+      }
     }
 
     function setupTextareaShortcuts(textareaId, sendCallback) {
@@ -612,8 +865,9 @@
         anonInput.value = currentUsername;
         anonInput.disabled = true;
         listenForAccountDeletion();
-        // Start listening for Pong challenges (as challenged or challenger)
-        listenForPongChallenges();
+        // Start listening for Duel Speed and RPS challenges
+        listenForDuelSpeedChallenges();
+        listenForRPSChallenges();
       } else {
         notLoggedInUI.style.display = "block";
         loggedInUI.style.display = "none";
@@ -670,12 +924,12 @@
         alert("Usernames cannot contain spaces!");
         return;
       }
-      const currentAccountSnap = await db.ref("accounts/" + currentUsername).once("value");
-      if (!currentAccountSnap.exists()) {
+      const snap = await db.ref("accounts/" + currentUsername).once("value");
+      if (!snap.exists()) {
         alert("Your account no longer exists or was deleted.");
         return;
       }
-      const currentAccData = currentAccountSnap.val();
+      const currentAccData = snap.val();
       const lastRenamed = currentAccData.lastRenamed || 0;
       const now = Date.now();
       const TWELVE_HOURS = 12 * 60 * 60 * 1000;
@@ -685,8 +939,8 @@
         alert(`You must wait ${timeLeftHr} more hour(s) before renaming again!`);
         return;
       }
-      const snap = await db.ref("accounts/" + newName).once("value");
-      if (snap.exists()) {
+      const newSnap = await db.ref("accounts/" + newName).once("value");
+      if (newSnap.exists()) {
         alert("That username is taken.");
         return;
       }
@@ -756,6 +1010,8 @@
       }
       document.getElementById("loginDiv").style.display = "none";
       document.getElementById("chatDiv").style.display = "block";
+      // Auto-focus the chat message input
+      document.getElementById("messageInput").focus();
       updateDMUI();
       setupPresence();
     }
@@ -897,6 +1153,8 @@
       currentDMPath = "dms/" + dmKey;
       document.getElementById("dmMessages").innerHTML = "";
       document.getElementById("dmConversation").style.display = "block";
+      // Auto-focus DM input
+      document.getElementById("dmMessageInput").focus();
       dmListener = db.ref(currentDMPath).on("child_added", (snap) => {
         const val = snap.val();
         displayDMMessage(val.user, val.text);
@@ -950,6 +1208,8 @@
       currentDM2Path = "dms/" + dmKey;
       document.getElementById("dm2Messages").innerHTML = "";
       document.getElementById("dm2Conversation").style.display = "block";
+      // Auto-focus DM2 input
+      document.getElementById("dm2MessageInput").focus();
       dm2Listener = db.ref(currentDM2Path).on("child_added", (snap) => {
         const val = snap.val();
         displayDM2Message(val.user, val.text);
@@ -1003,6 +1263,8 @@
       currentDM3Path = "dms/" + dmKey;
       document.getElementById("dm3Messages").innerHTML = "";
       document.getElementById("dm3Conversation").style.display = "block";
+      // Auto-focus DM3 input
+      document.getElementById("dm3MessageInput").focus();
       dm3Listener = db.ref(currentDM3Path).on("child_added", (snap) => {
         const val = snap.val();
         displayDM3Message(val.user, val.text);
@@ -1045,7 +1307,7 @@
     }
 
     /* =====================================================
-       Group Chat (Slash Commands) & Pong Challenge Commands
+       Group Chat (Slash Commands) & Challenge Commands
        ===================================================== */
     async function handleSlashCommand(text) {
       const parts = text.split(" ");
@@ -1063,23 +1325,40 @@
           return;
         }
       }
-      // Pong challenge commands
-      if (cmd === "/duelpong") {
-         if (!arg) { alert("Usage: /duelpong [account]"); return; }
-         initiatePongChallenge(arg);
+      // Duel Speed challenge command
+      if (cmd === "/duelspeed") {
+         if (!arg) { alert("Usage: /duelspeed [account]"); return; }
+         initiateDuelSpeedChallenge(arg);
          return;
       }
+      // Rock-Paper–Scissors challenge command
+      if (cmd === "/rps") {
+         if (!arg) { alert("Usage: /rps [account]"); return; }
+         initiateRPSChallenge(arg);
+         return;
+      }
+      // Accept/Decline for challenges
       if (cmd === "/accept") {
-         if (pendingPongChallenge) {
-            acceptPongChallenge();
+         if (pendingDuelSpeedChallenge) {
+            acceptDuelSpeedChallenge();
             return;
-         } else { alert("No pending Pong challenge to accept."); }
+         } else if (pendingRPSChallenge) {
+            acceptRPSChallenge();
+            return;
+         } else { 
+            alert("No pending challenge to accept.");
+         }
       }
       if (cmd === "/decline") {
-         if (pendingPongChallenge) {
-            declinePongChallenge();
+         if (pendingDuelSpeedChallenge) {
+            declineDuelSpeedChallenge();
             return;
-         } else { alert("No pending Pong challenge to decline."); }
+         } else if (pendingRPSChallenge) {
+            declineRPSChallenge();
+            return;
+         } else { 
+            alert("No pending challenge to decline.");
+         }
       }
       // Other group chat commands
       switch(cmd) {
@@ -1103,9 +1382,8 @@
       }
     }
 
-    /* ---- Pong Challenge Functions ---- */
-    // Store each challenge under "pongChallenges/<gameId>".
-    function initiatePongChallenge(target) {
+    /* ---- Duel Speed Challenge Functions ---- */
+    function initiateDuelSpeedChallenge(target) {
       if (!currentUsername) {
          alert("You must be logged in to challenge someone.");
          return;
@@ -1114,7 +1392,7 @@
          alert("You cannot challenge yourself!");
          return;
       }
-      let gameId = db.ref("games/pong").push().key;
+      let gameId = db.ref("games/duelspeed").push().key;
       let challengeData = {
          challenger: currentUsername,
          challenged: target,
@@ -1122,254 +1400,299 @@
          gameId: gameId,
          timestamp: firebase.database.ServerValue.TIMESTAMP
       };
-      db.ref("pongChallenges/" + gameId).set(challengeData);
-      alert("Pong challenge sent to " + target + "!");
+      db.ref("duelspeedChallenges/" + gameId).set(challengeData);
+      alert("Duel Speed challenge sent to " + target + "!");
     }
 
-    // Listen for any challenge where I am either the challenged or the challenger.
-    function listenForPongChallenges() {
-      db.ref("pongChallenges").on("child_changed", function(snapshot) {
+    function listenForDuelSpeedChallenges() {
+      db.ref("duelspeedChallenges").on("child_added", function(snapshot) {
          let challenge = snapshot.val();
          if (challenge.challenged.toLowerCase() === currentUsername.toLowerCase() && challenge.status === "pending") {
-            pendingPongChallenge = challenge;
-            alert(challenge.challenger + " has challenged you to Pong! Type /accept to accept or /decline to decline.");
-         }
-         if (challenge.challenger.toLowerCase() === currentUsername.toLowerCase() && challenge.status === "accepted") {
-            acceptedChallenge = challenge;
-            startPongGame(challenge.gameId, challenge.challenger, challenge.challenged);
+            if (!pendingDuelSpeedChallenge) {
+              pendingDuelSpeedChallenge = challenge;
+              alert(challenge.challenger + " has challenged you to Duel Speed! Type /accept to accept or /decline to decline.");
+            }
          }
       });
-      db.ref("pongChallenges").on("child_added", function(snapshot) {
+      db.ref("duelspeedChallenges").on("child_changed", function(snapshot) {
          let challenge = snapshot.val();
          if (challenge.challenged.toLowerCase() === currentUsername.toLowerCase() && challenge.status === "pending") {
-            pendingPongChallenge = challenge;
-            alert(challenge.challenger + " has challenged you to Pong! Type /accept to accept or /decline to decline.");
+            if (!pendingDuelSpeedChallenge) {
+              pendingDuelSpeedChallenge = challenge;
+              alert(challenge.challenger + " has challenged you to Duel Speed! Type /accept to accept or /decline to decline.");
+            }
          }
-      });
-    }
-
-    function acceptPongChallenge() {
-      if (!pendingPongChallenge) {
-          alert("No pending challenge.");
-          return;
-      }
-      let gameId = pendingPongChallenge.gameId;
-      db.ref("pongChallenges/" + gameId).update({status: "accepted"});
-      startPongGame(gameId, pendingPongChallenge.challenger, pendingPongChallenge.challenged);
-    }
-
-    function declinePongChallenge() {
-      if (!pendingPongChallenge) {
-          alert("No pending challenge.");
-          return;
-      }
-      let gameId = pendingPongChallenge.gameId;
-      db.ref("pongChallenges/" + gameId).remove();
-      pendingPongChallenge = null;
-      alert("Challenge declined.");
-    }
-
-    function listenForAcceptedPongChallenges() {
-      db.ref("pongChallenges").on("child_changed", function(snapshot) {
-         let challenge = snapshot.val();
          if (challenge.challenger.toLowerCase() === currentUsername.toLowerCase() && challenge.status === "accepted") {
-             acceptedChallenge = challenge;
-             startPongGame(challenge.gameId, challenge.challenger, challenge.challenged);
+            acceptedDuelSpeedChallenge = challenge;
+            startDuelSpeedGame(challenge.gameId, challenge.challenger, challenge.challenged);
          }
       });
     }
 
-    // Start the Pong game for both players.
-    function startPongGame(gameId, player1, player2) {
+    function acceptDuelSpeedChallenge() {
+      if (!pendingDuelSpeedChallenge) {
+          alert("No pending Duel Speed challenge.");
+          return;
+      }
+      let gameId = pendingDuelSpeedChallenge.gameId;
+      db.ref("duelspeedChallenges/" + gameId).update({ status: "accepted" });
+      startDuelSpeedGame(gameId, pendingDuelSpeedChallenge.challenger, pendingDuelSpeedChallenge.challenged);
+      pendingDuelSpeedChallenge = null;
+    }
+
+    function declineDuelSpeedChallenge() {
+      if (!pendingDuelSpeedChallenge) {
+          alert("No pending Duel Speed challenge.");
+          return;
+      }
+      let gameId = pendingDuelSpeedChallenge.gameId;
+      db.ref("duelspeedChallenges/" + gameId).remove();
+      pendingDuelSpeedChallenge = null;
+      alert("Duel Speed challenge declined.");
+    }
+
+    function startDuelSpeedGame(gameId, player1, player2) {
       document.getElementById("chatDiv").style.display = "none";
-      document.getElementById("pongGameDiv").style.display = "block";
-      pongGameId = gameId;
-      let gameRef = db.ref("games/pong/" + gameId);
-      let canvasWidth = document.getElementById("pongCanvas").parentNode.clientWidth;
-      let canvasHeight = document.getElementById("pongCanvas").parentNode.clientHeight;
-      gameRef.once("value", function(snapshot) {
+      document.getElementById("duelSpeedGameDiv").style.display = "block";
+      duelSpeedGameId = gameId;
+      duelSpeedGameRef = db.ref("games/duelspeed/" + gameId);
+      duelSpeedGameRef.once("value", function(snapshot) {
          if (!snapshot.exists()) {
-            gameRef.set({
+            duelSpeedGameRef.set({
                players: {
-                   [player1]: { y: 150, score: 0 },
-                   [player2]: { y: 150, score: 0 }
+                   [player1]: { clicks: 0 },
+                   [player2]: { clicks: 0 }
                },
-               ball: { 
-                 x: canvasWidth / 2, 
-                 y: canvasHeight / 2, 
-                 dx: INITIAL_SPEED, 
-                 dy: INITIAL_SPEED, 
-                 radius: 8 
-               },
-               status: "playing"
+               status: "countdown",
+               countdown: 3
             });
          }
-         initPongGame(gameId, player1, player2);
+         initDuelSpeedGame(gameId, player1, player2);
       });
-      db.ref("pongChallenges/" + gameId).remove();
+      db.ref("duelspeedChallenges/" + gameId).remove();
     }
 
-    /* ---- Pong Game Logic ---- */
-    let pongCanvas, pongCtx;
-    let localGameState = {};
-    function initPongGame(gameId, player1, player2) {
-      isHost = (currentUsername.toLowerCase() === player1.toLowerCase());
-      pongCanvas = document.getElementById("pongCanvas");
-      pongCtx = pongCanvas.getContext("2d");
-      pongCanvas.width = pongCanvas.parentNode.clientWidth;
-      pongCanvas.height = pongCanvas.parentNode.clientHeight;
-      document.addEventListener("keydown", pongKeyDownHandler);
-      document.addEventListener("keyup", pongKeyUpHandler);
-      let gameRef = db.ref("games/pong/" + gameId);
-      gameRef.on("value", function(snapshot) {
-         localGameState = snapshot.val();
-         if (localGameState && localGameState.status === "ended") {
-           endPongGame(localGameState.winner);
+    function initDuelSpeedGame(gameId, player1, player2) {
+      isDuelSpeedHost = (currentUsername.toLowerCase() === player1.toLowerCase());
+      duelSpeedGameRef.on("value", function(snapshot) {
+         let gameData = snapshot.val();
+         if (!gameData) return;
+         if (gameData.status === "countdown") {
+            document.getElementById("duelSpeedStatus").textContent = "Starting in " + gameData.countdown + "...";
+            document.getElementById("duelSpeedClickButton").disabled = true;
+         } else if (gameData.status === "playing") {
+            document.getElementById("duelSpeedStatus").textContent = "Go!";
+            document.getElementById("duelSpeedClickButton").disabled = false;
+         } else if (gameData.status === "ended") {
+            document.getElementById("duelSpeedStatus").textContent = gameData.winner + " wins!";
+            document.getElementById("duelSpeedClickButton").disabled = true;
+            setTimeout(() => {
+              document.getElementById("duelSpeedGameDiv").style.display = "none";
+              document.getElementById("chatDiv").style.display = "block";
+              // Refocus the main message input when returning
+              document.getElementById("messageInput").focus();
+            }, 3000);
+         }
+         document.getElementById("player1Counter").textContent = player1 + ": " + (gameData.players[player1].clicks || 0) + " clicks";
+         document.getElementById("player2Counter").textContent = player2 + ": " + (gameData.players[player2].clicks || 0) + " clicks";
+         if (gameData.status === "playing" && isDuelSpeedHost) {
+            if (gameData.players[player1].clicks >= 100) {
+              duelSpeedGameRef.update({ status: "ended", winner: player1 });
+            } else if (gameData.players[player2].clicks >= 100) {
+              duelSpeedGameRef.update({ status: "ended", winner: player2 });
+            }
          }
       });
-      if (isHost) {
-         hostGameLoop(gameId, player1, player2);
+      if (isDuelSpeedHost) {
+         duelSpeedCountdownInterval = setInterval(() => {
+            duelSpeedGameRef.once("value", function(snapshot) {
+               let gameData = snapshot.val();
+               if (gameData.status === "countdown") {
+                  if (gameData.countdown > 0) {
+                     duelSpeedGameRef.update({ countdown: gameData.countdown - 1 });
+                  } else {
+                     duelSpeedGameRef.update({ status: "playing" });
+                     clearInterval(duelSpeedCountdownInterval);
+                  }
+               }
+            });
+         }, 1000);
       }
-      requestAnimationFrame(pongRenderLoop);
     }
 
-    function pongKeyDownHandler(e) {
-      if (e.key === "ArrowUp") { moveUp = true; }
-      else if (e.key === "ArrowDown") { moveDown = true; }
+    function registerDuelSpeedClick() {
+      duelSpeedGameRef.once("value", function(snapshot) {
+         let gameData = snapshot.val();
+         if (gameData.status !== "playing") return;
+         let playerRef = duelSpeedGameRef.child("players/" + currentUsername + "/clicks");
+         playerRef.transaction(function(currentClicks) {
+            return (currentClicks || 0) + 1;
+         });
+      });
     }
-    function pongKeyUpHandler(e) {
-      if (e.key === "ArrowUp") { moveUp = false; }
-      else if (e.key === "ArrowDown") { moveDown = false; }
-    }
-    function updatePaddlePosition(gameId, player, newY) {
-      db.ref("games/pong/" + gameId + "/players/" + player + "/y").set(newY);
-    }
-    function nonHostPaddleUpdate(gameId) {
-      if (isHost) return;
-      let paddleY = localGameState.players[currentUsername].y;
-      if (moveUp) paddleY -= 5;
-      if (moveDown) paddleY += 5;
-      paddleY = Math.max(0, Math.min(pongCanvas.height - 60, paddleY));
-      if (paddleY !== localGameState.players[currentUsername].y) {
-         updatePaddlePosition(gameId, currentUsername, paddleY);
+
+    /* ---- Rock-Paper–Scissors (RPS) Challenge Functions ---- */
+    function initiateRPSChallenge(target) {
+      if (!currentUsername) {
+         alert("You must be logged in to challenge someone.");
+         return;
       }
-    }
-    // Host game loop with predictive collision detection and immediate win check.
-    function hostGameLoop(gameId, player1, player2) {
-      let gameRef = db.ref("games/pong/" + gameId);
-      function loop() {
-          if (!localGameState || localGameState.status !== "playing") return;
-          // Update left paddle (host)
-          let hostPaddleY = localGameState.players[player1].y;
-          if (moveUp) hostPaddleY -= 5;
-          if (moveDown) hostPaddleY += 5;
-          hostPaddleY = Math.max(0, Math.min(pongCanvas.height - 60, hostPaddleY));
-          if (hostPaddleY !== localGameState.players[player1].y) {
-              db.ref("games/pong/" + gameId + "/players/" + player1 + "/y").set(hostPaddleY);
-          }
-          // Get ball state
-          let ball = localGameState.ball;
-          let ballRadius = ball.radius || 8;
-          let nextX = ball.x + ball.dx;
-          let nextY = ball.y + ball.dy;
-          // Bounce off top and bottom
-          if (nextY - ballRadius <= 0 || nextY + ballRadius >= pongCanvas.height) {
-              ball.dy = -ball.dy;
-              nextY = ball.y + ball.dy;
-          }
-          // Left paddle collision (player1)
-          let leftPaddleY = localGameState.players[player1].y;
-          const leftPaddleRightEdge = 20;
-          if (ball.dx < 0 && nextX - ballRadius <= leftPaddleRightEdge) {
-              if (nextY >= leftPaddleY && nextY <= leftPaddleY + 60) {
-                  nextX = leftPaddleRightEdge + ballRadius;
-                  ball.dx = -ball.dx * 1.1;
-                  ball.dy = ball.dy * 1.1;
-              } else {
-                  // Player2 scores
-                  let newScore = localGameState.players[player2].score + 1;
-                  db.ref("games/pong/" + gameId + "/players/" + player2 + "/score").set(newScore);
-                  if(newScore >= 3) {
-                      db.ref("games/pong/" + gameId).update({ status: "ended", winner: player2 });
-                      return;
-                  }
-                  nextX = pongCanvas.width / 2;
-                  nextY = pongCanvas.height / 2;
-                  ball.dx = (Math.random() < 0.5 ? INITIAL_SPEED : -INITIAL_SPEED);
-                  ball.dy = (Math.random() < 0.5 ? INITIAL_SPEED : -INITIAL_SPEED);
-              }
-          }
-          // Right paddle collision (player2)
-          let rightPaddleY = localGameState.players[player2].y;
-          const rightPaddleLeftEdge = pongCanvas.width - 20;
-          if (ball.dx > 0 && nextX + ballRadius >= rightPaddleLeftEdge) {
-              if (nextY >= rightPaddleY && nextY <= rightPaddleY + 60) {
-                  nextX = rightPaddleLeftEdge - ballRadius;
-                  ball.dx = -ball.dx * 1.1;
-                  ball.dy = ball.dy * 1.1;
-              } else {
-                  // Player1 scores
-                  let newScore = localGameState.players[player1].score + 1;
-                  db.ref("games/pong/" + gameId + "/players/" + player1 + "/score").set(newScore);
-                  if(newScore >= 3) {
-                      db.ref("games/pong/" + gameId).update({ status: "ended", winner: player1 });
-                      return;
-                  }
-                  nextX = pongCanvas.width / 2;
-                  nextY = pongCanvas.height / 2;
-                  ball.dx = (Math.random() < 0.5 ? INITIAL_SPEED : -INITIAL_SPEED);
-                  ball.dy = (Math.random() < 0.5 ? INITIAL_SPEED : -INITIAL_SPEED);
-              }
-          }
-          // Update ball state in the database
-          db.ref("games/pong/" + gameId + "/ball").set({
-              x: nextX,
-              y: nextY,
-              dx: ball.dx,
-              dy: ball.dy,
-              radius: ballRadius
-          });
-          setTimeout(loop, 30);
+      if (target.toLowerCase() === currentUsername.toLowerCase()) {
+         alert("You cannot challenge yourself!");
+         return;
       }
-      loop();
+      let gameId = db.ref("games/rps").push().key;
+      let challengeData = {
+         challenger: currentUsername,
+         challenged: target,
+         status: "pending",
+         gameId: gameId,
+         timestamp: firebase.database.ServerValue.TIMESTAMP
+      };
+      db.ref("rpsChallenges/" + gameId).set(challengeData);
+      alert("Rock–Paper–Scissors challenge sent to " + target + "!");
     }
-    function pongRenderLoop() {
-      if (!localGameState) { requestAnimationFrame(pongRenderLoop); return; }
-      pongCtx.clearRect(0, 0, pongCanvas.width, pongCanvas.height);
-      // Draw center line
-      pongCtx.setLineDash([5, 5]);
-      pongCtx.beginPath();
-      pongCtx.moveTo(pongCanvas.width/2, 0);
-      pongCtx.lineTo(pongCanvas.width/2, pongCanvas.height);
-      pongCtx.stroke();
-      pongCtx.setLineDash([]);
-      // Draw paddles
-      let players = Object.keys(localGameState.players);
-      let player1 = players[0], player2 = players[1];
-      let leftPaddleY = localGameState.players[player1].y;
-      let rightPaddleY = localGameState.players[player2].y;
-      pongCtx.fillStyle = "blue";
-      pongCtx.fillRect(10, leftPaddleY, 10, 60);
-      pongCtx.fillStyle = "red";
-      pongCtx.fillRect(pongCanvas.width - 20, rightPaddleY, 10, 60);
-      // Draw ball
-      pongCtx.beginPath();
-      pongCtx.arc(localGameState.ball.x, localGameState.ball.y, localGameState.ball.radius || 8, 0, Math.PI * 2);
-      pongCtx.fillStyle = "black";
-      pongCtx.fill();
-      // Draw scores
-      pongCtx.font = "20px Arial";
-      pongCtx.fillText(localGameState.players[player1].score, 50, 30);
-      pongCtx.fillText(localGameState.players[player2].score, pongCanvas.width - 70, 30);
-      if (!isHost) { nonHostPaddleUpdate(pongGameId); }
-      requestAnimationFrame(pongRenderLoop);
+
+    function listenForRPSChallenges() {
+      db.ref("rpsChallenges").on("child_added", function(snapshot) {
+         let challenge = snapshot.val();
+         if (challenge.challenged.toLowerCase() === currentUsername.toLowerCase() && challenge.status === "pending") {
+            if (!pendingRPSChallenge) {
+              pendingRPSChallenge = challenge;
+              alert(challenge.challenger + " has challenged you to Rock–Paper–Scissors! Type /accept to accept or /decline to decline.");
+            }
+         }
+      });
+      db.ref("rpsChallenges").on("child_changed", function(snapshot) {
+         let challenge = snapshot.val();
+         if (challenge.challenged.toLowerCase() === currentUsername.toLowerCase() && challenge.status === "pending") {
+            if (!pendingRPSChallenge) {
+              pendingRPSChallenge = challenge;
+              alert(challenge.challenger + " has challenged you to Rock–Paper–Scissors! Type /accept to accept or /decline to decline.");
+            }
+         }
+         if (challenge.challenger.toLowerCase() === currentUsername.toLowerCase() && challenge.status === "accepted") {
+            acceptedRPSChallenge = challenge;
+            startRPSGame(challenge.gameId, challenge.challenger, challenge.challenged);
+         }
+      });
     }
-    function endPongGame(winner) {
-      alert(winner + " has won!");
-      document.removeEventListener("keydown", pongKeyDownHandler);
-      document.removeEventListener("keyup", pongKeyUpHandler);
-      document.getElementById("pongGameDiv").style.display = "none";
-      document.getElementById("chatDiv").style.display = "block";
+
+    function acceptRPSChallenge() {
+      if (!pendingRPSChallenge) {
+         alert("No pending Rock–Paper–Scissors challenge.");
+         return;
+      }
+      let gameId = pendingRPSChallenge.gameId;
+      db.ref("rpsChallenges/" + gameId).update({ status: "accepted" });
+      startRPSGame(gameId, pendingRPSChallenge.challenger, pendingRPSChallenge.challenged);
+      pendingRPSChallenge = null;
+    }
+
+    function declineRPSChallenge() {
+      if (!pendingRPSChallenge) {
+         alert("No pending Rock–Paper–Scissors challenge.");
+         return;
+      }
+      let gameId = pendingRPSChallenge.gameId;
+      db.ref("rpsChallenges/" + gameId).remove();
+      pendingRPSChallenge = null;
+      alert("Rock–Paper–Scissors challenge declined.");
+    }
+
+    function startRPSGame(gameId, player1, player2) {
+      document.getElementById("chatDiv").style.display = "none";
+      document.getElementById("rpsGameDiv").style.display = "block";
+      rpsPlayer1 = player1;
+      rpsPlayer2 = player2;
+      rpsGameId = gameId;
+      rpsGameRef = db.ref("games/rps/" + gameId);
+      rpsGameRef.once("value", function(snapshot) {
+         if (!snapshot.exists()) {
+            rpsGameRef.set({
+               players: {
+                   [player1]: { choice: "" },
+                   [player2]: { choice: "" }
+               },
+               status: "waiting"
+            });
+         }
+         initRPSGame(gameId, player1, player2);
+      });
+      db.ref("rpsChallenges/" + gameId).remove();
+    }
+
+    // Modified initRPSGame: once the game is finished, automatically return to chat and reset the RPS game
+    function initRPSGame(gameId, player1, player2) {
+      isRPSHost = (currentUsername.toLowerCase() === player1.toLowerCase());
+      rpsGameRef.on("value", function(snapshot) {
+         let gameData = snapshot.val();
+         if (!gameData) return;
+         let choice1 = gameData.players[player1].choice;
+         let choice2 = gameData.players[player2].choice;
+         // If both players have made their choices, compute the result
+         if (choice1 !== "" && choice2 !== "" && gameData.status === "waiting") {
+            let emoji1 = getEmoji(choice1);
+            let emoji2 = getEmoji(choice2);
+            let resultText = "";
+            if (choice1 === choice2) {
+              resultText = "It's a tie! Both chose " + choice1 + " " + emoji1 + ".";
+            } else if (
+              (choice1 === "rock" && choice2 === "scissors") ||
+              (choice1 === "scissors" && choice2 === "paper") ||
+              (choice1 === "paper" && choice2 === "rock")
+            ) {
+              resultText = player1 + " wins! " + choice1 + " " + emoji1 + " beats " + choice2 + " " + emoji2 + ".";
+            } else {
+              resultText = player2 + " wins! " + choice2 + " " + emoji2 + " beats " + choice1 + " " + emoji1 + ".";
+            }
+            rpsGameRef.update({ status: "finished", result: resultText });
+         }
+         if (gameData.status === "finished") {
+            document.getElementById("rpsStatus").textContent = "Game Over";
+            document.getElementById("rpsResult").textContent = gameData.result;
+            document.getElementById("rpsChoices").style.display = "none";
+            // Auto-return to chat after 3 seconds
+            if (!rpsGameEndTimeout) {
+              rpsGameEndTimeout = setTimeout(function() {
+                document.getElementById("rpsGameDiv").style.display = "none";
+                document.getElementById("chatDiv").style.display = "block";
+                // Auto-focus the main message input when returning to chat
+                document.getElementById("messageInput").focus();
+                resetRPSGame();
+                rpsGameEndTimeout = null;
+              }, 3000);
+            }
+         }
+      });
+    }
+
+    function makeRPSChoice(choice) {
+      rpsGameRef.once("value", function(snapshot) {
+         let gameData = snapshot.val();
+         if (gameData.status !== "waiting") return;
+         // Only update if the current player's choice is empty
+         if (gameData.players[currentUsername].choice === "") {
+            rpsGameRef.child("players/" + currentUsername + "/choice").set(choice);
+            document.getElementById("rpsStatus").textContent = "Waiting for opponent's choice...";
+         }
+      });
+    }
+
+    function resetRPSGame() {
+      if (!rpsGameRef) return;
+      // Reset game state so both players can choose again
+      rpsGameRef.set({
+         players: {
+            [rpsPlayer1]: { choice: "" },
+            [rpsPlayer2]: { choice: "" }
+         },
+         status: "waiting"
+      });
+      document.getElementById("rpsStatus").textContent = "Make your choice:";
+      document.getElementById("rpsResult").textContent = "";
+      document.getElementById("rpsChoices").style.display = "block";
+      document.getElementById("rpsPlayAgainButton").style.display = "none";
     }
 
     /* =====================================================
@@ -1378,10 +1701,12 @@
     function isCurrentUserOP() {
       return currentUsername && OP_LIST.includes(currentUsername.toLowerCase());
     }
+
     function checkIfOP() {
       const opSection = document.getElementById("opSection");
       opSection.style.display = isCurrentUserOP() ? "block" : "none";
     }
+
     function handleOpCommand(cmd, target) {
       if (!target) { alert("Usage: " + cmd + " [username]"); return; }
       if (cmd === "/mute") {
@@ -1392,6 +1717,7 @@
         alert(`User "${target}" has been unmuted.`);
       }
     }
+
     async function terminateAccount(target) {
       const confirmTerm = confirm(`Are you sure you want to TERMINATE the account "${target}"? This is permanent!`);
       if (!confirmTerm) return;
@@ -1432,6 +1758,7 @@
         alert("Error terminating account: " + err);
       }
     }
+
     async function clearChatForEveryone() {
       const confirmClear = confirm("Are you sure you want to clear the public chat AND all broadcasts for EVERYONE?");
       if (!confirmClear) return;
@@ -1441,6 +1768,7 @@
       publicMessages = [];
       alert("All messages and broadcasts cleared for everyone.");
     }
+
     function sendBroadcast() {
       if (!isCurrentUserOP()) { alert("You are not an OP!"); return; }
       const broadcastInput = document.getElementById("opBroadcastInput");
@@ -1454,6 +1782,7 @@
       broadcastInput.value = "";
       alert("Broadcast sent!");
     }
+
     function setOpColor() {
       if (!isCurrentUserOP()) { alert("You are not an OP!"); return; }
       const colorPicker = document.getElementById("opColorPicker");
@@ -1461,11 +1790,13 @@
       db.ref("accountColors/" + currentUsername).set(chosenColor);
       alert("Your chat color has been updated to: " + chosenColor);
     }
+
     function clearAllTyping() {
       if (!isCurrentUserOP()) { alert("You are not an OP!"); return; }
       db.ref("typing").remove();
       alert("All 'typing' statuses have been cleared for everyone.");
     }
+
     /* =====================================================
        Settings Navigation
        ===================================================== */
@@ -1473,10 +1804,12 @@
       document.getElementById("loginDiv").style.display = "none";
       document.getElementById("settingsDiv").style.display = "block";
     }
+
     function goBack() {
       document.getElementById("settingsDiv").style.display = "none";
       document.getElementById("loginDiv").style.display = "block";
     }
+
     /* =====================================================
        Dark Mode Toggle
        ===================================================== */
@@ -1485,6 +1818,7 @@
       const isDark = document.body.classList.contains("dark-mode");
       localStorage.setItem("darkModeEnabled", isDark);
     }
+
     /* =====================================================
        GUI Size
        ===================================================== */
@@ -1494,10 +1828,12 @@
       localStorage.setItem("uiScale", scale);
       updateGuiSizeDisplay();
     }
+
     function updateGuiSizeDisplay() {
       const val = document.getElementById("guiSizeRange").value;
       document.getElementById("guiSizeValue").textContent = `Current Scale: ${val}x`;
     }
+
     /* =====================================================
        Custom Font
        ===================================================== */
@@ -1511,6 +1847,7 @@
       document.body.classList.add(selectedFont);
       localStorage.setItem("selectedFont", selectedFont);
     }
+
     /* =====================================================
        Desktop Notifications
        ===================================================== */
@@ -1519,6 +1856,7 @@
       localStorage.setItem("notificationsEnabled", isChecked);
       if (isChecked) { requestNotificationPermission(); }
     }
+
     function requestNotificationPermission() {
       if (!("Notification" in window)) {
         alert("This browser does not support desktop notifications.");
@@ -1534,6 +1872,7 @@
         });
       }
     }
+
     function showDMNotification(user, text) {
       const isNotificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
       if (!("Notification" in window) || !isNotificationsEnabled) return;
@@ -1544,6 +1883,7 @@
         });
       }
     }
+
     /* =====================================================
        Member List (Presence)
        ===================================================== */
@@ -1557,13 +1897,19 @@
       });
       myPresenceRef.onDisconnect().remove();
     }
+
+    // Update the member list but skip any username that is in the OP_LIST
     function updateMemberList(members) {
       const uniqueMembers = {};
+      let totalCount = 0;
       members.forEach(member => {
         if (!member || member.trim() === "" || member.toLowerCase().includes("anoynumus")) {
           member = "Anonymous Player";
         }
+        // If this member is in the OP list, do not include them.
+        if (OP_LIST.includes(member.toLowerCase())) return;
         uniqueMembers[member] = (uniqueMembers[member] || 0) + 1;
+        totalCount += 1;
       });
       const memberListUl = document.getElementById("memberList");
       memberListUl.innerHTML = "";
@@ -1573,7 +1919,12 @@
         li.textContent = member + (count > 1 ? " (" + count + ")" : "");
         memberListUl.appendChild(li);
       }
+      const memberCountHeader = document.getElementById("memberCountHeader");
+      if(memberCountHeader) {
+        memberCountHeader.textContent = "Members Online (" + totalCount + ")";
+      }
     }
+
     /* =====================================================
        NEW SETTINGS FEATURES
        ===================================================== */
