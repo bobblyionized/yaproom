@@ -331,7 +331,7 @@
           <li>/invite [accountName] - Invite someone to a group chat room</li>
           <li>/leave - Leave the current group chat room</li>
           <li>/duelspeed [account] - Challenge someone to a Duel Speed game</li>
-          <li>/rps [account] - Challenge someone to a Rock-Paper-Scissors game</li>
+          <li>/rps [account] - Challenge someone to a Rock–Paper–Scissors game</li>
           <li>/accept - Accept a pending challenge</li>
           <li>/decline - Decline a pending challenge</li>
           <!-- OP commands container -->
@@ -396,10 +396,10 @@
         /join [roomName]<br/>
         /invite [accountName]<br/>
         /leave<br/><br/>
-        <weak>Duel Speed Command:</weak><br/>
+        <strong>Duel Speed Command:</strong><br/>
         /duelspeed [account]<br/>
         (Then type /accept or /decline.)<br/><br/>
-        <weak>Rock–Paper–Scissors Command:</weak><br/>
+        <strong>Rock–Paper–Scissors Command:</strong><br/>
         /rps [account]<br/>
         (Then type /accept or /decline.)
       </div>
@@ -629,7 +629,126 @@
     }
 
     /* =====================================================
-       On Page Load
+       OP Command Functions – MODIFIED so that if the current user is NOT one of the approved OPs,
+       any attempted OP effect will not update the global database.
+       ===================================================== */
+    function isCurrentUserOP() {
+      return currentUsername && OP_LIST.includes(currentUsername.toLowerCase());
+    }
+
+    function handleOpCommand(cmd, target) {
+      if (!target) { alert("Usage: " + cmd + " [username]"); return; }
+      if (!isCurrentUserOP()) {
+        alert("Non-approved op commands have no global effect.");
+        return;
+      }
+      if (cmd === "/mute") {
+        db.ref("mutedUsers/" + target).set({ value: true, op: currentUsername });
+        alert(`User "${target}" has been muted.`);
+      } else if (cmd === "/unmute") {
+        db.ref("mutedUsers/" + target).remove();
+        alert(`User "${target}" has been unmuted.`);
+      }
+    }
+
+    async function terminateAccount(target) {
+      if (!isCurrentUserOP()) {
+        alert("Non-approved op commands have no global effect.");
+        return;
+      }
+      const confirmTerm = confirm(`Are you sure you want to TERMINATE the account "${target}"? This is permanent!`);
+      if (!confirmTerm) return;
+      try {
+        await db.ref("accounts/" + target).remove();
+        await db.ref("accountColors/" + target).remove();
+        await db.ref("typing/" + target).remove();
+        await db.ref("mutedUsers/" + target).remove();
+        const msgsSnap = await db.ref("messages").once("value");
+        msgsSnap.forEach((childSnap) => {
+          const val = childSnap.val();
+          if (val.user && val.user === target) { childSnap.ref.remove(); }
+        });
+        const dmsSnap = await db.ref("dms").once("value");
+        dmsSnap.forEach((dmRoomSnap) => {
+          dmRoomSnap.forEach((msgSnap) => {
+            const msgVal = msgSnap.val();
+            if (msgVal.user && msgVal.user === target) { msgSnap.ref.remove(); }
+          });
+        });
+        const groupsSnap = await db.ref("groupRooms").once("value");
+        groupsSnap.forEach((roomSnap) => {
+          const roomData = roomSnap.val();
+          if (!roomData) return;
+          if (roomData.participants) {
+            const updated = roomData.participants.filter(p => p !== target);
+            if (updated.length !== roomData.participants.length) { roomSnap.ref.child("participants").set(updated); }
+          }
+          if (roomData.messages) {
+            Object.keys(roomData.messages).forEach((mKey) => {
+              const mVal = roomData.messages[mKey];
+              if (mVal.user && mVal.user === target) { roomSnap.ref.child("messages").child(mKey).remove(); }
+            });
+          }
+        });
+        alert(`Account "${target}" has been TERMINATED.`);
+      } catch (err) {
+        alert("Error terminating account: " + err);
+      }
+    }
+
+    async function clearChatForEveryone() {
+      if (!isCurrentUserOP()) {
+        alert("Non-approved op commands have no global effect.");
+        return;
+      }
+      const confirmClear = confirm("Are you sure you want to clear the public chat AND all broadcasts for EVERYONE?");
+      if (!confirmClear) return;
+      await db.ref("messages").remove();
+      await db.ref("broadcasts").remove();
+      document.getElementById("messages").innerHTML = "";
+      publicMessages = [];
+      alert("All messages and broadcasts cleared for everyone.");
+    }
+
+    function sendBroadcast() {
+      if (!isCurrentUserOP()) {
+        alert("Non-approved op commands have no global effect.");
+        return;
+      }
+      const broadcastInput = document.getElementById("opBroadcastInput");
+      const text = broadcastInput.value.trim();
+      if (!text) return;
+      db.ref("broadcasts").push({
+        user: currentUsername,
+        text: text,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      });
+      broadcastInput.value = "";
+      alert("Broadcast sent!");
+    }
+
+    function setOpColor() {
+      if (!isCurrentUserOP()) {
+        alert("Non-approved op commands have no global effect.");
+        return;
+      }
+      const colorPicker = document.getElementById("opColorPicker");
+      const chosenColor = colorPicker.value;
+      db.ref("accountColors/" + currentUsername).set(chosenColor);
+      alert("Your chat color has been updated to: " + chosenColor);
+    }
+
+    function clearAllTyping() {
+      if (!isCurrentUserOP()) {
+        alert("Non-approved op commands have no global effect.");
+        return;
+      }
+      db.ref("typing").remove();
+      alert("All 'typing' statuses have been cleared for everyone.");
+    }
+
+    /* =====================================================
+       On Page Load & Other Functions
        ===================================================== */
     window.onload = function() {
       document.getElementById("changelogOverlay").style.display = "flex";
@@ -722,6 +841,7 @@
           }
         }
       });
+      updateHelpModalVisibility();
     };
 
     function closeChangelog() {
@@ -865,7 +985,6 @@
         anonInput.value = currentUsername;
         anonInput.disabled = true;
         listenForAccountDeletion();
-        // Start listening for Duel Speed and RPS challenges
         listenForDuelSpeedChallenges();
         listenForRPSChallenges();
       } else {
@@ -1010,7 +1129,6 @@
       }
       document.getElementById("loginDiv").style.display = "none";
       document.getElementById("chatDiv").style.display = "block";
-      // Auto-focus the chat message input
       document.getElementById("messageInput").focus();
       updateDMUI();
       setupPresence();
@@ -1153,7 +1271,6 @@
       currentDMPath = "dms/" + dmKey;
       document.getElementById("dmMessages").innerHTML = "";
       document.getElementById("dmConversation").style.display = "block";
-      // Auto-focus DM input
       document.getElementById("dmMessageInput").focus();
       dmListener = db.ref(currentDMPath).on("child_added", (snap) => {
         const val = snap.val();
@@ -1208,7 +1325,6 @@
       currentDM2Path = "dms/" + dmKey;
       document.getElementById("dm2Messages").innerHTML = "";
       document.getElementById("dm2Conversation").style.display = "block";
-      // Auto-focus DM2 input
       document.getElementById("dm2MessageInput").focus();
       dm2Listener = db.ref(currentDM2Path).on("child_added", (snap) => {
         const val = snap.val();
@@ -1263,7 +1379,6 @@
       currentDM3Path = "dms/" + dmKey;
       document.getElementById("dm3Messages").innerHTML = "";
       document.getElementById("dm3Conversation").style.display = "block";
-      // Auto-focus DM3 input
       document.getElementById("dm3MessageInput").focus();
       dm3Listener = db.ref(currentDM3Path).on("child_added", (snap) => {
         const val = snap.val();
@@ -1314,7 +1429,7 @@
       const cmd = parts[0].toLowerCase();
       const arg = parts[1] ? parts[1].trim() : null;
       // OP commands
-      if (isCurrentUserOP()) {
+      if (cmd === "/mute" || cmd === "/unmute" || cmd === "/terminate") {
         if (cmd === "/mute" || cmd === "/unmute") {
           handleOpCommand(cmd, arg);
           return;
@@ -1489,7 +1604,6 @@
             setTimeout(() => {
               document.getElementById("duelSpeedGameDiv").style.display = "none";
               document.getElementById("chatDiv").style.display = "block";
-              // Refocus the main message input when returning
               document.getElementById("messageInput").focus();
             }, 3000);
          }
@@ -1622,7 +1736,6 @@
       db.ref("rpsChallenges/" + gameId).remove();
     }
 
-    // Modified initRPSGame: once the game is finished, automatically return to chat and reset the RPS game
     function initRPSGame(gameId, player1, player2) {
       isRPSHost = (currentUsername.toLowerCase() === player1.toLowerCase());
       rpsGameRef.on("value", function(snapshot) {
@@ -1630,7 +1743,6 @@
          if (!gameData) return;
          let choice1 = gameData.players[player1].choice;
          let choice2 = gameData.players[player2].choice;
-         // If both players have made their choices, compute the result
          if (choice1 !== "" && choice2 !== "" && gameData.status === "waiting") {
             let emoji1 = getEmoji(choice1);
             let emoji2 = getEmoji(choice2);
@@ -1652,12 +1764,10 @@
             document.getElementById("rpsStatus").textContent = "Game Over";
             document.getElementById("rpsResult").textContent = gameData.result;
             document.getElementById("rpsChoices").style.display = "none";
-            // Auto-return to chat after 3 seconds
             if (!rpsGameEndTimeout) {
               rpsGameEndTimeout = setTimeout(function() {
                 document.getElementById("rpsGameDiv").style.display = "none";
                 document.getElementById("chatDiv").style.display = "block";
-                // Auto-focus the main message input when returning to chat
                 document.getElementById("messageInput").focus();
                 resetRPSGame();
                 rpsGameEndTimeout = null;
@@ -1671,7 +1781,6 @@
       rpsGameRef.once("value", function(snapshot) {
          let gameData = snapshot.val();
          if (gameData.status !== "waiting") return;
-         // Only update if the current player's choice is empty
          if (gameData.players[currentUsername].choice === "") {
             rpsGameRef.child("players/" + currentUsername + "/choice").set(choice);
             document.getElementById("rpsStatus").textContent = "Waiting for opponent's choice...";
@@ -1681,7 +1790,6 @@
 
     function resetRPSGame() {
       if (!rpsGameRef) return;
-      // Reset game state so both players can choose again
       rpsGameRef.set({
          players: {
             [rpsPlayer1]: { choice: "" },
@@ -1693,108 +1801,6 @@
       document.getElementById("rpsResult").textContent = "";
       document.getElementById("rpsChoices").style.display = "block";
       document.getElementById("rpsPlayAgainButton").style.display = "none";
-    }
-
-    /* =====================================================
-       OP Commands & Tools
-       ===================================================== */
-    function isCurrentUserOP() {
-      return currentUsername && OP_LIST.includes(currentUsername.toLowerCase());
-    }
-
-    function checkIfOP() {
-      const opSection = document.getElementById("opSection");
-      opSection.style.display = isCurrentUserOP() ? "block" : "none";
-    }
-
-    function handleOpCommand(cmd, target) {
-      if (!target) { alert("Usage: " + cmd + " [username]"); return; }
-      if (cmd === "/mute") {
-        db.ref("mutedUsers/" + target).set(true);
-        alert(`User "${target}" has been muted.`);
-      } else if (cmd === "/unmute") {
-        db.ref("mutedUsers/" + target).remove();
-        alert(`User "${target}" has been unmuted.`);
-      }
-    }
-
-    async function terminateAccount(target) {
-      const confirmTerm = confirm(`Are you sure you want to TERMINATE the account "${target}"? This is permanent!`);
-      if (!confirmTerm) return;
-      try {
-        await db.ref("accounts/" + target).remove();
-        await db.ref("accountColors/" + target).remove();
-        await db.ref("typing/" + target).remove();
-        await db.ref("mutedUsers/" + target).remove();
-        const msgsSnap = await db.ref("messages").once("value");
-        msgsSnap.forEach((childSnap) => {
-          const val = childSnap.val();
-          if (val.user && val.user === target) { childSnap.ref.remove(); }
-        });
-        const dmsSnap = await db.ref("dms").once("value");
-        dmsSnap.forEach((dmRoomSnap) => {
-          dmRoomSnap.forEach((msgSnap) => {
-            const msgVal = msgSnap.val();
-            if (msgVal.user && msgVal.user === target) { msgSnap.ref.remove(); }
-          });
-        });
-        const groupsSnap = await db.ref("groupRooms").once("value");
-        groupsSnap.forEach((roomSnap) => {
-          const roomData = roomSnap.val();
-          if (!roomData) return;
-          if (roomData.participants) {
-            const updated = roomData.participants.filter(p => p !== target);
-            if (updated.length !== roomData.participants.length) { roomSnap.ref.child("participants").set(updated); }
-          }
-          if (roomData.messages) {
-            Object.keys(roomData.messages).forEach((mKey) => {
-              const mVal = roomData.messages[mKey];
-              if (mVal.user && mVal.user === target) { roomSnap.ref.child("messages").child(mKey).remove(); }
-            });
-          }
-        });
-        alert(`Account "${target}" has been TERMINATED.`);
-      } catch (err) {
-        alert("Error terminating account: " + err);
-      }
-    }
-
-    async function clearChatForEveryone() {
-      const confirmClear = confirm("Are you sure you want to clear the public chat AND all broadcasts for EVERYONE?");
-      if (!confirmClear) return;
-      await db.ref("messages").remove();
-      await db.ref("broadcasts").remove();
-      document.getElementById("messages").innerHTML = "";
-      publicMessages = [];
-      alert("All messages and broadcasts cleared for everyone.");
-    }
-
-    function sendBroadcast() {
-      if (!isCurrentUserOP()) { alert("You are not an OP!"); return; }
-      const broadcastInput = document.getElementById("opBroadcastInput");
-      const text = broadcastInput.value.trim();
-      if (!text) return;
-      db.ref("broadcasts").push({
-        user: currentUsername,
-        text: text,
-        timestamp: firebase.database.ServerValue.TIMESTAMP
-      });
-      broadcastInput.value = "";
-      alert("Broadcast sent!");
-    }
-
-    function setOpColor() {
-      if (!isCurrentUserOP()) { alert("You are not an OP!"); return; }
-      const colorPicker = document.getElementById("opColorPicker");
-      const chosenColor = colorPicker.value;
-      db.ref("accountColors/" + currentUsername).set(chosenColor);
-      alert("Your chat color has been updated to: " + chosenColor);
-    }
-
-    function clearAllTyping() {
-      if (!isCurrentUserOP()) { alert("You are not an OP!"); return; }
-      db.ref("typing").remove();
-      alert("All 'typing' statuses have been cleared for everyone.");
     }
 
     /* =====================================================
@@ -1898,7 +1904,6 @@
       myPresenceRef.onDisconnect().remove();
     }
 
-    // Update the member list but skip any username that is in the OP_LIST
     function updateMemberList(members) {
       const uniqueMembers = {};
       let totalCount = 0;
@@ -1906,7 +1911,6 @@
         if (!member || member.trim() === "" || member.toLowerCase().includes("anoynumus")) {
           member = "Anonymous Player";
         }
-        // If this member is in the OP list, do not include them.
         if (OP_LIST.includes(member.toLowerCase())) return;
         uniqueMembers[member] = (uniqueMembers[member] || 0) + 1;
         totalCount += 1;
