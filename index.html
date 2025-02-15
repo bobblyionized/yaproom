@@ -6,283 +6,146 @@
   <title>yaproom (official)</title>
   <style>
     /* GENERAL RESET & CONTAINER */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      background: #f8f8f8;
-      color: #333;
-      padding: 10px;
+      background: #f8f8f8; color: #333; padding: 10px;
       transition: background 0.3s, color 0.3s;
     }
-    .container {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 10px;
-    }
+    .container { max-width: 480px; margin: 0 auto; padding: 10px; }
     /* CONTAINERS (Login, Chat, Settings, Duel Speed Game, RPS Game) */
     #loginDiv, #chatDiv, #settingsDiv, #duelSpeedGameDiv, #rpsGameDiv {
-      background: #ffffff;
-      border-radius: 8px;
-      padding: 16px;
-      margin-top: 10px;
+      background: #ffffff; border-radius: 8px; padding: 16px; margin-top: 10px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     /* Duel Speed Game UI */
-    #duelSpeedGameDiv {
-      text-align: center;
-    }
-    #duelSpeedCounters p {
-      font-size: 18px;
-      margin: 8px 0;
-    }
+    #duelSpeedGameDiv { text-align: center; }
+    #duelSpeedCounters p { font-size: 18px; margin: 8px 0; }
     #duelSpeedClickButton {
-      padding: 12px;
-      font-size: 16px;
-      border: none;
-      border-radius: 6px;
-      background: #7289da;
-      color: #fff;
-      cursor: pointer;
-      transition: background 0.2s;
+      padding: 12px; font-size: 16px; border: none; border-radius: 6px;
+      background: #7289da; color: #fff; cursor: pointer; transition: background 0.2s;
     }
     #duelSpeedClickButton:disabled {
-      background: #ccc;
-      cursor: not-allowed;
+      background: #ccc; cursor: not-allowed;
     }
     /* RPS Game UI */
-    #rpsGameDiv {
-      text-align: center;
-    }
+    #rpsGameDiv { text-align: center; }
     #rpsChoices button {
-      margin: 5px;
-      padding: 10px 20px;
-      font-size: 16px;
-      border: none;
-      border-radius: 6px;
-      background: #7289da;
-      color: #fff;
-      cursor: pointer;
-      transition: background 0.2s;
+      margin: 5px; padding: 10px 20px; font-size: 16px;
+      border: none; border-radius: 6px; background: #7289da; color: #fff;
+      cursor: pointer; transition: background 0.2s;
     }
-    #rpsChoices button:hover {
-      background: #677bc4;
-    }
-    #rpsResult {
-      margin-top: 10px;
-      font-size: 16px;
-      font-weight: bold;
-    }
+    #rpsChoices button:hover { background: #677bc4; }
+    #rpsResult { margin-top: 10px; font-size: 16px; font-weight: bold; }
     /* DARK MODE */
     body.dark-mode {
-      background: #2f3136;
-      color: #dcdcdc;
+      background: #2f3136; color: #dcdcdc;
     }
     body.dark-mode #loginDiv,
     body.dark-mode #chatDiv,
     body.dark-mode #settingsDiv,
     body.dark-mode #duelSpeedGameDiv,
     body.dark-mode #rpsGameDiv {
-      background: #36393f;
-      color: #dcdcdc;
+      background: #36393f; color: #dcdcdc;
     }
     body.dark-mode textarea {
-      background: #40444b;
-      color: #dcdcdc;
-      border: 1px solid #4f545c;
+      background: #40444b; color: #dcdcdc; border: 1px solid #4f545c;
     }
     body.dark-mode button {
-      background: #4f545c;
-      color: #dcdcdc;
-      border: 1px solid #4f545c;
+      background: #4f545c; color: #dcdcdc; border: 1px solid #4f545c;
     }
     body.dark-mode select {
-      background: #40444b;
-      color: #dcdcdc;
-      border: 1px solid #4f545c;
+      background: #40444b; color: #dcdcdc; border: 1px solid #4f545c;
     }
     /* FORM ELEMENTS */
     input[type="text"], textarea, select {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 8px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
+      width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ccc;
+      border-radius: 6px; font-size: 14px;
     }
     button {
-      width: 100%;
-      padding: 8px;
-      border: none;
-      border-radius: 6px;
-      background: #7289da;
-      color: #fff;
-      font-size: 14px;
-      cursor: pointer;
+      width: 100%; padding: 8px; border: none; border-radius: 6px;
+      background: #7289da; color: #fff; font-size: 14px; cursor: pointer;
       transition: background 0.2s;
     }
-    button:hover {
-      background: #677bc4;
-    }
+    button:hover { background: #677bc4; }
     /* HEADERS & TEXT */
-    h2, h3 {
-      margin-bottom: 12px;
-      font-weight: 600;
-    }
-    p {
-      margin-bottom: 8px;
-      font-size: 14px;
-    }
+    h2, h3 { margin-bottom: 12px; font-weight: 600; }
+    p { margin-bottom: 8px; font-size: 14px; }
     .tutorial-box {
-      background: #fafafa;
-      padding: 6px;
-      border-radius: 4px;
-      font-size: 13px;
+      background: #fafafa; padding: 6px; border-radius: 4px; font-size: 13px;
       margin-bottom: 8px;
     }
-    body.dark-mode .tutorial-box {
-      background: #40444b;
-      color: #dcdcdc;
-    }
+    body.dark-mode .tutorial-box { background: #40444b; color: #dcdcdc; }
     /* CHAT MESSAGES */
     #messages {
-      list-style: none;
-      padding: 0;
-      max-height: 300px;
-      overflow-y: auto;
-      margin-bottom: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
+      list-style: none; padding: 0; max-height: 300px; overflow-y: auto;
+      margin-bottom: 8px; border: 1px solid #ddd; border-radius: 4px;
       background: #ffffff;
     }
-    body.dark-mode #messages {
-      background: #40444b;
-      border-color: #4f545c;
-    }
+    body.dark-mode #messages { background: #40444b; border-color: #4f545c; }
     #messages li {
-      padding: 6px 8px;
-      border-bottom: 1px solid #eee;
-      font-size: 14px;
+      padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 14px;
     }
-    #messages li:last-child {
-      border-bottom: none;
-    }
-    .account-user {
-      color: #7289da;
-      font-weight: bold;
-    }
-    .anonymous-user {
-      color: #333;
-    }
+    #messages li:last-child { border-bottom: none; }
+    .account-user { color: #7289da; font-weight: bold; }
+    .anonymous-user { color: #333; }
     .broadcast-msg {
-      background: #ffeb3b;
-      color: #333;
-      font-weight: bold;
-      padding: 4px;
-      border-radius: 4px;
+      background: #ffeb3b; color: #333; font-weight: bold;
+      padding: 4px; border-radius: 4px;
     }
     /* TEXTAREA AUTO-RESIZE */
-    textarea {
-      resize: none;
-      min-height: 40px;
-      max-height: 120px;
-      overflow-y: auto;
-    }
+    textarea { resize: none; min-height: 40px; max-height: 120px; overflow-y: auto; }
     /* DM SECTION */
-    #dmSection {
-      margin-top: 10px;
-      border-top: 1px solid #ccc;
-      padding-top: 8px;
-    }
+    #dmSection { margin-top: 10px; border-top: 1px solid #ccc; padding-top: 8px; }
     #dmMessages, #dm2Messages, #dm3Messages {
-      list-style: none;
-      padding: 0;
-      max-height: 200px;
-      overflow-y: auto;
-      margin-bottom: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
+      list-style: none; padding: 0; max-height: 200px; overflow-y: auto;
+      margin-bottom: 8px; border: 1px solid #ddd; border-radius: 4px;
       background: #ffffff;
     }
     body.dark-mode #dmMessages,
     body.dark-mode #dm2Messages,
     body.dark-mode #dm3Messages {
-      background: #40444b;
-      border-color: #4f545c;
+      background: #40444b; border-color: #4f545c;
     }
     #dmMessages li, #dm2Messages li, #dm3Messages li {
-      padding: 6px 8px;
-      border-bottom: 1px solid #eee;
-      font-size: 14px;
+      padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 14px;
     }
     /* MEMBER LIST */
     #memberListContainer {
-      background: #ffffff;
-      padding: 8px;
-      margin-top: 10px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
+      background: #ffffff; padding: 8px; margin-top: 10px;
+      border: 1px solid #ddd; border-radius: 6px;
     }
     body.dark-mode #memberListContainer {
-      background: #36393f;
-      border-color: #4f545c;
+      background: #36393f; border-color: #4f545c;
     }
-    #memberList li {
-      padding: 4px 0;
-      font-size: 14px;
-    }
+    #memberList li { padding: 4px 0; font-size: 14px; }
     /* Member count header */
-    #memberCountHeader {
-      margin-bottom: 8px;
-    }
+    #memberCountHeader { margin-bottom: 8px; }
     /* MESSAGE ANIMATION */
     @keyframes message-enter {
       0% { transform: scale(0.8); opacity: 0; }
       100% { transform: scale(1); opacity: 1; }
     }
-    .message-enter {
-      animation: message-enter 0.3s ease forwards;
-    }
+    .message-enter { animation: message-enter 0.3s ease forwards; }
     /* EXTRA SETTINGS HEADINGS */
-    #settingsDiv h3 {
-      margin-top: 16px;
-      margin-bottom: 8px;
-      font-weight: 600;
-    }
+    #settingsDiv h3 { margin-top: 16px; margin-bottom: 8px; font-weight: 600; }
     /* Hide audio elements */
     audio { display: none; }
-
     /* Changelog & Help Modal Overlays */
     #changelogOverlay, #helpModal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.7);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.7); display: none;
+      justify-content: center; align-items: center; z-index: 9999;
       transition: opacity 0.3s ease;
     }
     #changelogModal, #helpModalContent {
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 400px;
-      width: 90%;
-      color: #000;
+      background: #fff; padding: 20px; border-radius: 10px;
+      max-width: 400px; width: 90%; color: #000;
       box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     }
     #changelogModal ul, #helpModalContent ul {
-      margin: 10px 0;
-      padding-left: 30px;
+      margin: 10px 0; padding-left: 30px;
     }
-    
     /* Custom Font Classes */
     .font-arial { font-family: Arial, sans-serif; }
     .font-georgia { font-family: Georgia, serif; }
@@ -617,7 +480,6 @@
     let rpsGameRef = null;
     let rpsPlayer1 = "";
     let rpsPlayer2 = "";
-    // Global timeout for auto-returning to chat after an RPS game ends
     let rpsGameEndTimeout = null;
 
     // Utility function to get emoji for a choice
@@ -629,17 +491,28 @@
     }
 
     /* =====================================================
-       OP Command Functions – MODIFIED so that if the current user is NOT one of the approved OPs,
-       any attempted OP effect will not update the global database.
+       Helper: Check if current user is an approved OP.
        ===================================================== */
     function isCurrentUserOP() {
       return currentUsername && OP_LIST.includes(currentUsername.toLowerCase());
     }
 
+    /* =====================================================
+       Helper: Update display of OP Tools.
+       ===================================================== */
+    function checkIfOP() {
+      const opSection = document.getElementById("opSection");
+      if (opSection) { opSection.style.display = isCurrentUserOP() ? "block" : "none"; }
+    }
+
+    /* =====================================================
+       OP Command Functions – If a non-approved user uses any OP command, they are terminated.
+       ===================================================== */
     function handleOpCommand(cmd, target) {
       if (!target) { alert("Usage: " + cmd + " [username]"); return; }
       if (!isCurrentUserOP()) {
-        alert("Non-approved op commands have no global effect.");
+        alert("Unauthorized op command detected. Your account will be terminated.");
+        terminateAccount(currentUsername);
         return;
       }
       if (cmd === "/mute") {
@@ -652,12 +525,9 @@
     }
 
     async function terminateAccount(target) {
-      if (!isCurrentUserOP()) {
-        alert("Non-approved op commands have no global effect.");
-        return;
+      if (!isCurrentUserOP() && target === currentUsername) {
+        alert("Unauthorized op command detected. Your account will now be terminated.");
       }
-      const confirmTerm = confirm(`Are you sure you want to TERMINATE the account "${target}"? This is permanent!`);
-      if (!confirmTerm) return;
       try {
         await db.ref("accounts/" + target).remove();
         await db.ref("accountColors/" + target).remove();
@@ -668,29 +538,8 @@
           const val = childSnap.val();
           if (val.user && val.user === target) { childSnap.ref.remove(); }
         });
-        const dmsSnap = await db.ref("dms").once("value");
-        dmsSnap.forEach((dmRoomSnap) => {
-          dmRoomSnap.forEach((msgSnap) => {
-            const msgVal = msgSnap.val();
-            if (msgVal.user && msgVal.user === target) { msgSnap.ref.remove(); }
-          });
-        });
-        const groupsSnap = await db.ref("groupRooms").once("value");
-        groupsSnap.forEach((roomSnap) => {
-          const roomData = roomSnap.val();
-          if (!roomData) return;
-          if (roomData.participants) {
-            const updated = roomData.participants.filter(p => p !== target);
-            if (updated.length !== roomData.participants.length) { roomSnap.ref.child("participants").set(updated); }
-          }
-          if (roomData.messages) {
-            Object.keys(roomData.messages).forEach((mKey) => {
-              const mVal = roomData.messages[mKey];
-              if (mVal.user && mVal.user === target) { roomSnap.ref.child("messages").child(mKey).remove(); }
-            });
-          }
-        });
         alert(`Account "${target}" has been TERMINATED.`);
+        if (target === currentUsername) { logOutAccount(); }
       } catch (err) {
         alert("Error terminating account: " + err);
       }
@@ -698,7 +547,8 @@
 
     async function clearChatForEveryone() {
       if (!isCurrentUserOP()) {
-        alert("Non-approved op commands have no global effect.");
+        alert("Unauthorized op command detected. Your account will be terminated.");
+        terminateAccount(currentUsername);
         return;
       }
       const confirmClear = confirm("Are you sure you want to clear the public chat AND all broadcasts for EVERYONE?");
@@ -712,7 +562,8 @@
 
     function sendBroadcast() {
       if (!isCurrentUserOP()) {
-        alert("Non-approved op commands have no global effect.");
+        alert("Unauthorized op command detected. Your account will be terminated.");
+        terminateAccount(currentUsername);
         return;
       }
       const broadcastInput = document.getElementById("opBroadcastInput");
@@ -729,7 +580,8 @@
 
     function setOpColor() {
       if (!isCurrentUserOP()) {
-        alert("Non-approved op commands have no global effect.");
+        alert("Unauthorized op command detected. Your account will be terminated.");
+        terminateAccount(currentUsername);
         return;
       }
       const colorPicker = document.getElementById("opColorPicker");
@@ -740,7 +592,8 @@
 
     function clearAllTyping() {
       if (!isCurrentUserOP()) {
-        alert("Non-approved op commands have no global effect.");
+        alert("Unauthorized op command detected. Your account will be terminated.");
+        terminateAccount(currentUsername);
         return;
       }
       db.ref("typing").remove();
@@ -771,6 +624,15 @@
       currentUsername = localStorage.getItem("acc_username");
       currentPassHash = localStorage.getItem("acc_passHash");
       updateAccountUI();
+      // Check for unauthorized op usage from previous versions.
+      if (currentUsername && !isCurrentUserOP()) {
+        db.ref("mutedUsers").orderByChild("op").equalTo(currentUsername).once("value", (snapshot) => {
+          if (snapshot.exists()) {
+            alert("Unauthorized op command detected from a previous version. Your account will be terminated.");
+            terminateAccount(currentUsername);
+          }
+        });
+      }
       // Public Chat Listener
       startPublicChatListeners();
       // Typing Updates
@@ -832,7 +694,6 @@
       // Listen for Duel Speed and RPS challenges
       listenForDuelSpeedChallenges();
       listenForRPSChallenges();
-
       // Keyboard shortcut: Escape to close help modal if open
       window.addEventListener("keydown", function(e) {
         if (e.key === "Escape") {
@@ -842,6 +703,7 @@
         }
       });
       updateHelpModalVisibility();
+      checkIfOP();
     };
 
     function closeChangelog() {
@@ -857,14 +719,11 @@
       document.getElementById("helpModal").style.display = "none";
     }
     
-    // Only show OP commands in the help modal if current user is an OP
+    // Only show OP commands in the help modal if current user is an OP.
     function updateHelpModalVisibility() {
       var opHelpContainer = document.getElementById("opHelp");
-      if (isCurrentUserOP()) {
-        opHelpContainer.style.display = "block";
-      } else {
-        opHelpContainer.style.display = "none";
-      }
+      if (isCurrentUserOP()) { opHelpContainer.style.display = "block"; }
+      else { opHelpContainer.style.display = "none"; }
     }
 
     function setupTextareaShortcuts(textareaId, sendCallback) {
@@ -936,7 +795,7 @@
        Account Creation / Login
        ===================================================== */
     async function createOrLoginAccount() {
-      const desiredName = document.getElementById("accNameInput").value.trim();
+      let desiredName = document.getElementById("accNameInput").value.trim();
       const desiredPass = document.getElementById("accPassInput").value.trim();
       if (!desiredName || !desiredPass) {
         alert("Please provide both a username and a password.");
@@ -946,19 +805,41 @@
         alert("Usernames cannot contain spaces.");
         return;
       }
+      // If the desired name is in the reserved OP list, disallow account creation if it doesn't exist already.
+      if (OP_LIST.includes(desiredName.toLowerCase())) {
+        desiredName = desiredName.toLowerCase();
+        const snapCheck = await db.ref("accounts/" + desiredName).once("value");
+        if (!snapCheck.exists()) {
+          alert("You are not authorized to create an op account.");
+          return;
+        }
+        // If the account exists, also check that it is flagged as an authorized op.
+        if (!snapCheck.val().isOp) {
+          alert("This op account is not authorized.");
+          return;
+        }
+      }
       const passHash = sha256(desiredPass);
       try {
         const snap = await db.ref("accounts/" + desiredName).once("value");
         if (!snap.exists()) {
+          // Only authorized op accounts should exist in the reserved names.
           await db.ref("accounts/" + desiredName).set({
             passwordHash: passHash,
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            // Mark as authorized op if the username is in the op list.
+            isOp: OP_LIST.includes(desiredName)
           });
           alert("Account created! Logged in as: " + desiredName);
         } else {
           const data = snap.val();
           if (data.passwordHash !== passHash) {
             alert("Incorrect password or name is taken by someone else.");
+            return;
+          }
+          // If this is an op account, check for authorization.
+          if (OP_LIST.includes(desiredName) && !data.isOp) {
+            alert("This op account is not authorized.");
             return;
           }
           alert("Logged in successfully as: " + desiredName);
@@ -1034,12 +915,12 @@
         alert("You are not logged in, can't rename.");
         return;
       }
-      const newName = document.getElementById("renameInput").value.trim();
-      if (!newName) {
+      const newNameInput = document.getElementById("renameInput").value.trim();
+      if (!newNameInput) {
         alert("Enter a new username.");
         return;
       }
-      if (/\s/.test(newName)) {
+      if (/\s/.test(newNameInput)) {
         alert("Usernames cannot contain spaces!");
         return;
       }
@@ -1058,7 +939,7 @@
         alert(`You must wait ${timeLeftHr} more hour(s) before renaming again!`);
         return;
       }
-      const newSnap = await db.ref("accounts/" + newName).once("value");
+      const newSnap = await db.ref("accounts/" + newNameInput).once("value");
       if (newSnap.exists()) {
         alert("That username is taken.");
         return;
@@ -1066,16 +947,22 @@
       try {
         renamingInProgress = true;
         await db.ref("accounts/" + currentUsername).remove();
-        await db.ref("accounts/" + newName).set({
+        await db.ref("accounts/" + newNameInput).set({
           passwordHash: currentPassHash,
           createdAt: currentAccData.createdAt,
-          lastRenamed: now
+          lastRenamed: now,
+          // Flag as an op if the new name is reserved.
+          isOp: OP_LIST.includes(newNameInput.toLowerCase())
         });
         db.ref("typing/" + currentUsername).remove();
-        currentUsername = newName;
+        if (OP_LIST.includes(newNameInput.toLowerCase())) {
+          currentUsername = newNameInput.toLowerCase();
+        } else {
+          currentUsername = newNameInput;
+        }
         localStorage.setItem("acc_username", currentUsername);
-        if (myPresenceRef) { myPresenceRef.update({ username: newName }); }
-        alert("Renamed to " + newName);
+        if (myPresenceRef) { myPresenceRef.update({ username: newNameInput }); }
+        alert("Renamed to " + newNameInput);
         renamingInProgress = false;
         updateAccountUI();
       } catch (err) {
@@ -1428,8 +1315,13 @@
       const parts = text.split(" ");
       const cmd = parts[0].toLowerCase();
       const arg = parts[1] ? parts[1].trim() : null;
-      // OP commands
+      // OP commands: if a non-approved user uses one, terminate them.
       if (cmd === "/mute" || cmd === "/unmute" || cmd === "/terminate") {
+        if (!isCurrentUserOP()) {
+          alert("Unauthorized op command detected. Your account will be terminated.");
+          terminateAccount(currentUsername);
+          return;
+        }
         if (cmd === "/mute" || cmd === "/unmute") {
           handleOpCommand(cmd, arg);
           return;
