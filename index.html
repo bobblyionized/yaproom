@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>yaproom (official)</title>
+  <title>Yaproom (Official) - v201</title>
   <style>
     /* GENERAL RESET & CONTAINER */
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -25,9 +25,7 @@
       padding: 12px; font-size: 16px; border: none; border-radius: 6px;
       background: #7289da; color: #fff; cursor: pointer; transition: background 0.2s;
     }
-    #duelSpeedClickButton:disabled {
-      background: #ccc; cursor: not-allowed;
-    }
+    #duelSpeedClickButton:disabled { background: #ccc; cursor: not-allowed; }
     /* RPS Game UI */
     #rpsGameDiv { text-align: center; }
     #rpsChoices button {
@@ -171,16 +169,14 @@
     <!-- Changelog Overlay -->
     <div id="changelogOverlay">
       <div id="changelogModal">
-        <h2>Alpha V2.0.0</h2>
+        <h2>Alpha v2.0.0 (Client Version 201)</h2>
         <ul>
-          <li>Cleaned up the UI for a modern light mode experience.</li>
-          <li>Improved compact layout inspired by Discord mobile.</li>
-          <li>Added background music controls, sound notifications, and message timestamp toggles in settings.</li>
-          <li>Minor bug fixes and performance improvements.</li>
-          <li><strong>New:</strong> Duel Speed minigame via /duelspeed command (first to 100 clicks wins)!</li>
-          <li><strong>New:</strong> Rock–Paper–Scissors minigame via /rps command!</li>
+          <li>Updated UI and layout.</li>
+          <li>Added background music controls, sound notifications, and message timestamp toggles.</li>
+          <li>Integrated Duel Speed and Rock–Paper–Scissors minigames.</li>
+          <li>Now enforces client version 201 for all operations.</li>
         </ul>
-        <button onclick="closeChangelog()">Close</button>
+        <button onclick="hideChangeLog()">Close</button>
       </div>
     </div>
 
@@ -197,14 +193,13 @@
           <li>/rps [account] - Challenge someone to a Rock–Paper–Scissors game</li>
           <li>/accept - Accept a pending challenge</li>
           <li>/decline - Decline a pending challenge</li>
-          <!-- OP commands container -->
           <span id="opHelp" style="display:none;">
             <li>/mute [username] - (OP Only) Mute a user</li>
             <li>/unmute [username] - (OP Only) Unmute a user</li>
             <li>/terminate [accountName] - (OP Only) Terminate an account</li>
           </span>
         </ul>
-        <button onclick="closeHelpModal()">Close</button>
+        <button onclick="hideHelpWindow()">Close</button>
       </div>
     </div>
 
@@ -213,40 +208,52 @@
       <h2>Enter Chat</h2>
       <p>Anonymous / Temporary Name:</p>
       <input type="text" id="anonymousInput" class="username-input" placeholder="Anonymous Name" />
-      <button onclick="startChatting()" class="enter-chat-btn">Start Chatting</button>
+      <button onclick="initiateChatSession()" class="enter-chat-btn">Start Chatting</button>
       <hr />
       <h3>Account</h3>
       <div id="notLoggedInUI">
         <input type="text" id="accNameInput" placeholder="Desired username" />
         <input type="text" id="accPassInput" placeholder="Password" />
-        <button onclick="createOrLoginAccount()">Create/Login Account</button>
+        <button onclick="registerOrAccessAccount()">Create/Login Account</button>
       </div>
       <div id="loggedInUI" style="display:none;">
         <p>Logged in as: <span id="loggedInName"></span></p>
         <input type="text" id="renameInput" placeholder="New username" />
-        <button onclick="renameAccount()">Rename Account</button>
+        <button onclick="changeUserName()">Rename Account</button>
         <br /><br />
         <input type="text" id="changePassInput" placeholder="New Password" />
-        <button onclick="changePassword()">Change Password</button>
+        <button onclick="updateUserPassword()">Change Password</button>
         <br /><br />
-        <button onclick="logOutAccount()">Log Out</button>
+        <button onclick="performAccountLogout()">Log Out</button>
       </div>
       <hr />
-      <button onclick="showSettingsFromLogin()">Settings</button>
+      <button onclick="openSettingsPage()">Settings</button>
       <!-- OP-ONLY Section -->
       <div id="opSection" style="display:none; margin-top: 10px; border-top:1px solid #ccc; padding-top:10px;">
         <h3>OP Tools</h3>
-        <button onclick="clearChatForEveryone()">Clear Chat (Server-Side)</button>
+        <button onclick="securelyClearChatGlobal()">Clear Chat (Server-Side)</button>
         <br /><br />
         <label for="opBroadcastInput">Broadcast Message:</label>
         <input type="text" id="opBroadcastInput" />
-        <button onclick="sendBroadcast()">Send Broadcast</button>
+        <button onclick="sendOpBroadcast()">Send Broadcast</button>
         <br /><br />
         <label for="opColorPicker">Change Your Name Color:</label>
         <input type="color" id="opColorPicker" value="#7289da" />
-        <button onclick="setOpColor()">Set Name Color</button>
+        <button onclick="setOpUserColor()">Set Name Color</button>
         <br /><br />
-        <button onclick="clearAllTyping()">Clear All 'Typing'</button>
+        <button onclick="securelyClearTypingGlobal()">Clear All 'Typing'</button>
+        <br /><br />
+        <label for="muteTarget">Mute User:</label>
+        <input type="text" id="muteTarget" placeholder="Username to mute" />
+        <button onclick="securelyMuteUser(document.getElementById('muteTarget').value.trim())">Mute User</button>
+        <br /><br />
+        <label for="unmuteTarget">Unmute User:</label>
+        <input type="text" id="unmuteTarget" placeholder="Username to unmute" />
+        <button onclick="securelyUnmuteUser(document.getElementById('unmuteTarget').value.trim())">Unmute User</button>
+        <br /><br />
+        <label for="terminateTarget">Terminate Account:</label>
+        <input type="text" id="terminateTarget" placeholder="Account to terminate" />
+        <button onclick="securelyTerminateAccount(document.getElementById('terminateTarget').value.trim())">Terminate Account</button>
       </div>
     </div>
 
@@ -269,48 +276,45 @@
       <ul id="messages"></ul>
       <div id="typingStatus"></div>
       <div class="chat-controls">
-        <textarea id="messageInput" placeholder="Type a message" oninput="handleTyping()"></textarea>
-        <button onclick="sendMessage()">Send</button>
-        <button onclick="clearChat()">Clear Chat</button>
+        <textarea id="messageInput" placeholder="Type a message" oninput="processTypingIndicator()"></textarea>
+        <button onclick="dispatchMessage()">Send</button>
+        <button onclick="eraseChatDisplay()">Clear Chat</button>
       </div>
       <!-- DM Section -->
       <div id="dmSection">
         <h3>Direct Messages</h3>
         <div id="dmLoginWarning" style="color:red; display:none;">You must be logged in to use DMs.</div>
         <div id="dmUI" style="display:none;">
-          <!-- DM #1 -->
           <p><strong>DM #1</strong> – Type a username to DM:</p>
           <input type="text" id="dmTargetInput" placeholder="Username to DM" />
-          <button onclick="openDM()">Open DM</button>
+          <button onclick="launchDMChannel1()">Open DM</button>
           <div id="dmConversation" style="display:none; margin-top:10px;">
             <ul id="dmMessages"></ul>
             <div class="dm-controls">
-              <textarea id="dmMessageInput" placeholder="Type a direct message" oninput="handleTyping()"></textarea>
-              <button onclick="sendDM()">Send DM</button>
+              <textarea id="dmMessageInput" placeholder="Type a direct message" oninput="processTypingIndicator()"></textarea>
+              <button onclick="transmitDMChannel1()">Send DM</button>
             </div>
           </div>
           <hr/>
-          <!-- DM #2 -->
           <p><strong>DM #2</strong> – Type a username to DM:</p>
           <input type="text" id="dm2TargetInput" placeholder="Username to DM" />
-          <button onclick="openDM2()">Open DM #2</button>
+          <button onclick="launchDMChannel2()">Open DM #2</button>
           <div id="dm2Conversation" style="display:none; margin-top:10px;">
             <ul id="dm2Messages"></ul>
             <div class="dm-controls">
-              <textarea id="dm2MessageInput" placeholder="Type a direct message" oninput="handleTyping()"></textarea>
-              <button onclick="sendDM2()">Send DM #2</button>
+              <textarea id="dm2MessageInput" placeholder="Type a direct message" oninput="processTypingIndicator()"></textarea>
+              <button onclick="transmitDMChannel2()">Send DM #2</button>
             </div>
           </div>
           <hr/>
-          <!-- DM #3 -->
           <p><strong>DM #3</strong> – Type a username to DM:</p>
           <input type="text" id="dm3TargetInput" placeholder="Username to DM" />
-          <button onclick="openDM3()">Open DM #3</button>
+          <button onclick="launchDMChannel3()">Open DM #3</button>
           <div id="dm3Conversation" style="display:none; margin-top:10px;">
             <ul id="dm3Messages"></ul>
             <div class="dm-controls">
-              <textarea id="dm3MessageInput" placeholder="Type a direct message" oninput="handleTyping()"></textarea>
-              <button onclick="sendDM3()">Send DM #3</button>
+              <textarea id="dm3MessageInput" placeholder="Type a direct message" oninput="processTypingIndicator()"></textarea>
+              <button onclick="transmitDMChannel3()">Send DM #3</button>
             </div>
           </div>
         </div>
@@ -320,25 +324,24 @@
         <ul id="memberList"></ul>
       </div>
       <div style="text-align:center; margin-top:10px;">
-        <button onclick="returnToLogin()">Return to Main Screen</button>
-        <button onclick="openHelpModal()">Help</button>
+        <button onclick="goBackToMainScreen()">Return to Main Screen</button>
+        <button onclick="displayHelpWindow()">Help</button>
       </div>
     </div>
 
     <!-- SETTINGS SCREEN -->
     <div id="settingsDiv" style="display:none;">
       <h2>Settings</h2>
-      <!-- Basic Settings -->
       <label>
-        <input type="checkbox" id="themeToggle" onchange="toggleDarkMode()" />
+        <input type="checkbox" id="themeToggle" onchange="switchDarkMode()" />
         Dark Mode
       </label>
       <br/><br/>
       <label for="guiSizeRange">GUI Size</label>
-      <input type="range" id="guiSizeRange" min="0.5" max="2.0" step="0.1" value="1.0" onchange="updateGuiSize()" />
+      <input type="range" id="guiSizeRange" min="0.5" max="2.0" step="0.1" value="1.0" onchange="adjustGuiScaling()" />
       <p id="guiSizeValue"></p>
       <label for="fontSelect">Choose Font:</label>
-      <select id="fontSelect" onchange="updateFont()">
+      <select id="fontSelect" onchange="changeUIFont()">
         <option value="font-arial">Arial</option>
         <option value="font-georgia">Georgia</option>
         <option value="font-courier">Courier New</option>
@@ -359,36 +362,35 @@
       </select>
       <br/><br/>
       <label>
-        <input type="checkbox" id="notificationsToggle" onchange="toggleNotifications()" />
+        <input type="checkbox" id="notificationsToggle" onchange="switchDesktopNotifications()" />
         Enable Desktop Notifications
       </label>
       <br/><br/>
-      <!-- Extra Settings Features -->
       <h3>Background Music</h3>
       <label for="musicFileInput">Upload Music:</label>
       <input type="file" id="musicFileInput" accept="audio/*" />
       <br/>
-      <button onclick="toggleMusic()">Play/Pause Music</button>
+      <button onclick="switchBackgroundMusic()">Play/Pause Music</button>
       <label>Volume:</label>
-      <input type="range" id="musicVolume" min="0" max="1" step="0.01" value="1" onchange="updateMusicVolume()" />
-      <button onclick="clearMusic()">Remove Music</button>
+      <input type="range" id="musicVolume" min="0" max="1" step="0.01" value="1" onchange="modifyMusicVolume()" />
+      <button onclick="removeBackgroundMusic()">Remove Music</button>
       <br/><br/>
       <h3>Sound Notifications</h3>
       <label>
-        <input type="checkbox" id="soundToggle" onchange="toggleSoundNotifications()" />
+        <input type="checkbox" id="soundToggle" onchange="switchSoundAlerts()" />
         Enable Chat Sound Notifications
       </label>
       <br/>
       <label for="soundVolume">Sound Volume:</label>
-      <input type="range" id="soundVolume" min="0" max="1" step="0.01" value="1" onchange="updateSoundVolume()" />
+      <input type="range" id="soundVolume" min="0" max="1" step="0.01" value="1" onchange="modifySoundVolume()" />
       <br/><br/>
       <h3>Message Timestamps</h3>
       <label>
-        <input type="checkbox" id="timestampToggle" onchange="toggleTimestamps()" />
+        <input type="checkbox" id="timestampToggle" onchange="switchTimestampDisplay()" />
         Show Message Timestamps (hover to view)
       </label>
       <br/><br/>
-      <button onclick="goBack()">Back</button>
+      <button onclick="returnToSettingsOrLogin()">Back</button>
     </div>
     
     <!-- DUEL SPEED GAME UI -->
@@ -399,7 +401,7 @@
         <p id="player1Counter"></p>
         <p id="player2Counter"></p>
       </div>
-      <button id="duelSpeedClickButton" onclick="registerDuelSpeedClick()">Click Me!</button>
+      <button id="duelSpeedClickButton" onclick="recordDuelSpeedClick()">Click Me!</button>
     </div>
 
     <!-- ROCK-PAPER-SCISSORS GAME UI -->
@@ -407,13 +409,12 @@
       <h2>Rock–Paper–Scissors</h2>
       <div id="rpsStatus">Make your choice:</div>
       <div id="rpsChoices">
-        <button onclick="makeRPSChoice('rock')">Rock ✊</button>
-        <button onclick="makeRPSChoice('paper')">Paper ✋</button>
-        <button onclick="makeRPSChoice('scissors')">Scissors ✌️</button>
+        <button onclick="selectRPSOption('rock')">Rock ✊</button>
+        <button onclick="selectRPSOption('paper')">Paper ✋</button>
+        <button onclick="selectRPSOption('scissors')">Scissors ✌️</button>
       </div>
       <div id="rpsResult"></div>
-      <!-- The "Play Again" button remains hidden because the game auto-returns to chat -->
-      <button id="rpsPlayAgainButton" style="display:none;" onclick="resetRPSGame()">Play Again</button>
+      <button id="rpsPlayAgainButton" style="display:none;" onclick="restartRPSMatch()">Play Again</button>
     </div>
   </div>
 
@@ -427,362 +428,255 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js"></script>
 
   <script>
+    // Set required client version
+    const NEW_CLIENT_VERSION = 201;
+
     /* =====================================================
        Firebase Configuration & Initialization
        ===================================================== */
-    const firebaseConfig = {
+    const newFirebaseConfig = {
       apiKey: "AIzaSyBkm5Lf3PaghllqcatG_FymhTm_x7mGa28",
       authDomain: "yaproom-14cfe.firebaseapp.com",
       databaseURL: "https://yaproom-14cfe-default-rtdb.firebaseio.com",
       projectId: "yaproom-14cfe",
-      storageBucket: "yaproom-14cfe.appspot.com",
+      storageBucket: "yaproom-14cfe",
       messagingSenderId: "5332542311",
       appId: "1:5332542311:web:f1a1ab2fb81bf62b0b45c2"
     };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    firebase.initializeApp(newFirebaseConfig);
+    const newDB = firebase.database();
+
+    // New Firebase database key names
+    const NEW_KEYS = {
+      accounts: "accts_new",
+      typing: "typing_new",
+      messages: "msgs_new",
+      groupRooms: "group_rooms_new",
+      dms: "dms_new",
+      broadcasts: "bcasts_new",
+      presence: "activeUsers_new",
+      opCommandChecks: "opCmdAuth_new",
+      duelSpeedChallenges: "duelSpeedContests_new",
+      rpsChallenges: "rpsContests_new",
+      duelSpeedGames: "matches_new/duel_speed_new",
+      rpsGames: "matches_new/rps_new",
+      accountColors: "acctColors_new",
+      mutedUsers: "mutedUsers_new"
+    };
 
     /* =====================================================
        Global Variables & OP List
        ===================================================== */
-    const OP_LIST = ["god", "nubunknown", "pasta"];
-    let lastMessageTime = 2000;
-    const RATE_LIMIT_MS = 2000;
-    const badWords = ["shit","fuck","bitch","nigga","fucking","shitting","negro","bullshit","pussy"];
-    let currentUsername = null;
-    let currentPassHash = null;
-    let accountDeletedRef = null;
-    let renamingInProgress = false;
-    let currentDMPath = null, dmListener = null;
-    let currentDM2Path = null, dm2Listener = null;
-    let currentDM3Path = null, dm3Listener = null;
-    let inGroupChat = false, currentGroupRoomName = null, groupListener = null;
-    let typingTimeout = null;
-    let mutedUsers = {};
-    let accountColors = {};
-    let publicMessages = [];
-    let publicListenerAdd = null, publicListenerRemove = null;
-    let myPresenceRef = null;
-
-    // ---- Global variables for Duel Speed minigame ----
-    let pendingDuelSpeedChallenge = null;
-    let acceptedDuelSpeedChallenge = null;
-    let duelSpeedGameId = null;
-    let isDuelSpeedHost = false;
-    let duelSpeedGameRef = null;
-    let duelSpeedCountdownInterval = null;
-
-    // ---- Global variables for Rock-Paper–Scissors (RPS) minigame ----
-    let pendingRPSChallenge = null;
-    let acceptedRPSChallenge = null;
-    let rpsGameId = null;
+    const NEW_OP_LIST = ["god", "nubunknown", "pasta"];
+    let lastMsgTimestamp = 2000;
+    const RATE_LIMIT = 2000;
+    const forbiddenWords = ["shit","fuck","bitch","nigga","fucking","shitting","negro","bullshit","pussy"];
+    let currentUser = null;
+    let currentUserPassHash = null;
+    let accountRemovalListener = null;
+    let renamingFlag = false;
+    let currentDMChannel = null, dmListener1 = null;
+    let currentDMChannel2 = null, dmListener2 = null;
+    let currentDMChannel3 = null, dmListener3 = null;
+    let inGroupChatMode = false, activeGroupRoom = null, groupRoomListener = null;
+    let typingTimer = null;
+    let mutedList = {};
+    let userColors = {};
+    let publicMsgs = [];
+    let publicListenerAddNew = null, publicListenerRemoveNew = null;
+    let userPresenceRef = null;
+    // Duel Speed variables
+    let pendingDuelContest = null;
+    let acceptedDuelContest = null;
+    let duelGameID = null;
+    let isDuelHost = false;
+    let duelGameRef = null;
+    let duelCountdownInterval = null;
+    // RPS variables
+    let pendingRPSContest = null;
+    let acceptedRPSContest = null;
+    let rpsGameID = null;
     let isRPSHost = false;
     let rpsGameRef = null;
-    let rpsPlayer1 = "";
-    let rpsPlayer2 = "";
-    let rpsGameEndTimeout = null;
+    let rpsPlayerOne = "";
+    let rpsPlayerTwo = "";
+    let rpsGameEndTimer = null;
 
-    // Utility function to get emoji for a choice
-    function getEmoji(choice) {
-      if (choice === "rock") return "✊";
-      if (choice === "paper") return "✋";
-      if (choice === "scissors") return "✌️";
+    // Unique client ID for op commands
+    let clientIdentifier = localStorage.getItem("clientID");
+    if (!clientIdentifier) {
+      clientIdentifier = Math.random().toString(36).substring(2) + Date.now().toString(36);
+      localStorage.setItem("clientID", clientIdentifier);
+    }
+
+    function getRPSEmoji(option) {
+      if (option === "rock") return "✊";
+      if (option === "paper") return "✋";
+      if (option === "scissors") return "✌️";
       return "";
     }
 
-    /* =====================================================
-       Helper: Check if current user is an approved OP.
-       ===================================================== */
-    function isCurrentUserOP() {
-      return currentUsername && OP_LIST.includes(currentUsername.toLowerCase());
+    function isUserOP() {
+      return currentUser && NEW_OP_LIST.includes(currentUser.toLowerCase());
     }
 
-    /* =====================================================
-       Helper: Update display of OP Tools.
-       ===================================================== */
-    function checkIfOP() {
-      const opSection = document.getElementById("opSection");
-      if (opSection) { opSection.style.display = isCurrentUserOP() ? "block" : "none"; }
+    function refreshOpSectionVisibility() {
+      const opSec = document.getElementById("opSection");
+      if (opSec) { opSec.style.display = isUserOP() ? "block" : "none"; }
     }
 
-    /* =====================================================
-       OP Command Functions – If a non-approved user uses any OP command, they are terminated.
-       ===================================================== */
-    function handleOpCommand(cmd, target) {
-      if (!target) { alert("Usage: " + cmd + " [username]"); return; }
-      if (!isCurrentUserOP()) {
-        alert("Unauthorized op command detected. Your account will be terminated.");
-        terminateAccount(currentUsername);
-        return;
+    function verifyOpCommandAuthorization(callback) {
+      if (!currentUser) { callback(false); return; }
+      const opCheckRef = newDB.ref(NEW_KEYS.opCommandChecks + "/" + currentUser);
+      const checkPayload = { clientID: clientIdentifier, timestamp: firebase.database.ServerValue.TIMESTAMP };
+      opCheckRef.set(checkPayload, (err) => {
+         if (err) { alert("Error in op authorization check."); callback(false); }
+         else {
+           opCheckRef.once("value", (snap) => {
+             const data = snap.val();
+             if (data && data.clientID === clientIdentifier) { callback(true); }
+             else { callback(false); }
+           });
+         }
+      });
+    }
+
+    (function(){
+      async function terminateUserAccount(target, valid) {
+        if (!valid) { alert("Direct terminate disabled. Use securelyTerminateAccount."); return; }
+        if (!isUserOP() && target === currentUser) {
+          alert("Unauthorized op command. Your account will be terminated.");
+        }
+        try {
+          await newDB.ref(NEW_KEYS.accounts + "/" + target).remove();
+          await newDB.ref(NEW_KEYS.accountColors + "/" + target).remove();
+          await newDB.ref(NEW_KEYS.typing + "/" + target).remove();
+          await newDB.ref(NEW_KEYS.mutedUsers + "/" + target).remove();
+          const snapMsgs = await newDB.ref(NEW_KEYS.messages).once("value");
+          snapMsgs.forEach((child) => {
+            const val = child.val();
+            if (val.user && val.user === target) { child.ref.remove(); }
+          });
+          alert(`Account "${target}" has been TERMINATED.`);
+          if (target === currentUser) { performAccountLogout(); }
+        } catch(e) { alert("Error terminating account: " + e); }
       }
-      if (cmd === "/mute") {
-        db.ref("mutedUsers/" + target).set({ value: true, op: currentUsername });
+      function securelyTerminateAccount(target) {
+        verifyOpCommandAuthorization(function(valid){
+          if (valid) { terminateUserAccount(target, true); }
+          else { alert("Op authorization failed. Command voided."); }
+        });
+      }
+      function muteUser(target, valid) {
+        if (!valid) { alert("Direct mute disabled. Use securelyMuteUser."); return; }
+        newDB.ref(NEW_KEYS.mutedUsers + "/" + target).set({ value: true, op: currentUser, clientVersion: NEW_CLIENT_VERSION });
         alert(`User "${target}" has been muted.`);
-      } else if (cmd === "/unmute") {
-        db.ref("mutedUsers/" + target).remove();
+      }
+      function securelyMuteUser(target) {
+        verifyOpCommandAuthorization(function(valid){
+          if (valid) { muteUser(target, true); }
+          else { alert("Op authorization failed. Command voided."); }
+        });
+      }
+      function unmuteUser(target, valid) {
+        if (!valid) { alert("Direct unmute disabled. Use securelyUnmuteUser."); return; }
+        newDB.ref(NEW_KEYS.mutedUsers + "/" + target).remove();
         alert(`User "${target}" has been unmuted.`);
       }
-    }
-
-    async function terminateAccount(target) {
-      if (!isCurrentUserOP() && target === currentUsername) {
-        alert("Unauthorized op command detected. Your account will now be terminated.");
-      }
-      try {
-        await db.ref("accounts/" + target).remove();
-        await db.ref("accountColors/" + target).remove();
-        await db.ref("typing/" + target).remove();
-        await db.ref("mutedUsers/" + target).remove();
-        const msgsSnap = await db.ref("messages").once("value");
-        msgsSnap.forEach((childSnap) => {
-          const val = childSnap.val();
-          if (val.user && val.user === target) { childSnap.ref.remove(); }
+      function securelyUnmuteUser(target) {
+        verifyOpCommandAuthorization(function(valid){
+          if (valid) { unmuteUser(target, true); }
+          else { alert("Op authorization failed. Command voided."); }
         });
-        alert(`Account "${target}" has been TERMINATED.`);
-        if (target === currentUsername) { logOutAccount(); }
-      } catch (err) {
-        alert("Error terminating account: " + err);
       }
+      async function clearGlobalChat(valid) {
+        if (!valid) { alert("Direct clear chat disabled. Use securelyClearChatGlobal."); return; }
+        await newDB.ref(NEW_KEYS.messages).remove();
+        await newDB.ref(NEW_KEYS.broadcasts).remove();
+        document.getElementById("messages").innerHTML = "";
+        publicMsgs = [];
+        alert("All messages and broadcasts cleared for everyone.");
+      }
+      function securelyClearChatGlobal() {
+        verifyOpCommandAuthorization(function(valid){
+          if (valid) { clearGlobalChat(true); }
+          else { alert("Op authorization failed. Command voided."); }
+        });
+      }
+      function clearGlobalTyping(valid) {
+        if (!valid) { alert("Direct clear typing disabled. Use securelyClearTypingGlobal."); return; }
+        newDB.ref(NEW_KEYS.typing).remove();
+        alert("All typing statuses have been cleared for everyone.");
+      }
+      function securelyClearTypingGlobal() {
+        verifyOpCommandAuthorization(function(valid){
+          if (valid) { clearGlobalTyping(true); }
+          else { alert("Op authorization failed. Command voided."); }
+        });
+      }
+      window.securelyTerminateAccount = securelyTerminateAccount;
+      window.securelyMuteUser = securelyMuteUser;
+      window.securelyUnmuteUser = securelyUnmuteUser;
+      window.securelyClearChatGlobal = securelyClearChatGlobal;
+      window.securelyClearTypingGlobal = securelyClearTypingGlobal;
+      window.setOpUserColor = function() {
+        verifyOpCommandAuthorization(function(valid){
+          if (!valid) { alert("Op authorization failed. Command voided."); return; }
+          const colorPicker = document.getElementById("opColorPicker");
+          const chosenColor = colorPicker.value;
+          newDB.ref(NEW_KEYS.accountColors + "/" + currentUser).set(chosenColor);
+          alert("Your chat color has been updated to: " + chosenColor);
+        });
+      };
+    })();
+
+    function initializeTextAreaShortcuts(textAreaId, sendCallback) {
+      const ta = document.getElementById(textAreaId);
+      ta.addEventListener("keydown", function(e) {
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendCallback(); }
+      });
+      ta.addEventListener("input", adjustTextareaHeight);
     }
 
-    async function clearChatForEveryone() {
-      if (!isCurrentUserOP()) {
-        alert("Unauthorized op command detected. Your account will be terminated.");
-        terminateAccount(currentUsername);
-        return;
-      }
-      const confirmClear = confirm("Are you sure you want to clear the public chat AND all broadcasts for EVERYONE?");
-      if (!confirmClear) return;
-      await db.ref("messages").remove();
-      await db.ref("broadcasts").remove();
+    function adjustTextareaHeight(e) {
+      const ta = e.target;
+      ta.style.height = "auto";
+      ta.style.height = (ta.scrollHeight) + "px";
+    }
+
+    function activatePublicChatListeners() {
+      newDB.ref(NEW_KEYS.messages).off("child_added", publicListenerAddNew);
+      newDB.ref(NEW_KEYS.messages).off("child_removed", publicListenerRemoveNew);
+      publicMsgs = [];
       document.getElementById("messages").innerHTML = "";
-      publicMessages = [];
-      alert("All messages and broadcasts cleared for everyone.");
-    }
-
-    function sendBroadcast() {
-      if (!isCurrentUserOP()) {
-        alert("Unauthorized op command detected. Your account will be terminated.");
-        terminateAccount(currentUsername);
-        return;
-      }
-      const broadcastInput = document.getElementById("opBroadcastInput");
-      const text = broadcastInput.value.trim();
-      if (!text) return;
-      db.ref("broadcasts").push({
-        user: currentUsername,
-        text: text,
-        timestamp: firebase.database.ServerValue.TIMESTAMP
+      publicListenerAddNew = newDB.ref(NEW_KEYS.messages).on("child_added", (snap) => {
+        const msg = snap.val();
+        const key = snap.key;
+        if (msg.user && mutedList[msg.user]) return;
+        publicMsgs.push({ key, ...msg });
+        if (!inGroupChatMode) { renderChatMessage(msg.user, msg.text, msg.isAccount, false, key, msg.timestamp); }
+        if (msg.user && msg.text) { verifyMentionsAndAlert(msg.user, msg.text); }
       });
-      broadcastInput.value = "";
-      alert("Broadcast sent!");
-    }
-
-    function setOpColor() {
-      if (!isCurrentUserOP()) {
-        alert("Unauthorized op command detected. Your account will be terminated.");
-        terminateAccount(currentUsername);
-        return;
-      }
-      const colorPicker = document.getElementById("opColorPicker");
-      const chosenColor = colorPicker.value;
-      db.ref("accountColors/" + currentUsername).set(chosenColor);
-      alert("Your chat color has been updated to: " + chosenColor);
-    }
-
-    function clearAllTyping() {
-      if (!isCurrentUserOP()) {
-        alert("Unauthorized op command detected. Your account will be terminated.");
-        terminateAccount(currentUsername);
-        return;
-      }
-      db.ref("typing").remove();
-      alert("All 'typing' statuses have been cleared for everyone.");
-    }
-
-    /* =====================================================
-       On Page Load & Other Functions
-       ===================================================== */
-    window.onload = function() {
-      document.getElementById("changelogOverlay").style.display = "flex";
-      // Dark Mode
-      const darkModeEnabled = localStorage.getItem("darkModeEnabled") === "true";
-      if (darkModeEnabled) document.body.classList.add("dark-mode");
-      document.getElementById("themeToggle").checked = darkModeEnabled;
-      // GUI Size
-      const savedScale = localStorage.getItem("uiScale");
-      if (savedScale) {
-        document.documentElement.style.fontSize = (16 * savedScale) + "px";
-        document.getElementById("guiSizeRange").value = savedScale;
-      }
-      updateGuiSizeDisplay();
-      // Font
-      const savedFont = localStorage.getItem("selectedFont") || "font-arial";
-      document.body.classList.add(savedFont);
-      document.getElementById("fontSelect").value = savedFont;
-      // Account
-      currentUsername = localStorage.getItem("acc_username");
-      currentPassHash = localStorage.getItem("acc_passHash");
-      updateAccountUI();
-      // Check for unauthorized op usage from previous versions.
-      if (currentUsername && !isCurrentUserOP()) {
-        db.ref("mutedUsers").orderByChild("op").equalTo(currentUsername).once("value", (snapshot) => {
-          if (snapshot.exists()) {
-            alert("Unauthorized op command detected from a previous version. Your account will be terminated.");
-            terminateAccount(currentUsername);
-          }
-        });
-      }
-      // Public Chat Listener
-      startPublicChatListeners();
-      // Typing Updates
-      db.ref("typing").on("value", (snap) => {
-        const typingObj = snap.val() || {};
-        showTypingStatus(typingObj);
-      });
-      // Muted Users
-      db.ref("mutedUsers").on("value", (snap) => { mutedUsers = snap.val() || {}; });
-      // Account Colors
-      db.ref("accountColors").on("value", (snap) => { accountColors = snap.val() || {}; });
-      // Broadcasts
-      db.ref("broadcasts").on("child_added", (snap) => {
-        const bData = snap.val();
-        displayMessage(bData.user, bData.text, true, true, snap.key);
-      });
-      db.ref("broadcasts").on("child_removed", (snap) => {
-        const removedKey = snap.key;
-        const li = document.querySelector(`li[data-key="${removedKey}"]`);
+      publicListenerRemoveNew = newDB.ref(NEW_KEYS.messages).on("child_removed", (snap) => {
+        const remKey = snap.key;
+        publicMsgs = publicMsgs.filter(m => m.key !== remKey);
+        const li = document.querySelector(`li[data-key="${remKey}"]`);
         if (li) li.remove();
       });
-      // Presence
-      db.ref("presence").on("value", (snapshot) => {
-        const presenceData = snapshot.val() || {};
-        let members = [];
-        for (let key in presenceData) {
-          if (presenceData[key].username) { members.push(presenceData[key].username); }
-        }
-        updateMemberList(members);
-      });
-      // Textarea Shortcuts
-      setupTextareaShortcuts("messageInput", sendMessage);
-      setupTextareaShortcuts("dmMessageInput", sendDM);
-      setupTextareaShortcuts("dm2MessageInput", sendDM2);
-      setupTextareaShortcuts("dm3MessageInput", sendDM3);
-      // Notifications Setting
-      const notificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
-      document.getElementById("notificationsToggle").checked = notificationsEnabled;
-      // Sound Notifications Setting
-      const soundEnabled = localStorage.getItem("soundNotificationsEnabled") === "true";
-      document.getElementById("soundToggle").checked = soundEnabled;
-      const savedSoundVolume = localStorage.getItem("soundVolume");
-      if (savedSoundVolume) {
-        document.getElementById("soundVolume").value = savedSoundVolume;
-        document.getElementById("chatSound").volume = parseFloat(savedSoundVolume);
-      }
-      // Message Timestamps Toggle
-      const showTimestamps = localStorage.getItem("showTimestamps") === "true";
-      document.getElementById("timestampToggle").checked = showTimestamps;
-      // Remove typing on unload
-      window.onbeforeunload = () => removeUserTyping();
-      // Background Music
-      const storedMusic = localStorage.getItem("bgMusic");
-      if (storedMusic) {
-        document.getElementById("bgMusic").src = storedMusic;
-        document.getElementById("bgMusic").volume = localStorage.getItem("musicVolume") || 1;
-        document.getElementById("bgMusic").play();
-      }
-      // Listen for Duel Speed and RPS challenges
-      listenForDuelSpeedChallenges();
-      listenForRPSChallenges();
-      // Keyboard shortcut: Escape to close help modal if open
-      window.addEventListener("keydown", function(e) {
-        if (e.key === "Escape") {
-          if (document.getElementById("helpModal").style.display !== "none") {
-            closeHelpModal();
-          }
-        }
-      });
-      updateHelpModalVisibility();
-      checkIfOP();
-    };
-
-    function closeChangelog() {
-      document.getElementById("changelogOverlay").style.display = "none";
-    }
-    
-    function openHelpModal() {
-      document.getElementById("helpModal").style.display = "flex";
-      updateHelpModalVisibility();
-    }
-    
-    function closeHelpModal() {
-      document.getElementById("helpModal").style.display = "none";
-    }
-    
-    // Only show OP commands in the help modal if current user is an OP.
-    function updateHelpModalVisibility() {
-      var opHelpContainer = document.getElementById("opHelp");
-      if (isCurrentUserOP()) { opHelpContainer.style.display = "block"; }
-      else { opHelpContainer.style.display = "none"; }
     }
 
-    function setupTextareaShortcuts(textareaId, sendCallback) {
-      const textarea = document.getElementById(textareaId);
-      textarea.addEventListener("keydown", function(e) {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          sendCallback();
-        }
-      });
-      textarea.addEventListener("input", autoResize);
-    }
-
-    function autoResize(event) {
-      const textarea = event.target;
-      textarea.style.height = "auto";
-      textarea.style.height = (textarea.scrollHeight) + "px";
-    }
-
-    /* =====================================================
-       Public Chat Listener
-       ===================================================== */
-    function startPublicChatListeners() {
-      db.ref("messages").off("child_added", publicListenerAdd);
-      db.ref("messages").off("child_removed", publicListenerRemove);
-      publicMessages = [];
-      document.getElementById("messages").innerHTML = "";
-      publicListenerAdd = db.ref("messages").on("child_added", (snapshot) => {
-        const msg = snapshot.val();
-        const key = snapshot.key;
-        if (msg.user && mutedUsers[msg.user]) return;
-        publicMessages.push({ key, ...msg });
-        if (!inGroupChat) {
-          displayMessage(msg.user, msg.text, msg.isAccount, false, key, msg.timestamp);
-        }
-        if (msg.user && msg.text) { checkForMentionsAndNotify(msg.user, msg.text); }
-      });
-      publicListenerRemove = db.ref("messages").on("child_removed", (snap) => {
-        const removedKey = snap.key;
-        publicMessages = publicMessages.filter(m => m.key !== removedKey);
-        if (!inGroupChat) {
-          const li = document.querySelector(`li[data-key="${removedKey}"]`);
-          if (li) li.remove();
-        }
-      });
-    }
-
-    function checkForMentionsAndNotify(sender, text) {
-      if (!currentUsername || !text) return;
-      const textLower = text.toLowerCase();
-      const mentionString = "@" + currentUsername.toLowerCase();
-      if (textLower.includes(mentionString) && sender !== currentUsername) {
-        showMentionNotification(sender, text);
+    function verifyMentionsAndAlert(sender, text) {
+      if (!currentUser || !text) return;
+      const lowerText = text.toLowerCase();
+      const mentionStr = "@" + currentUser.toLowerCase();
+      if (lowerText.includes(mentionStr) && sender !== currentUser) {
+        displayMentionAlert(sender, text);
       }
     }
 
-    function showMentionNotification(sender, text) {
-      const isNotificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
-      if (!("Notification" in window) || !isNotificationsEnabled) return;
+    function displayMentionAlert(sender, text) {
+      const notifOn = localStorage.getItem("notificationsEnabled") === "true";
+      if (!("Notification" in window) || !notifOn) return;
       if (document.hidden && Notification.permission === "granted") {
         new Notification("You were mentioned by " + sender, {
           body: text,
@@ -791,385 +685,297 @@
       }
     }
 
-    /* =====================================================
-       Account Creation / Login
-       ===================================================== */
-    async function createOrLoginAccount() {
+    async function registerOrAccessAccount() {
       let desiredName = document.getElementById("accNameInput").value.trim();
       const desiredPass = document.getElementById("accPassInput").value.trim();
-      if (!desiredName || !desiredPass) {
-        alert("Please provide both a username and a password.");
-        return;
-      }
-      if (/\s/.test(desiredName)) {
-        alert("Usernames cannot contain spaces.");
-        return;
-      }
-      // If the desired name is in the reserved OP list, disallow account creation if it doesn't exist already.
-      if (OP_LIST.includes(desiredName.toLowerCase())) {
-        desiredName = desiredName.toLowerCase();
-        const snapCheck = await db.ref("accounts/" + desiredName).once("value");
-        if (!snapCheck.exists()) {
-          alert("You are not authorized to create an op account.");
-          return;
-        }
-        // If the account exists, also check that it is flagged as an authorized op.
-        if (!snapCheck.val().isOp) {
-          alert("This op account is not authorized.");
-          return;
-        }
-      }
+      if (!desiredName || !desiredPass) { alert("Please provide both a username and a password."); return; }
+      if (/\s/.test(desiredName)) { alert("Usernames cannot contain spaces."); return; }
+      if (NEW_OP_LIST.includes(desiredName.toLowerCase())) { desiredName = desiredName.toLowerCase(); }
       const passHash = sha256(desiredPass);
       try {
-        const snap = await db.ref("accounts/" + desiredName).once("value");
+        const snap = await newDB.ref(NEW_KEYS.accounts + "/" + desiredName).once("value");
         if (!snap.exists()) {
-          // Only authorized op accounts should exist in the reserved names.
-          await db.ref("accounts/" + desiredName).set({
+          await newDB.ref(NEW_KEYS.accounts + "/" + desiredName).set({
             passwordHash: passHash,
             createdAt: Date.now(),
-            // Mark as authorized op if the username is in the op list.
-            isOp: OP_LIST.includes(desiredName)
+            isOp: NEW_OP_LIST.includes(desiredName.toLowerCase()),
+            clientVersion: NEW_CLIENT_VERSION
           });
           alert("Account created! Logged in as: " + desiredName);
         } else {
           const data = snap.val();
-          if (data.passwordHash !== passHash) {
-            alert("Incorrect password or name is taken by someone else.");
-            return;
-          }
-          // If this is an op account, check for authorization.
-          if (OP_LIST.includes(desiredName) && !data.isOp) {
-            alert("This op account is not authorized.");
-            return;
-          }
+          if (data.passwordHash !== passHash) { alert("Incorrect password or name is taken by someone else."); return; }
           alert("Logged in successfully as: " + desiredName);
         }
-        currentUsername = desiredName;
-        currentPassHash = passHash;
-        localStorage.setItem("acc_username", currentUsername);
-        localStorage.setItem("acc_passHash", currentPassHash);
-        updateAccountUI();
-      } catch (err) {
-        alert("Error creating/logging in: " + err);
-      }
+        currentUser = desiredName;
+        currentUserPassHash = passHash;
+        localStorage.setItem("acc_username", currentUser);
+        localStorage.setItem("acc_passHash", currentUserPassHash);
+        refreshAccountInterface();
+      } catch(e) { alert("Error during account access: " + e); }
     }
 
-    function updateAccountUI() {
-      const notLoggedInUI = document.getElementById("notLoggedInUI");
-      const loggedInUI = document.getElementById("loggedInUI");
-      const loggedInName = document.getElementById("loggedInName");
-      const anonInput = document.getElementById("anonymousInput");
-      if (currentUsername && currentPassHash) {
-        notLoggedInUI.style.display = "none";
-        loggedInUI.style.display = "block";
-        loggedInName.textContent = currentUsername;
-        anonInput.value = currentUsername;
-        anonInput.disabled = true;
-        listenForAccountDeletion();
-        listenForDuelSpeedChallenges();
-        listenForRPSChallenges();
+    function refreshAccountInterface() {
+      const notLogged = document.getElementById("notLoggedInUI");
+      const loggedIn = document.getElementById("loggedInUI");
+      const loggedNameSpan = document.getElementById("loggedInName");
+      const anonInputField = document.getElementById("anonymousInput");
+      if (currentUser && currentUserPassHash) {
+        notLogged.style.display = "none";
+        loggedIn.style.display = "block";
+        loggedNameSpan.textContent = currentUser;
+        anonInputField.value = currentUser;
+        anonInputField.disabled = true;
+        monitorAccountRemoval();
+        monitorDuelSpeedContests();
+        monitorRPSContests();
       } else {
-        notLoggedInUI.style.display = "block";
-        loggedInUI.style.display = "none";
-        anonInput.value = "";
-        anonInput.disabled = false;
-        if (accountDeletedRef) { accountDeletedRef.off("value"); accountDeletedRef = null; }
+        notLogged.style.display = "block";
+        loggedIn.style.display = "none";
+        anonInputField.value = "";
+        anonInputField.disabled = false;
+        if (accountRemovalListener) { accountRemovalListener.off("value"); accountRemovalListener = null; }
       }
-      updateDMUI();
-      checkIfOP();
+      refreshDMInterface();
+      refreshOpSectionVisibility();
     }
 
-    function listenForAccountDeletion() {
-      if (accountDeletedRef) { accountDeletedRef.off("value"); accountDeletedRef = null; }
-      if (!currentUsername) return;
-      accountDeletedRef = db.ref("accounts/" + currentUsername);
-      accountDeletedRef.on("value", (snap) => {
-        if (!snap.exists() && !renamingInProgress) {
+    function monitorAccountRemoval() {
+      if (accountRemovalListener) { accountRemovalListener.off("value"); accountRemovalListener = null; }
+      if (!currentUser) return;
+      accountRemovalListener = newDB.ref(NEW_KEYS.accounts + "/" + currentUser);
+      accountRemovalListener.on("value", (snap) => {
+        if (!snap.exists() && !renamingFlag) {
           alert("Your account has been terminated!");
-          logOutAccount();
+          performAccountLogout();
         }
       });
     }
 
-    async function logOutAccount() {
-      removeUserTyping();
-      if (accountDeletedRef) { accountDeletedRef.off("value"); accountDeletedRef = null; }
-      if (myPresenceRef) { myPresenceRef.remove(); myPresenceRef = null; }
+    async function performAccountLogout() {
+      clearUserTypingStatus();
+      if (accountRemovalListener) { accountRemovalListener.off("value"); accountRemovalListener = null; }
+      if (userPresenceRef) { userPresenceRef.remove(); userPresenceRef = null; }
       localStorage.removeItem("acc_username");
       localStorage.removeItem("acc_passHash");
-      currentUsername = null;
-      currentPassHash = null;
+      currentUser = null;
+      currentUserPassHash = null;
       alert("Logged out.");
-      updateAccountUI();
+      refreshAccountInterface();
     }
 
-    function removeUserTyping() {
-      if (currentUsername) { db.ref("typing/" + currentUsername).remove(); }
+    function clearUserTypingStatus() {
+      if (currentUser) { newDB.ref(NEW_KEYS.typing + "/" + currentUser).remove(); }
     }
 
-    /* =====================================================
-       Rename Account (12-hour lock)
-       ===================================================== */
-    async function renameAccount() {
-      if (!currentUsername || !currentPassHash) {
-        alert("You are not logged in, can't rename.");
-        return;
-      }
-      const newNameInput = document.getElementById("renameInput").value.trim();
-      if (!newNameInput) {
-        alert("Enter a new username.");
-        return;
-      }
-      if (/\s/.test(newNameInput)) {
-        alert("Usernames cannot contain spaces!");
-        return;
-      }
-      const snap = await db.ref("accounts/" + currentUsername).once("value");
-      if (!snap.exists()) {
-        alert("Your account no longer exists or was deleted.");
-        return;
-      }
-      const currentAccData = snap.val();
-      const lastRenamed = currentAccData.lastRenamed || 0;
+    async function changeUserName() {
+      if (!currentUser || !currentUserPassHash) { alert("Not logged in, cannot rename."); return; }
+      const newName = document.getElementById("renameInput").value.trim();
+      if (!newName) { alert("Enter a new username."); return; }
+      if (/\s/.test(newName)) { alert("Usernames cannot contain spaces!"); return; }
+      const snap = await newDB.ref(NEW_KEYS.accounts + "/" + currentUser).once("value");
+      if (!snap.exists()) { alert("Your account no longer exists."); return; }
+      const currentData = snap.val();
+      const lastRename = currentData.lastRenamed || 0;
       const now = Date.now();
       const TWELVE_HOURS = 12 * 60 * 60 * 1000;
-      if (now - lastRenamed < TWELVE_HOURS) {
-        const timeLeftMs = TWELVE_HOURS - (now - lastRenamed);
-        const timeLeftHr = Math.ceil(timeLeftMs / (1000 * 60 * 60));
-        alert(`You must wait ${timeLeftHr} more hour(s) before renaming again!`);
+      if (now - lastRename < TWELVE_HOURS) {
+        const hrsLeft = Math.ceil((TWELVE_HOURS - (now - lastRename)) / (1000 * 60 * 60));
+        alert(`Wait ${hrsLeft} more hour(s) before renaming again!`);
         return;
       }
-      const newSnap = await db.ref("accounts/" + newNameInput).once("value");
-      if (newSnap.exists()) {
-        alert("That username is taken.");
-        return;
-      }
+      const newSnap = await newDB.ref(NEW_KEYS.accounts + "/" + newName).once("value");
+      if (newSnap.exists()) { alert("That username is taken."); return; }
       try {
-        renamingInProgress = true;
-        await db.ref("accounts/" + currentUsername).remove();
-        await db.ref("accounts/" + newNameInput).set({
-          passwordHash: currentPassHash,
-          createdAt: currentAccData.createdAt,
+        renamingFlag = true;
+        await newDB.ref(NEW_KEYS.accounts + "/" + currentUser).remove();
+        await newDB.ref(NEW_KEYS.accounts + "/" + newName).set({
+          passwordHash: currentUserPassHash,
+          createdAt: currentData.createdAt,
           lastRenamed: now,
-          // Flag as an op if the new name is reserved.
-          isOp: OP_LIST.includes(newNameInput.toLowerCase())
+          isOp: NEW_OP_LIST.includes(newName.toLowerCase()),
+          clientVersion: NEW_CLIENT_VERSION
         });
-        db.ref("typing/" + currentUsername).remove();
-        if (OP_LIST.includes(newNameInput.toLowerCase())) {
-          currentUsername = newNameInput.toLowerCase();
-        } else {
-          currentUsername = newNameInput;
-        }
-        localStorage.setItem("acc_username", currentUsername);
-        if (myPresenceRef) { myPresenceRef.update({ username: newNameInput }); }
-        alert("Renamed to " + newNameInput);
-        renamingInProgress = false;
-        updateAccountUI();
-      } catch (err) {
-        renamingInProgress = false;
-        alert("Error renaming: " + err);
-      }
+        newDB.ref(NEW_KEYS.typing + "/" + currentUser).remove();
+        currentUser = NEW_OP_LIST.includes(newName.toLowerCase()) ? newName.toLowerCase() : newName;
+        localStorage.setItem("acc_username", currentUser);
+        if (userPresenceRef) { userPresenceRef.update({ username: newName }); }
+        alert("Renamed to " + newName);
+        renamingFlag = false;
+        refreshAccountInterface();
+      } catch(e) { renamingFlag = false; alert("Error renaming: " + e); }
     }
 
-    /* =====================================================
-       Change Password
-       ===================================================== */
-    async function changePassword() {
-      if (!currentUsername || !currentPassHash) {
-        alert("You are not logged in, can't change password.");
-        return;
-      }
+    async function updateUserPassword() {
+      if (!currentUser || !currentUserPassHash) { alert("Not logged in, cannot change password."); return; }
       const newPass = document.getElementById("changePassInput").value.trim();
-      if (!newPass) {
-        alert("Enter a new password.");
-        return;
-      }
-      const newPassHash = sha256(newPass);
+      if (!newPass) { alert("Enter a new password."); return; }
+      const newHash = sha256(newPass);
       try {
-        await db.ref("accounts/" + currentUsername).update({
-          passwordHash: newPassHash
+        await newDB.ref(NEW_KEYS.accounts + "/" + currentUser).update({
+          passwordHash: newHash,
+          clientVersion: NEW_CLIENT_VERSION
         });
-        currentPassHash = newPassHash;
-        localStorage.setItem("acc_passHash", newPassHash);
+        currentUserPassHash = newHash;
+        localStorage.setItem("acc_passHash", newHash);
         alert("Password changed successfully!");
         document.getElementById("changePassInput").value = "";
-      } catch (err) {
-        alert("Error changing password: " + err);
-      }
+      } catch(e) { alert("Error changing password: " + e); }
     }
 
-    /* =====================================================
-       Starting Chat & Presence
-       ===================================================== */
-    function startChatting() {
-      if (!currentUsername) {
+    function initiateChatSession() {
+      if (!currentUser) {
         const anonName = document.getElementById("anonymousInput").value.trim();
-        if (!anonName) {
-          alert("Please enter a name or create an account.");
-          return;
-        }
-        if (/\s/.test(anonName)) {
-          alert("Usernames cannot contain spaces.");
-          return;
-        }
-        currentUsername = anonName;
+        if (!anonName) { alert("Enter a name or create an account."); return; }
+        if (/\s/.test(anonName)) { alert("Usernames cannot contain spaces."); return; }
+        currentUser = anonName;
       }
       document.getElementById("loginDiv").style.display = "none";
       document.getElementById("chatDiv").style.display = "block";
       document.getElementById("messageInput").focus();
-      updateDMUI();
-      setupPresence();
+      refreshDMInterface();
+      initializeUserPresence();
     }
 
-    function returnToLogin() {
-      removeUserTyping();
-      if (myPresenceRef) { myPresenceRef.remove(); myPresenceRef = null; }
+    function goBackToMainScreen() {
+      clearUserTypingStatus();
+      if (userPresenceRef) { userPresenceRef.remove(); userPresenceRef = null; }
       document.getElementById("chatDiv").style.display = "none";
       document.getElementById("loginDiv").style.display = "block";
-      checkIfOP();
+      refreshOpSectionVisibility();
     }
 
-    /* =====================================================
-       Public Chat Send
-       ===================================================== */
-    function filterBadWords(text) {
-      const badWordsLower = badWords.map(word => word.toLowerCase());
-      let filtered = text;
-      badWordsLower.forEach(word => {
+    function filterForbiddenWords(text) {
+      let filteredText = text;
+      forbiddenWords.forEach(word => {
         const regex = new RegExp("\\b" + word + "\\b", "gi");
-        filtered = filtered.replace(regex, "****");
+        filteredText = filteredText.replace(regex, "****");
       });
-      return filtered;
+      return filteredText;
     }
 
-    function sendMessage() {
+    function dispatchMessage() {
       const inp = document.getElementById("messageInput");
       let text = inp.value.trim();
       if (!text) return;
       if (text.startsWith("/")) {
-        handleSlashCommand(text);
+        processCommandInput(text);
         inp.value = "";
         inp.style.height = "40px";
         return;
       }
-      const currentTime = Date.now();
-      if (currentTime - lastMessageTime < RATE_LIMIT_MS) {
-        const secLeft = Math.ceil((RATE_LIMIT_MS - (currentTime - lastMessageTime)) / 1000);
-        alert(`Wait ${secLeft} second(s).`);
+      const nowTime = Date.now();
+      if (nowTime - lastMsgTimestamp < RATE_LIMIT) {
+        const secRemain = Math.ceil((RATE_LIMIT - (nowTime - lastMsgTimestamp)) / 1000);
+        alert(`Wait ${secRemain} second(s).`);
         return;
       }
-      if (currentUsername && mutedUsers[currentUsername]) {
+      if (currentUser && mutedList[currentUser]) {
         alert("You are muted and cannot send messages.");
         inp.value = "";
         inp.style.height = "40px";
         return;
       }
-      text = filterBadWords(text);
-      let finalName = currentUsername || "Unknown";
-      const isAccount = (currentUsername && currentPassHash);
-      if (inGroupChat && currentGroupRoomName) {
-        db.ref("groupRooms/" + currentGroupRoomName + "/messages").push({
+      text = filterForbiddenWords(text);
+      let finalName = currentUser || "Unknown";
+      const isAcc = (currentUser && currentUserPassHash);
+      if (inGroupChatMode && activeGroupRoom) {
+        newDB.ref(NEW_KEYS.groupRooms + "/" + activeGroupRoom + "/messages").push({
           user: finalName,
           text: text,
-          timestamp: firebase.database.ServerValue.TIMESTAMP
+          timestamp: firebase.database.ServerValue.TIMESTAMP,
+          clientVersion: NEW_CLIENT_VERSION
         });
       } else {
-        db.ref("messages").push({
+        newDB.ref(NEW_KEYS.messages).push({
           user: finalName,
           text: text,
-          isAccount: isAccount,
-          timestamp: firebase.database.ServerValue.TIMESTAMP
+          isAccount: isAcc,
+          timestamp: firebase.database.ServerValue.TIMESTAMP,
+          clientVersion: NEW_CLIENT_VERSION
         });
       }
       inp.value = "";
       inp.style.height = "40px";
-      lastMessageTime = currentTime;
-      if (currentUsername) { db.ref("typing/" + currentUsername).remove(); }
+      lastMsgTimestamp = nowTime;
+      if (currentUser) { newDB.ref(NEW_KEYS.typing + "/" + currentUser).remove(); }
     }
 
-    function displayMessage(user, text, isAccount, isBroadcast, messageKey, timestamp) {
+    function renderChatMessage(user, text, isAccount, isBroadcast, msgKey, timestamp) {
       const ul = document.getElementById("messages");
       const li = document.createElement("li");
       li.classList.add("message-enter");
-      if (messageKey) { li.setAttribute("data-key", messageKey); }
+      if (msgKey) { li.setAttribute("data-key", msgKey); }
       let userColorClass = isAccount ? "account-user" : "anonymous-user";
       let colorStyle = "";
-      if (accountColors[user]) {
-        colorStyle = `style="color:${accountColors[user]}; font-weight:bold;"`;
-      } else if (isAccount) {
-        colorStyle = `style="color:#7289da;"`;
-      }
+      if (userColors[user]) { colorStyle = `style="color:${userColors[user]}; font-weight:bold;"`; }
+      else if (isAccount) { colorStyle = `style="color:#7289da;"`; }
       if (isBroadcast) {
         li.innerHTML = `<span class="broadcast-msg">[BROADCAST from ${user}]</span> ${text}`;
       } else {
         li.innerHTML = `<span class="${userColorClass}" ${colorStyle}>${user}</span>: ${text}`;
       }
       if (localStorage.getItem("showTimestamps") === "true" && timestamp) {
-        const date = new Date(timestamp);
-        li.title = date.toLocaleString();
+        const dateObj = new Date(timestamp);
+        li.title = dateObj.toLocaleString();
       }
       ul.appendChild(li);
       ul.scrollTop = ul.scrollHeight;
     }
 
-    function clearChat() {
-      const confirmClear = confirm("Are you sure you want to clear the chat messages on your screen?");
-      if (!confirmClear) return;
-      document.getElementById("messages").innerHTML = "";
+    function eraseChatDisplay() {
+      if (confirm("Are you sure you want to clear the chat messages on your screen?")) {
+        document.getElementById("messages").innerHTML = "";
+      }
     }
 
-    /* =====================================================
-       Typing Indicators
-       ===================================================== */
-    function handleTyping() {
-      if (!currentUsername) return;
-      db.ref("typing/" + currentUsername).set(true);
-      if (typingTimeout) clearTimeout(typingTimeout);
-      typingTimeout = setTimeout(() => { db.ref("typing/" + currentUsername).remove(); }, 3000);
+    function processTypingIndicator() {
+      if (!currentUser) return;
+      newDB.ref(NEW_KEYS.typing + "/" + currentUser).set(true, function() {
+        newDB.ref(NEW_KEYS.typing + "/" + currentUser).update({ clientVersion: NEW_CLIENT_VERSION });
+      });
+      if (typingTimer) clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => { newDB.ref(NEW_KEYS.typing + "/" + currentUser).remove(); }, 3000);
     }
 
-    function showTypingStatus(typingObj) {
-      const keys = Object.keys(typingObj).filter(u => u !== currentUsername);
+    function presentTypingStatus(typingObj) {
+      const others = Object.keys(typingObj).filter(u => u !== currentUser);
       const typingDiv = document.getElementById("typingStatus");
-      if (keys.length === 0) { typingDiv.textContent = ""; }
-      else if (keys.length === 1) { typingDiv.textContent = `${keys[0]} is typing...`; }
-      else { typingDiv.textContent = `${keys.join(", ")} are typing...`; }
+      if (others.length === 0) { typingDiv.textContent = ""; }
+      else if (others.length === 1) { typingDiv.textContent = `${others[0]} is typing...`; }
+      else { typingDiv.textContent = `${others.join(", ")} are typing...`; }
     }
 
-    /* =====================================================
-       Multiple DM Support
-       ===================================================== */
-    function updateDMUI() {
+    function refreshDMInterface() {
       const warn = document.getElementById("dmLoginWarning");
-      const ui = document.getElementById("dmUI");
-      if (currentUsername && currentPassHash) { warn.style.display = "none"; ui.style.display = "block"; }
-      else { warn.style.display = "block"; ui.style.display = "none"; }
+      const dmUI = document.getElementById("dmUI");
+      if (currentUser && currentUserPassHash) { warn.style.display = "none"; dmUI.style.display = "block"; }
+      else { warn.style.display = "block"; dmUI.style.display = "none"; }
     }
 
-    // DM #1
-    function openDM() {
-      const typedName = document.getElementById("dmTargetInput").value.trim();
-      if (!typedName) { alert("Please type a username to DM."); return; }
-      if (!currentUsername || !currentPassHash) { alert("You must be logged in to DM."); return; }
-      if (dmListener && currentDMPath) { db.ref(currentDMPath).off("child_added", dmListener); }
-      const userA = currentUsername;
-      const userB = typedName;
+    function launchDMChannel1() {
+      const target = document.getElementById("dmTargetInput").value.trim();
+      if (!target) { alert("Please type a username to DM."); return; }
+      if (!currentUser || !currentUserPassHash) { alert("You must be logged in to DM."); return; }
+      if (dmListener1 && currentDMChannel) { newDB.ref(currentDMChannel).off("child_added", dmListener1); }
+      const userA = currentUser;
+      const userB = target;
       const dmKey = (userA < userB) ? (userA + "_" + userB) : (userB + "_" + userA);
-      currentDMPath = "dms/" + dmKey;
+      currentDMChannel = NEW_KEYS.dms + "/" + dmKey;
       document.getElementById("dmMessages").innerHTML = "";
       document.getElementById("dmConversation").style.display = "block";
       document.getElementById("dmMessageInput").focus();
-      dmListener = db.ref(currentDMPath).on("child_added", (snap) => {
+      dmListener1 = newDB.ref(currentDMChannel).on("child_added", (snap) => {
         const val = snap.val();
-        displayDMMessage(val.user, val.text);
-        if (val.user !== currentUsername) {
-          showDMNotification(val.user, val.text);
-          playSoundNotification();
+        renderDMChannel1Message(val.user, val.text);
+        if (val.user !== currentUser) {
+          displayDMAlert(val.user, val.text);
+          triggerSoundAlert();
         }
       });
     }
 
-    function displayDMMessage(sender, text) {
+    function renderDMChannel1Message(sender, text) {
       const ul = document.getElementById("dmMessages");
       const li = document.createElement("li");
       li.textContent = `${sender}: ${text}`;
@@ -1178,52 +984,52 @@
       ul.scrollTop = ul.scrollHeight;
     }
 
-    function sendDM() {
-      if (!currentDMPath) { alert("No DM open. Type a username and 'Open DM' first."); return; }
+    function transmitDMChannel1() {
+      if (!currentDMChannel) { alert("No DM open. Type a username and 'Open DM' first."); return; }
       const inp = document.getElementById("dmMessageInput");
       let text = inp.value.trim();
       if (!text) return;
-      text = filterBadWords(text);
-      if (currentUsername && mutedUsers[currentUsername]) {
+      text = filterForbiddenWords(text);
+      if (currentUser && mutedList[currentUser]) {
         alert("You are muted and cannot send messages.");
         inp.value = "";
         inp.style.height = "40px";
         return;
       }
-      const finalName = currentUsername || "Unknown";
-      db.ref(currentDMPath).push({
+      const finalName = currentUser || "Unknown";
+      newDB.ref(currentDMChannel).push({
         user: finalName,
         text: text,
-        timestamp: firebase.database.ServerValue.TIMESTAMP
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        clientVersion: NEW_CLIENT_VERSION
       });
       inp.value = "";
       inp.style.height = "40px";
     }
 
-    // DM #2
-    function openDM2() {
-      const typedName = document.getElementById("dm2TargetInput").value.trim();
-      if (!typedName) { alert("Please type a username to DM (DM #2)."); return; }
-      if (!currentUsername || !currentPassHash) { alert("You must be logged in to DM."); return; }
-      if (dm2Listener && currentDM2Path) { db.ref(currentDM2Path).off("child_added", dm2Listener); }
-      const userA = currentUsername;
-      const userB = typedName;
+    function launchDMChannel2() {
+      const target = document.getElementById("dm2TargetInput").value.trim();
+      if (!target) { alert("Please type a username to DM (DM #2)."); return; }
+      if (!currentUser || !currentUserPassHash) { alert("You must be logged in to DM."); return; }
+      if (dmListener2 && currentDMChannel2) { newDB.ref(currentDMChannel2).off("child_added", dmListener2); }
+      const userA = currentUser;
+      const userB = target;
       const dmKey = (userA < userB) ? (userA + "_" + userB) : (userB + "_" + userA);
-      currentDM2Path = "dms/" + dmKey;
+      currentDMChannel2 = NEW_KEYS.dms + "/" + dmKey;
       document.getElementById("dm2Messages").innerHTML = "";
       document.getElementById("dm2Conversation").style.display = "block";
       document.getElementById("dm2MessageInput").focus();
-      dm2Listener = db.ref(currentDM2Path).on("child_added", (snap) => {
+      dmListener2 = newDB.ref(currentDMChannel2).on("child_added", (snap) => {
         const val = snap.val();
-        displayDM2Message(val.user, val.text);
-        if (val.user !== currentUsername) {
-          showDMNotification(val.user, val.text);
-          playSoundNotification();
+        renderDMChannel2Message(val.user, val.text);
+        if (val.user !== currentUser) {
+          displayDMAlert(val.user, val.text);
+          triggerSoundAlert();
         }
       });
     }
 
-    function displayDM2Message(sender, text) {
+    function renderDMChannel2Message(sender, text) {
       const ul = document.getElementById("dm2Messages");
       const li = document.createElement("li");
       li.textContent = `${sender}: ${text}`;
@@ -1232,52 +1038,52 @@
       ul.scrollTop = ul.scrollHeight;
     }
 
-    function sendDM2() {
-      if (!currentDM2Path) { alert("No DM #2 open. Type a username and 'Open DM #2' first."); return; }
+    function transmitDMChannel2() {
+      if (!currentDMChannel2) { alert("No DM #2 open. Type a username and 'Open DM #2' first."); return; }
       const inp = document.getElementById("dm2MessageInput");
       let text = inp.value.trim();
       if (!text) return;
-      text = filterBadWords(text);
-      if (currentUsername && mutedUsers[currentUsername]) {
+      text = filterForbiddenWords(text);
+      if (currentUser && mutedList[currentUser]) {
         alert("You are muted and cannot send messages.");
         inp.value = "";
         inp.style.height = "40px";
         return;
       }
-      const finalName = currentUsername || "Unknown";
-      db.ref(currentDM2Path).push({
+      const finalName = currentUser || "Unknown";
+      newDB.ref(currentDMChannel2).push({
         user: finalName,
         text: text,
-        timestamp: firebase.database.ServerValue.TIMESTAMP
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        clientVersion: NEW_CLIENT_VERSION
       });
       inp.value = "";
       inp.style.height = "40px";
     }
 
-    // DM #3
-    function openDM3() {
-      const typedName = document.getElementById("dm3TargetInput").value.trim();
-      if (!typedName) { alert("Please type a username to DM (DM #3)."); return; }
-      if (!currentUsername || !currentPassHash) { alert("You must be logged in to DM."); return; }
-      if (dm3Listener && currentDM3Path) { db.ref(currentDM3Path).off("child_added", dm3Listener); }
-      const userA = currentUsername;
-      const userB = typedName;
+    function launchDMChannel3() {
+      const target = document.getElementById("dm3TargetInput").value.trim();
+      if (!target) { alert("Please type a username to DM (DM #3)."); return; }
+      if (!currentUser || !currentUserPassHash) { alert("You must be logged in to DM."); return; }
+      if (dmListener3 && currentDMChannel3) { newDB.ref(currentDMChannel3).off("child_added", dmListener3); }
+      const userA = currentUser;
+      const userB = target;
       const dmKey = (userA < userB) ? (userA + "_" + userB) : (userB + "_" + userA);
-      currentDM3Path = "dms/" + dmKey;
+      currentDMChannel3 = NEW_KEYS.dms + "/" + dmKey;
       document.getElementById("dm3Messages").innerHTML = "";
       document.getElementById("dm3Conversation").style.display = "block";
       document.getElementById("dm3MessageInput").focus();
-      dm3Listener = db.ref(currentDM3Path).on("child_added", (snap) => {
+      dmListener3 = newDB.ref(currentDMChannel3).on("child_added", (snap) => {
         const val = snap.val();
-        displayDM3Message(val.user, val.text);
-        if (val.user !== currentUsername) {
-          showDMNotification(val.user, val.text);
-          playSoundNotification();
+        renderDMChannel3Message(val.user, val.text);
+        if (val.user !== currentUser) {
+          displayDMAlert(val.user, val.text);
+          triggerSoundAlert();
         }
       });
     }
 
-    function displayDM3Message(sender, text) {
+    function renderDMChannel3Message(sender, text) {
       const ul = document.getElementById("dm3Messages");
       const li = document.createElement("li");
       li.textContent = `${sender}: ${text}`;
@@ -1286,100 +1092,75 @@
       ul.scrollTop = ul.scrollHeight;
     }
 
-    function sendDM3() {
-      if (!currentDM3Path) { alert("No DM #3 open. Type a username and 'Open DM' first."); return; }
+    function transmitDMChannel3() {
+      if (!currentDMChannel3) { alert("No DM #3 open. Type a username and 'Open DM' first."); return; }
       const inp = document.getElementById("dm3MessageInput");
       let text = inp.value.trim();
       if (!text) return;
-      text = filterBadWords(text);
-      if (currentUsername && mutedUsers[currentUsername]) {
+      text = filterForbiddenWords(text);
+      if (currentUser && mutedList[currentUser]) {
         alert("You are muted and cannot send messages.");
         inp.value = "";
         inp.style.height = "40px";
         return;
       }
-      const finalName = currentUsername || "Unknown";
-      db.ref(currentDM3Path).push({
+      const finalName = currentUser || "Unknown";
+      newDB.ref(currentDMChannel3).push({
         user: finalName,
         text: text,
-        timestamp: firebase.database.ServerValue.TIMESTAMP
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        clientVersion: NEW_CLIENT_VERSION
       });
       inp.value = "";
       inp.style.height = "40px";
     }
 
-    /* =====================================================
-       Group Chat (Slash Commands) & Challenge Commands
-       ===================================================== */
-    async function handleSlashCommand(text) {
-      const parts = text.split(" ");
-      const cmd = parts[0].toLowerCase();
-      const arg = parts[1] ? parts[1].trim() : null;
-      // OP commands: if a non-approved user uses one, terminate them.
-      if (cmd === "/mute" || cmd === "/unmute" || cmd === "/terminate") {
-        if (!isCurrentUserOP()) {
+    async function processCommandInput(inputText) {
+      const parts = inputText.split(" ");
+      const command = parts[0].toLowerCase();
+      const argument = parts[1] ? parts[1].trim() : null;
+      if (command === "/mute" || command === "/unmute" || command === "/terminate") {
+        if (!isUserOP()) {
           alert("Unauthorized op command detected. Your account will be terminated.");
-          terminateAccount(currentUsername);
+          securelyTerminateAccount(currentUser);
           return;
         }
-        if (cmd === "/mute" || cmd === "/unmute") {
-          handleOpCommand(cmd, arg);
-          return;
-        }
-        if (cmd === "/terminate") {
-          if (!arg) { alert("Usage: /terminate [accountName]"); }
-          else { terminateAccount(arg); }
-          return;
-        }
+        if (command === "/mute") { securelyMuteUser(argument); return; }
+        else if (command === "/unmute") { securelyUnmuteUser(argument); return; }
+        else if (command === "/terminate") { if (!argument) { alert("Usage: /terminate [accountName]"); } else { securelyTerminateAccount(argument); } return; }
       }
-      // Duel Speed challenge command
-      if (cmd === "/duelspeed") {
-         if (!arg) { alert("Usage: /duelspeed [account]"); return; }
-         initiateDuelSpeedChallenge(arg);
+      if (command === "/duelspeed") {
+         if (!argument) { alert("Usage: /duelspeed [account]"); return; }
+         startDuelSpeedContest(argument);
          return;
       }
-      // Rock-Paper–Scissors challenge command
-      if (cmd === "/rps") {
-         if (!arg) { alert("Usage: /rps [account]"); return; }
-         initiateRPSChallenge(arg);
+      if (command === "/rps") {
+         if (!argument) { alert("Usage: /rps [account]"); return; }
+         startRPSContest(argument);
          return;
       }
-      // Accept/Decline for challenges
-      if (cmd === "/accept") {
-         if (pendingDuelSpeedChallenge) {
-            acceptDuelSpeedChallenge();
-            return;
-         } else if (pendingRPSChallenge) {
-            acceptRPSChallenge();
-            return;
-         } else { 
-            alert("No pending challenge to accept.");
-         }
+      if (command === "/accept") {
+         if (pendingDuelContest) { approveDuelSpeedContest(); return; }
+         else if (pendingRPSContest) { approveRPSContest(); return; }
+         else { alert("No pending challenge to accept."); }
       }
-      if (cmd === "/decline") {
-         if (pendingDuelSpeedChallenge) {
-            declineDuelSpeedChallenge();
-            return;
-         } else if (pendingRPSChallenge) {
-            declineRPSChallenge();
-            return;
-         } else { 
-            alert("No pending challenge to decline.");
-         }
+      if (command === "/decline") {
+         if (pendingDuelContest) { rejectDuelSpeedContest(); return; }
+         else if (pendingRPSContest) { rejectRPSContest(); return; }
+         else { alert("No pending challenge to decline."); }
       }
-      // Other group chat commands
-      switch(cmd) {
+      switch(command) {
         case "/createroom":
-          if (!arg) { alert("Usage: /createroom [roomName]"); return; }
-          await createGroupRoom(arg);
+          if (!argument) { alert("Usage: /createroom [roomName]"); return; }
+          await createGroupRoom(argument);
           break;
         case "/join":
-          if (!arg) { alert("Usage: /join [roomName]"); return; }
-          await joinGroupRoom(arg);
+          if (!argument) { alert("Usage: /join [roomName]"); return; }
+          await joinGroupRoom(argument);
           break;
         case "/invite":
-          if (!arg) { alert("Usage: /invite [accountName]"); return; }
-          await inviteToGroup(arg);
+          if (!argument) { alert("Usage: /invite [accountName]"); return; }
+          await inviteToGroupRoom(argument);
           break;
         case "/leave":
           leaveGroupRoom();
@@ -1389,100 +1170,89 @@
       }
     }
 
-    /* ---- Duel Speed Challenge Functions ---- */
-    function initiateDuelSpeedChallenge(target) {
-      if (!currentUsername) {
-         alert("You must be logged in to challenge someone.");
-         return;
-      }
-      if (target.toLowerCase() === currentUsername.toLowerCase()) {
-         alert("You cannot challenge yourself!");
-         return;
-      }
-      let gameId = db.ref("games/duelspeed").push().key;
-      let challengeData = {
-         challenger: currentUsername,
-         challenged: target,
+    function startDuelSpeedContest(targetUser) {
+      if (!currentUser) { alert("Login required to challenge."); return; }
+      if (targetUser.toLowerCase() === currentUser.toLowerCase()) { alert("Cannot challenge yourself!"); return; }
+      let gameID = newDB.ref(NEW_KEYS.duelSpeedGames).push().key;
+      let contestData = {
+         challenger: currentUser,
+         challenged: targetUser,
          status: "pending",
-         gameId: gameId,
-         timestamp: firebase.database.ServerValue.TIMESTAMP
+         gameId: gameID,
+         timestamp: firebase.database.ServerValue.TIMESTAMP,
+         clientVersion: NEW_CLIENT_VERSION
       };
-      db.ref("duelspeedChallenges/" + gameId).set(challengeData);
-      alert("Duel Speed challenge sent to " + target + "!");
+      newDB.ref(NEW_KEYS.duelSpeedChallenges + "/" + gameID).set(contestData);
+      alert("Duel Speed challenge sent to " + targetUser + "!");
     }
 
-    function listenForDuelSpeedChallenges() {
-      db.ref("duelspeedChallenges").on("child_added", function(snapshot) {
-         let challenge = snapshot.val();
-         if (challenge.challenged.toLowerCase() === currentUsername.toLowerCase() && challenge.status === "pending") {
-            if (!pendingDuelSpeedChallenge) {
-              pendingDuelSpeedChallenge = challenge;
-              alert(challenge.challenger + " has challenged you to Duel Speed! Type /accept to accept or /decline to decline.");
+    function monitorDuelSpeedContests() {
+      newDB.ref(NEW_KEYS.duelSpeedChallenges).on("child_added", function(snap) {
+         let contest = snap.val();
+         if (contest.challenged.toLowerCase() === currentUser.toLowerCase() && contest.status === "pending") {
+            if (!pendingDuelContest) {
+              pendingDuelContest = contest;
+              alert(contest.challenger + " has challenged you to Duel Speed! Type /accept to accept or /decline to decline.");
             }
          }
       });
-      db.ref("duelspeedChallenges").on("child_changed", function(snapshot) {
-         let challenge = snapshot.val();
-         if (challenge.challenged.toLowerCase() === currentUsername.toLowerCase() && challenge.status === "pending") {
-            if (!pendingDuelSpeedChallenge) {
-              pendingDuelSpeedChallenge = challenge;
-              alert(challenge.challenger + " has challenged you to Duel Speed! Type /accept to accept or /decline to decline.");
+      newDB.ref(NEW_KEYS.duelSpeedChallenges).on("child_changed", function(snap) {
+         let contest = snap.val();
+         if (contest.challenged.toLowerCase() === currentUser.toLowerCase() && contest.status === "pending") {
+            if (!pendingDuelContest) {
+              pendingDuelContest = contest;
+              alert(contest.challenger + " has challenged you to Duel Speed! Type /accept to accept or /decline to decline.");
             }
          }
-         if (challenge.challenger.toLowerCase() === currentUsername.toLowerCase() && challenge.status === "accepted") {
-            acceptedDuelSpeedChallenge = challenge;
-            startDuelSpeedGame(challenge.gameId, challenge.challenger, challenge.challenged);
+         if (contest.challenger.toLowerCase() === currentUser.toLowerCase() && contest.status === "accepted") {
+            acceptedDuelContest = contest;
+            beginDuelSpeedMatch(contest.gameId, contest.challenger, contest.challenged);
          }
       });
     }
 
-    function acceptDuelSpeedChallenge() {
-      if (!pendingDuelSpeedChallenge) {
-          alert("No pending Duel Speed challenge.");
-          return;
-      }
-      let gameId = pendingDuelSpeedChallenge.gameId;
-      db.ref("duelspeedChallenges/" + gameId).update({ status: "accepted" });
-      startDuelSpeedGame(gameId, pendingDuelSpeedChallenge.challenger, pendingDuelSpeedChallenge.challenged);
-      pendingDuelSpeedChallenge = null;
+    function approveDuelSpeedContest() {
+      if (!pendingDuelContest) { alert("No pending Duel Speed challenge."); return; }
+      let gameID = pendingDuelContest.gameId;
+      newDB.ref(NEW_KEYS.duelSpeedChallenges + "/" + gameID).update({ status: "accepted", clientVersion: NEW_CLIENT_VERSION });
+      beginDuelSpeedMatch(gameID, pendingDuelContest.challenger, pendingDuelContest.challenged);
+      pendingDuelContest = null;
     }
 
-    function declineDuelSpeedChallenge() {
-      if (!pendingDuelSpeedChallenge) {
-          alert("No pending Duel Speed challenge.");
-          return;
-      }
-      let gameId = pendingDuelSpeedChallenge.gameId;
-      db.ref("duelspeedChallenges/" + gameId).remove();
-      pendingDuelSpeedChallenge = null;
+    function rejectDuelSpeedContest() {
+      if (!pendingDuelContest) { alert("No pending Duel Speed challenge."); return; }
+      let gameID = pendingDuelContest.gameId;
+      newDB.ref(NEW_KEYS.duelSpeedChallenges + "/" + gameID).remove();
+      pendingDuelContest = null;
       alert("Duel Speed challenge declined.");
     }
 
-    function startDuelSpeedGame(gameId, player1, player2) {
+    function beginDuelSpeedMatch(gameID, playerOne, playerTwo) {
       document.getElementById("chatDiv").style.display = "none";
       document.getElementById("duelSpeedGameDiv").style.display = "block";
-      duelSpeedGameId = gameId;
-      duelSpeedGameRef = db.ref("games/duelspeed/" + gameId);
-      duelSpeedGameRef.once("value", function(snapshot) {
-         if (!snapshot.exists()) {
-            duelSpeedGameRef.set({
+      duelGameID = gameID;
+      duelGameRef = newDB.ref(NEW_KEYS.duelSpeedGames + "/" + gameID);
+      duelGameRef.once("value", function(snap) {
+         if (!snap.exists()) {
+            duelGameRef.set({
                players: {
-                   [player1]: { clicks: 0 },
-                   [player2]: { clicks: 0 }
+                   [playerOne]: { clicks: 0 },
+                   [playerTwo]: { clicks: 0 }
                },
                status: "countdown",
-               countdown: 3
+               countdown: 3,
+               clientVersion: NEW_CLIENT_VERSION
             });
          }
-         initDuelSpeedGame(gameId, player1, player2);
+         initializeDuelSpeedMatch(gameID, playerOne, playerTwo);
       });
-      db.ref("duelspeedChallenges/" + gameId).remove();
+      newDB.ref(NEW_KEYS.duelSpeedChallenges + "/" + gameID).remove();
     }
 
-    function initDuelSpeedGame(gameId, player1, player2) {
-      isDuelSpeedHost = (currentUsername.toLowerCase() === player1.toLowerCase());
-      duelSpeedGameRef.on("value", function(snapshot) {
-         let gameData = snapshot.val();
+    function initializeDuelSpeedMatch(gameID, playerOne, playerTwo) {
+      isDuelHost = (currentUser.toLowerCase() === playerOne.toLowerCase());
+      duelGameRef.on("value", function(snap) {
+         let gameData = snap.val();
          if (!gameData) return;
          if (gameData.status === "countdown") {
             document.getElementById("duelSpeedStatus").textContent = "Starting in " + gameData.countdown + "...";
@@ -1499,26 +1269,26 @@
               document.getElementById("messageInput").focus();
             }, 3000);
          }
-         document.getElementById("player1Counter").textContent = player1 + ": " + (gameData.players[player1].clicks || 0) + " clicks";
-         document.getElementById("player2Counter").textContent = player2 + ": " + (gameData.players[player2].clicks || 0) + " clicks";
-         if (gameData.status === "playing" && isDuelSpeedHost) {
-            if (gameData.players[player1].clicks >= 100) {
-              duelSpeedGameRef.update({ status: "ended", winner: player1 });
-            } else if (gameData.players[player2].clicks >= 100) {
-              duelSpeedGameRef.update({ status: "ended", winner: player2 });
+         document.getElementById("player1Counter").textContent = playerOne + ": " + (gameData.players[playerOne].clicks || 0) + " clicks";
+         document.getElementById("player2Counter").textContent = playerTwo + ": " + (gameData.players[playerTwo].clicks || 0) + " clicks";
+         if (gameData.status === "playing" && isDuelHost) {
+            if (gameData.players[playerOne].clicks >= 100) {
+              duelGameRef.update({ status: "ended", winner: playerOne, clientVersion: NEW_CLIENT_VERSION });
+            } else if (gameData.players[playerTwo].clicks >= 100) {
+              duelGameRef.update({ status: "ended", winner: playerTwo, clientVersion: NEW_CLIENT_VERSION });
             }
          }
       });
-      if (isDuelSpeedHost) {
-         duelSpeedCountdownInterval = setInterval(() => {
-            duelSpeedGameRef.once("value", function(snapshot) {
-               let gameData = snapshot.val();
+      if (isDuelHost) {
+         duelCountdownInterval = setInterval(() => {
+            duelGameRef.once("value", function(snap) {
+               let gameData = snap.val();
                if (gameData.status === "countdown") {
                   if (gameData.countdown > 0) {
-                     duelSpeedGameRef.update({ countdown: gameData.countdown - 1 });
+                     duelGameRef.update({ countdown: gameData.countdown - 1, clientVersion: NEW_CLIENT_VERSION });
                   } else {
-                     duelSpeedGameRef.update({ status: "playing" });
-                     clearInterval(duelSpeedCountdownInterval);
+                     duelGameRef.update({ status: "playing", clientVersion: NEW_CLIENT_VERSION });
+                     clearInterval(duelCountdownInterval);
                   }
                }
             });
@@ -1526,168 +1296,151 @@
       }
     }
 
-    function registerDuelSpeedClick() {
-      duelSpeedGameRef.once("value", function(snapshot) {
-         let gameData = snapshot.val();
+    function recordDuelSpeedClick() {
+      duelGameRef.once("value", function(snap) {
+         let gameData = snap.val();
          if (gameData.status !== "playing") return;
-         let playerRef = duelSpeedGameRef.child("players/" + currentUsername + "/clicks");
-         playerRef.transaction(function(currentClicks) {
-            return (currentClicks || 0) + 1;
-         });
+         let playerRef = duelGameRef.child("players/" + currentUser + "/clicks");
+         playerRef.transaction(function(currentClicks) { return (currentClicks || 0) + 1; });
       });
     }
 
-    /* ---- Rock-Paper–Scissors (RPS) Challenge Functions ---- */
-    function initiateRPSChallenge(target) {
-      if (!currentUsername) {
-         alert("You must be logged in to challenge someone.");
-         return;
-      }
-      if (target.toLowerCase() === currentUsername.toLowerCase()) {
-         alert("You cannot challenge yourself!");
-         return;
-      }
-      let gameId = db.ref("games/rps").push().key;
-      let challengeData = {
-         challenger: currentUsername,
-         challenged: target,
+    function startRPSContest(targetUser) {
+      if (!currentUser) { alert("Login required to challenge."); return; }
+      if (targetUser.toLowerCase() === currentUser.toLowerCase()) { alert("Cannot challenge yourself!"); return; }
+      let gameID = newDB.ref(NEW_KEYS.rpsGames).push().key;
+      let contestData = {
+         challenger: currentUser,
+         challenged: targetUser,
          status: "pending",
-         gameId: gameId,
-         timestamp: firebase.database.ServerValue.TIMESTAMP
+         gameId: gameID,
+         timestamp: firebase.database.ServerValue.TIMESTAMP,
+         clientVersion: NEW_CLIENT_VERSION
       };
-      db.ref("rpsChallenges/" + gameId).set(challengeData);
-      alert("Rock–Paper–Scissors challenge sent to " + target + "!");
+      newDB.ref(NEW_KEYS.rpsChallenges + "/" + gameID).set(contestData);
+      alert("Rock–Paper–Scissors challenge sent to " + targetUser + "!");
     }
 
-    function listenForRPSChallenges() {
-      db.ref("rpsChallenges").on("child_added", function(snapshot) {
-         let challenge = snapshot.val();
-         if (challenge.challenged.toLowerCase() === currentUsername.toLowerCase() && challenge.status === "pending") {
-            if (!pendingRPSChallenge) {
-              pendingRPSChallenge = challenge;
-              alert(challenge.challenger + " has challenged you to Rock–Paper–Scissors! Type /accept to accept or /decline to decline.");
+    function monitorRPSContests() {
+      newDB.ref(NEW_KEYS.rpsChallenges).on("child_added", function(snap) {
+         let contest = snap.val();
+         if (contest.challenged.toLowerCase() === currentUser.toLowerCase() && contest.status === "pending") {
+            if (!pendingRPSContest) {
+              pendingRPSContest = contest;
+              alert(contest.challenger + " has challenged you to Rock–Paper–Scissors! Type /accept to accept or /decline to decline.");
             }
          }
       });
-      db.ref("rpsChallenges").on("child_changed", function(snapshot) {
-         let challenge = snapshot.val();
-         if (challenge.challenged.toLowerCase() === currentUsername.toLowerCase() && challenge.status === "pending") {
-            if (!pendingRPSChallenge) {
-              pendingRPSChallenge = challenge;
-              alert(challenge.challenger + " has challenged you to Rock–Paper–Scissors! Type /accept to accept or /decline to decline.");
+      newDB.ref(NEW_KEYS.rpsChallenges).on("child_changed", function(snap) {
+         let contest = snap.val();
+         if (contest.challenged.toLowerCase() === currentUser.toLowerCase() && contest.status === "pending") {
+            if (!pendingRPSContest) {
+              pendingRPSContest = contest;
+              alert(contest.challenger + " has challenged you to Rock–Paper–Scissors! Type /accept to accept or /decline to decline.");
             }
          }
-         if (challenge.challenger.toLowerCase() === currentUsername.toLowerCase() && challenge.status === "accepted") {
-            acceptedRPSChallenge = challenge;
-            startRPSGame(challenge.gameId, challenge.challenger, challenge.challenged);
+         if (contest.challenger.toLowerCase() === currentUser.toLowerCase() && contest.status === "accepted") {
+            acceptedRPSContest = contest;
+            beginRPSMatch(contest.gameId, contest.challenger, contest.challenged);
          }
       });
     }
 
-    function acceptRPSChallenge() {
-      if (!pendingRPSChallenge) {
-         alert("No pending Rock–Paper–Scissors challenge.");
-         return;
-      }
-      let gameId = pendingRPSChallenge.gameId;
-      db.ref("rpsChallenges/" + gameId).update({ status: "accepted" });
-      startRPSGame(gameId, pendingRPSChallenge.challenger, pendingRPSChallenge.challenged);
-      pendingRPSChallenge = null;
+    function approveRPSContest() {
+      if (!pendingRPSContest) { alert("No pending Rock–Paper–Scissors challenge."); return; }
+      let gameID = pendingRPSContest.gameId;
+      newDB.ref(NEW_KEYS.rpsChallenges + "/" + gameID).update({ status: "accepted", clientVersion: NEW_CLIENT_VERSION });
+      beginRPSMatch(gameID, pendingRPSContest.challenger, pendingRPSContest.challenged);
+      pendingRPSContest = null;
     }
 
-    function declineRPSChallenge() {
-      if (!pendingRPSChallenge) {
-         alert("No pending Rock–Paper–Scissors challenge.");
-         return;
-      }
-      let gameId = pendingRPSChallenge.gameId;
-      db.ref("rpsChallenges/" + gameId).remove();
-      pendingRPSChallenge = null;
+    function rejectRPSContest() {
+      if (!pendingRPSContest) { alert("No pending Rock–Paper–Scissors challenge."); return; }
+      let gameID = pendingRPSContest.gameId;
+      newDB.ref(NEW_KEYS.rpsChallenges + "/" + gameID).remove();
+      pendingRPSContest = null;
       alert("Rock–Paper–Scissors challenge declined.");
     }
 
-    function startRPSGame(gameId, player1, player2) {
+    function beginRPSMatch(gameID, playerOne, playerTwo) {
       document.getElementById("chatDiv").style.display = "none";
       document.getElementById("rpsGameDiv").style.display = "block";
-      rpsPlayer1 = player1;
-      rpsPlayer2 = player2;
-      rpsGameId = gameId;
-      rpsGameRef = db.ref("games/rps/" + gameId);
-      rpsGameRef.once("value", function(snapshot) {
-         if (!snapshot.exists()) {
+      rpsPlayerOne = playerOne;
+      rpsPlayerTwo = playerTwo;
+      rpsGameID = gameID;
+      rpsGameRef = newDB.ref(NEW_KEYS.rpsGames + "/" + gameID);
+      rpsGameRef.once("value", function(snap) {
+         if (!snap.exists()) {
             rpsGameRef.set({
                players: {
-                   [player1]: { choice: "" },
-                   [player2]: { choice: "" }
+                   [playerOne]: { choice: "" },
+                   [playerTwo]: { choice: "" }
                },
-               status: "waiting"
+               status: "waiting",
+               clientVersion: NEW_CLIENT_VERSION
             });
          }
-         initRPSGame(gameId, player1, player2);
+         initializeRPSMatch(gameID, playerOne, playerTwo);
       });
-      db.ref("rpsChallenges/" + gameId).remove();
+      newDB.ref(NEW_KEYS.rpsChallenges + "/" + gameID).remove();
     }
 
-    function initRPSGame(gameId, player1, player2) {
-      isRPSHost = (currentUsername.toLowerCase() === player1.toLowerCase());
-      rpsGameRef.on("value", function(snapshot) {
-         let gameData = snapshot.val();
+    function initializeRPSMatch(gameID, playerOne, playerTwo) {
+      isRPSHost = (currentUser.toLowerCase() === playerOne.toLowerCase());
+      rpsGameRef.on("value", function(snap) {
+         let gameData = snap.val();
          if (!gameData) return;
-         let choice1 = gameData.players[player1].choice;
-         let choice2 = gameData.players[player2].choice;
+         let choice1 = gameData.players[playerOne].choice;
+         let choice2 = gameData.players[playerTwo].choice;
          if (choice1 !== "" && choice2 !== "" && gameData.status === "waiting") {
-            let emoji1 = getEmoji(choice1);
-            let emoji2 = getEmoji(choice2);
-            let resultText = "";
-            if (choice1 === choice2) {
-              resultText = "It's a tie! Both chose " + choice1 + " " + emoji1 + ".";
-            } else if (
-              (choice1 === "rock" && choice2 === "scissors") ||
-              (choice1 === "scissors" && choice2 === "paper") ||
-              (choice1 === "paper" && choice2 === "rock")
-            ) {
-              resultText = player1 + " wins! " + choice1 + " " + emoji1 + " beats " + choice2 + " " + emoji2 + ".";
+            let emoji1 = getRPSEmoji(choice1);
+            let emoji2 = getRPSEmoji(choice2);
+            let resultStr = "";
+            if (choice1 === choice2) { resultStr = "It's a tie! Both chose " + choice1 + " " + emoji1 + "."; }
+            else if ((choice1 === "rock" && choice2 === "scissors") || (choice1 === "scissors" && choice2 === "paper") || (choice1 === "paper" && choice2 === "rock")) {
+              resultStr = playerOne + " wins! " + choice1 + " " + emoji1 + " beats " + choice2 + " " + emoji2 + ".";
             } else {
-              resultText = player2 + " wins! " + choice2 + " " + emoji2 + " beats " + choice1 + " " + emoji1 + ".";
+              resultStr = playerTwo + " wins! " + choice2 + " " + emoji2 + " beats " + choice1 + " " + emoji1 + ".";
             }
-            rpsGameRef.update({ status: "finished", result: resultText });
+            rpsGameRef.update({ status: "finished", result: resultStr, clientVersion: NEW_CLIENT_VERSION });
          }
          if (gameData.status === "finished") {
             document.getElementById("rpsStatus").textContent = "Game Over";
             document.getElementById("rpsResult").textContent = gameData.result;
             document.getElementById("rpsChoices").style.display = "none";
-            if (!rpsGameEndTimeout) {
-              rpsGameEndTimeout = setTimeout(function() {
+            if (!rpsGameEndTimer) {
+              rpsGameEndTimer = setTimeout(function() {
                 document.getElementById("rpsGameDiv").style.display = "none";
                 document.getElementById("chatDiv").style.display = "block";
                 document.getElementById("messageInput").focus();
-                resetRPSGame();
-                rpsGameEndTimeout = null;
+                restartRPSMatch();
+                rpsGameEndTimer = null;
               }, 3000);
             }
          }
       });
     }
 
-    function makeRPSChoice(choice) {
-      rpsGameRef.once("value", function(snapshot) {
-         let gameData = snapshot.val();
+    function selectRPSOption(choice) {
+      rpsGameRef.once("value", function(snap) {
+         let gameData = snap.val();
          if (gameData.status !== "waiting") return;
-         if (gameData.players[currentUsername].choice === "") {
-            rpsGameRef.child("players/" + currentUsername + "/choice").set(choice);
+         if (gameData.players[currentUser].choice === "") {
+            rpsGameRef.child("players/" + currentUser + "/choice").set(choice);
             document.getElementById("rpsStatus").textContent = "Waiting for opponent's choice...";
          }
       });
     }
 
-    function resetRPSGame() {
+    function restartRPSMatch() {
       if (!rpsGameRef) return;
       rpsGameRef.set({
          players: {
-            [rpsPlayer1]: { choice: "" },
-            [rpsPlayer2]: { choice: "" }
+            [rpsPlayerOne]: { choice: "" },
+            [rpsPlayerTwo]: { choice: "" }
          },
-         status: "waiting"
+         status: "waiting",
+         clientVersion: NEW_CLIENT_VERSION
       });
       document.getElementById("rpsStatus").textContent = "Make your choice:";
       document.getElementById("rpsResult").textContent = "";
@@ -1695,187 +1448,226 @@
       document.getElementById("rpsPlayAgainButton").style.display = "none";
     }
 
-    /* =====================================================
-       Settings Navigation
-       ===================================================== */
-    function showSettingsFromLogin() {
+    function openSettingsPage() {
       document.getElementById("loginDiv").style.display = "none";
       document.getElementById("settingsDiv").style.display = "block";
     }
 
-    function goBack() {
+    function returnToSettingsOrLogin() {
       document.getElementById("settingsDiv").style.display = "none";
       document.getElementById("loginDiv").style.display = "block";
     }
 
-    /* =====================================================
-       Dark Mode Toggle
-       ===================================================== */
-    function toggleDarkMode() {
+    function switchDarkMode() {
       document.body.classList.toggle("dark-mode");
-      const isDark = document.body.classList.contains("dark-mode");
-      localStorage.setItem("darkModeEnabled", isDark);
+      const darkActive = document.body.classList.contains("dark-mode");
+      localStorage.setItem("darkModeEnabled", darkActive);
     }
 
-    /* =====================================================
-       GUI Size
-       ===================================================== */
-    function updateGuiSize() {
+    function adjustGuiScaling() {
       const scale = document.getElementById("guiSizeRange").value;
       document.documentElement.style.fontSize = (16 * scale) + "px";
       localStorage.setItem("uiScale", scale);
-      updateGuiSizeDisplay();
+      refreshGuiScaleDisplay();
     }
 
-    function updateGuiSizeDisplay() {
+    function refreshGuiScaleDisplay() {
       const val = document.getElementById("guiSizeRange").value;
       document.getElementById("guiSizeValue").textContent = `Current Scale: ${val}x`;
     }
 
-    /* =====================================================
-       Custom Font
-       ===================================================== */
-    function updateFont() {
+    function changeUIFont() {
       document.body.classList.remove(
         "font-arial", "font-georgia", "font-courier", "font-comic", "font-roboto",
         "font-times", "font-verdana", "font-trebuchet", "font-lucida", "font-garamond",
         "font-helvetica", "font-tahoma", "font-impact", "font-futura", "font-open-sans", "font-lato", "font-montserrat"
       );
-      const selectedFont = document.getElementById("fontSelect").value;
-      document.body.classList.add(selectedFont);
-      localStorage.setItem("selectedFont", selectedFont);
+      const selected = document.getElementById("fontSelect").value;
+      document.body.classList.add(selected);
+      localStorage.setItem("selectedFont", selected);
     }
 
-    /* =====================================================
-       Desktop Notifications
-       ===================================================== */
-    function toggleNotifications() {
-      const isChecked = document.getElementById("notificationsToggle").checked;
-      localStorage.setItem("notificationsEnabled", isChecked);
-      if (isChecked) { requestNotificationPermission(); }
+    function switchDesktopNotifications() {
+      const toggled = document.getElementById("notificationsToggle").checked;
+      localStorage.setItem("notificationsEnabled", toggled);
+      if (toggled) { askNotificationAccess(); }
     }
 
-    function requestNotificationPermission() {
-      if (!("Notification" in window)) {
-        alert("This browser does not support desktop notifications.");
-        return;
-      }
+    function askNotificationAccess() {
+      if (!("Notification" in window)) { alert("This browser does not support notifications."); return; }
       if (Notification.permission !== "granted") {
-        Notification.requestPermission().then((permission) => {
-          if (permission !== "granted") {
-            alert("You blocked notifications in your browser settings.");
-            document.getElementById("notificationsToggle").checked = false;
-            localStorage.setItem("notificationsEnabled", false);
-          }
+        Notification.requestPermission().then((perm) => {
+          if (perm !== "granted") { alert("Notifications blocked. Adjust settings."); document.getElementById("notificationsToggle").checked = false; localStorage.setItem("notificationsEnabled", false); }
         });
       }
     }
 
-    function showDMNotification(user, text) {
-      const isNotificationsEnabled = localStorage.getItem("notificationsEnabled") === "true";
-      if (!("Notification" in window) || !isNotificationsEnabled) return;
+    function displayDMAlert(user, text) {
+      const notifOn = localStorage.getItem("notificationsEnabled") === "true";
+      if (!("Notification" in window) || !notifOn) return;
       if (document.hidden && Notification.permission === "granted") {
-        new Notification("New DM from " + user, {
-          body: text,
-          icon: "https://via.placeholder.com/50"
-        });
+        new Notification("New DM from " + user, { body: text, icon: "https://via.placeholder.com/50" });
       }
     }
 
-    /* =====================================================
-       Member List (Presence)
-       ===================================================== */
-    function setupPresence() {
-      if (myPresenceRef) { myPresenceRef.remove(); myPresenceRef = null; }
-      const userNameForPresence = currentUsername || ("Guest_" + Math.floor(Math.random() * 10000));
-      myPresenceRef = db.ref("presence").push();
-      myPresenceRef.set({
-        username: userNameForPresence,
-        timestamp: firebase.database.ServerValue.TIMESTAMP
+    function initializeUserPresence() {
+      if (userPresenceRef) { userPresenceRef.remove(); userPresenceRef = null; }
+      const presenceName = currentUser || ("Guest_" + Math.floor(Math.random() * 10000));
+      userPresenceRef = newDB.ref(NEW_KEYS.presence).push();
+      userPresenceRef.set({
+        username: presenceName,
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        clientVersion: NEW_CLIENT_VERSION
       });
-      myPresenceRef.onDisconnect().remove();
+      userPresenceRef.onDisconnect().remove();
     }
 
-    function updateMemberList(members) {
-      const uniqueMembers = {};
-      let totalCount = 0;
+    function refreshMemberList(members) {
+      const unique = {};
+      let count = 0;
       members.forEach(member => {
-        if (!member || member.trim() === "" || member.toLowerCase().includes("anoynumus")) {
-          member = "Anonymous Player";
-        }
-        if (OP_LIST.includes(member.toLowerCase())) return;
-        uniqueMembers[member] = (uniqueMembers[member] || 0) + 1;
-        totalCount += 1;
+        if (!member || member.trim() === "" || member.toLowerCase().includes("anoynumus")) { member = "Anonymous Player"; }
+        if (NEW_OP_LIST.includes(member.toLowerCase())) return;
+        unique[member] = (unique[member] || 0) + 1;
+        count++;
       });
-      const memberListUl = document.getElementById("memberList");
-      memberListUl.innerHTML = "";
-      for (let member in uniqueMembers) {
-        const count = uniqueMembers[member];
+      const memberUl = document.getElementById("memberList");
+      memberUl.innerHTML = "";
+      for (let mem in unique) {
         const li = document.createElement("li");
-        li.textContent = member + (count > 1 ? " (" + count + ")" : "");
-        memberListUl.appendChild(li);
+        li.textContent = mem + (unique[mem] > 1 ? " (" + unique[mem] + ")" : "");
+        memberUl.appendChild(li);
       }
-      const memberCountHeader = document.getElementById("memberCountHeader");
-      if(memberCountHeader) {
-        memberCountHeader.textContent = "Members Online (" + totalCount + ")";
-      }
+      const header = document.getElementById("memberCountHeader");
+      if(header) { header.textContent = "Members Online (" + count + ")"; }
     }
 
-    /* =====================================================
-       NEW SETTINGS FEATURES
-       ===================================================== */
-    // --- Background Music Controls ---
-    const bgMusic = document.getElementById("bgMusic");
-    const musicFileInput = document.getElementById("musicFileInput");
-    const musicVolume = document.getElementById("musicVolume");
-    musicFileInput.addEventListener("change", function() {
-      const file = this.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          bgMusic.src = e.target.result;
-          localStorage.setItem("bgMusic", e.target.result);
-          bgMusic.play();
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-    function toggleMusic() {
-      if (bgMusic.paused) { bgMusic.play(); } else { bgMusic.pause(); }
+    function switchBackgroundMusic() {
+      const bgAudio = document.getElementById("bgMusic");
+      if (bgAudio.paused) { bgAudio.play(); } else { bgAudio.pause(); }
     }
-    function updateMusicVolume() {
-      const vol = musicVolume.value;
-      bgMusic.volume = vol;
+
+    function modifyMusicVolume() {
+      const vol = document.getElementById("musicVolume").value;
+      const bgAudio = document.getElementById("bgMusic");
+      bgAudio.volume = vol;
       localStorage.setItem("musicVolume", vol);
     }
-    function clearMusic() {
-      bgMusic.pause();
-      bgMusic.src = "";
+
+    function removeBackgroundMusic() {
+      const bgAudio = document.getElementById("bgMusic");
+      bgAudio.pause();
+      bgAudio.src = "";
       localStorage.removeItem("bgMusic");
       alert("Background music removed!");
     }
-    // --- Chat Sound Notifications ---
-    const chatSound = document.getElementById("chatSound");
-    const soundToggle = document.getElementById("soundToggle");
-    const soundVolume = document.getElementById("soundVolume");
-    function toggleSoundNotifications() {
-      const enabled = soundToggle.checked;
+
+    function switchSoundAlerts() {
+      const enabled = document.getElementById("soundToggle").checked;
       localStorage.setItem("soundNotificationsEnabled", enabled);
     }
-    function updateSoundVolume() {
-      const vol = soundVolume.value;
-      chatSound.volume = vol;
+
+    function modifySoundVolume() {
+      const vol = document.getElementById("soundVolume").value;
+      const chatAud = document.getElementById("chatSound");
+      chatAud.volume = vol;
       localStorage.setItem("soundVolume", vol);
     }
-    function playSoundNotification() {
-      const enabled = localStorage.getItem("soundNotificationsEnabled") === "true";
-      if (enabled) { chatSound.currentTime = 0; chatSound.play(); }
+
+    function triggerSoundAlert() {
+      const soundEnabled = localStorage.getItem("soundNotificationsEnabled") === "true";
+      if (soundEnabled) { const chatAud = document.getElementById("chatSound"); chatAud.currentTime = 0; chatAud.play(); }
     }
-    // --- Message Timestamps Toggle ---
-    function toggleTimestamps() {
-      const enabled = document.getElementById("timestampToggle").checked;
-      localStorage.setItem("showTimestamps", enabled);
-      alert("Message timestamp display " + (enabled ? "enabled" : "disabled") + ". (Hover over messages to see the sent time.)");
+
+    function switchTimestampDisplay() {
+      const show = document.getElementById("timestampToggle").checked;
+      localStorage.setItem("showTimestamps", show);
+      alert("Message timestamp display " + (show ? "enabled" : "disabled") + ". (Hover over messages to see the sent time.)");
+    }
+
+    window.onload = function() {
+      document.getElementById("changelogOverlay").style.display = "flex";
+      const darkEnabled = localStorage.getItem("darkModeEnabled") === "true";
+      if (darkEnabled) document.body.classList.add("dark-mode");
+      document.getElementById("themeToggle").checked = darkEnabled;
+      const savedScale = localStorage.getItem("uiScale");
+      if (savedScale) { document.documentElement.style.fontSize = (16 * savedScale) + "px"; document.getElementById("guiSizeRange").value = savedScale; }
+      refreshGuiScaleDisplay();
+      const savedFont = localStorage.getItem("selectedFont") || "font-arial";
+      document.body.classList.add(savedFont);
+      document.getElementById("fontSelect").value = savedFont;
+      currentUser = localStorage.getItem("acc_username");
+      currentUserPassHash = localStorage.getItem("acc_passHash");
+      refreshAccountInterface();
+      if (currentUser && !isUserOP()) {
+        newDB.ref(NEW_KEYS.mutedUsers).orderByChild("op").equalTo(currentUser).once("value", (snap) => {
+          if (snap.exists()) {
+            alert("Unauthorized op command detected from a previous version. Your account will be terminated.");
+            securelyTerminateAccount(currentUser);
+          }
+        });
+      }
+      activatePublicChatListeners();
+      newDB.ref(NEW_KEYS.typing).on("value", (snap) => {
+        const typObj = snap.val() || {};
+        presentTypingStatus(typObj);
+      });
+      newDB.ref(NEW_KEYS.mutedUsers).on("value", (snap) => { mutedList = snap.val() || {}; });
+      newDB.ref(NEW_KEYS.accountColors).on("value", (snap) => { userColors = snap.val() || {}; });
+      newDB.ref(NEW_KEYS.broadcasts).on("child_added", (snap) => {
+        const bData = snap.val();
+        renderChatMessage(bData.user, bData.text, true, true, snap.key, bData.timestamp);
+      });
+      newDB.ref(NEW_KEYS.broadcasts).on("child_removed", (snap) => {
+        const remKey = snap.key;
+        const li = document.querySelector(`li[data-key="${remKey}"]`);
+        if (li) li.remove();
+      });
+      newDB.ref(NEW_KEYS.presence).on("value", (snap) => {
+        const presData = snap.val() || {};
+        let membersArr = [];
+        for (let key in presData) {
+          if (presData[key].username) { membersArr.push(presData[key].username); }
+        }
+        refreshMemberList(membersArr);
+      });
+      initializeTextAreaShortcuts("messageInput", dispatchMessage);
+      initializeTextAreaShortcuts("dmMessageInput", transmitDMChannel1);
+      initializeTextAreaShortcuts("dm2MessageInput", transmitDMChannel2);
+      initializeTextAreaShortcuts("dm3MessageInput", transmitDMChannel3);
+      const notifEnabled = localStorage.getItem("notificationsEnabled") === "true";
+      document.getElementById("notificationsToggle").checked = notifEnabled;
+      const soundEnabled = localStorage.getItem("soundNotificationsEnabled") === "true";
+      document.getElementById("soundToggle").checked = soundEnabled;
+      const storedSoundVol = localStorage.getItem("soundVolume");
+      if (storedSoundVol) { document.getElementById("soundVolume").value = storedSoundVol; document.getElementById("chatSound").volume = parseFloat(storedSoundVol); }
+      const showTime = localStorage.getItem("showTimestamps") === "true";
+      document.getElementById("timestampToggle").checked = showTime;
+      window.onbeforeunload = () => { clearUserTypingStatus(); };
+      const storedMusic = localStorage.getItem("bgMusic");
+      if (storedMusic) {
+        document.getElementById("bgMusic").src = storedMusic;
+        document.getElementById("bgMusic").volume = localStorage.getItem("musicVolume") || 1;
+        document.getElementById("bgMusic").play();
+      }
+      monitorDuelSpeedContests();
+      monitorRPSContests();
+      window.addEventListener("keydown", function(e) {
+        if (e.key === "Escape") {
+          if (document.getElementById("helpModal").style.display !== "none") { hideHelpWindow(); }
+        }
+      });
+      updateHelpWindowVisibility();
+      refreshOpSectionVisibility();
+    };
+
+    function hideChangeLog() { document.getElementById("changelogOverlay").style.display = "none"; }
+    function displayHelpWindow() { document.getElementById("helpModal").style.display = "flex"; updateHelpWindowVisibility(); }
+    function hideHelpWindow() { document.getElementById("helpModal").style.display = "none"; }
+    function updateHelpWindowVisibility() {
+      var opHelpElem = document.getElementById("opHelp");
+      if (isUserOP()) { opHelpElem.style.display = "block"; }
+      else { opHelpElem.style.display = "none"; }
     }
   </script>
 </body>
