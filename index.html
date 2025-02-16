@@ -108,17 +108,76 @@
     #dmMessages li, #dm2Messages li, #dm3Messages li {
       padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 14px;
     }
-    /* MEMBER LIST */
+    /* REWORKED MEMBERS LIST */
     #memberListContainer {
-      background: #ffffff; padding: 8px; margin-top: 10px;
-      border: 1px solid #ddd; border-radius: 6px;
+      background: #ffffff; 
+      border: 1px solid #ddd; 
+      border-radius: 6px; 
+      padding: 10px; 
+      margin-top: 10px;
     }
+    #memberListHeader {
+      margin-bottom: 8px; 
+      font-size: 18px; 
+      font-weight: bold;
+    }
+    #memberListSearch input {
+      width: 100%;
+      padding: 6px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    #memberList {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .member-item {
+      display: flex;
+      align-items: center;
+      padding: 6px;
+      border-bottom: 1px solid #eee;
+      transition: background 0.2s;
+    }
+    .member-item:hover {
+      background: #f0f0f0;
+    }
+    .member-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #7289da;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 10px;
+      font-weight: bold;
+    }
+    .member-name {
+      font-size: 14px;
+      color: #333;
+    }
+    /* Dark mode overrides for the members list */
     body.dark-mode #memberListContainer {
-      background: #36393f; border-color: #4f545c;
+      background: #2f3136; 
+      border: 1px solid #4f545c;
     }
-    #memberList li { padding: 4px 0; font-size: 14px; }
-    /* Member count header */
-    #memberCountHeader { margin-bottom: 8px; }
+    body.dark-mode #memberListSearch input {
+      background: #40444b;
+      color: #dcdcdc;
+      border: 1px solid #4f545c;
+    }
+    body.dark-mode .member-item {
+      border-bottom: 1px solid #4f545c;
+    }
+    body.dark-mode .member-item:hover {
+      background: #36393f;
+    }
+    body.dark-mode .member-name {
+      color: #dcdcdc;
+    }
     /* MESSAGE ANIMATION */
     @keyframes message-enter {
       0% { transform: scale(0.8); opacity: 0; }
@@ -254,6 +313,9 @@
         <label for="terminateTarget">Terminate Account:</label>
         <input type="text" id="terminateTarget" placeholder="Account to terminate" />
         <button onclick="securelyTerminateAccount(document.getElementById('terminateTarget').value.trim())">Terminate Account</button>
+        <br /><br />
+        <!-- Button to clear the members list from the server -->
+        <button onclick="clearMemberList()">Clear Member List</button>
       </div>
     </div>
 
@@ -319,8 +381,12 @@
           </div>
         </div>
       </div>
+      <!-- REWORKED MEMBERS LIST -->
       <div id="memberListContainer">
-        <h3 id="memberCountHeader">Members Online</h3>
+        <h3 id="memberListHeader">Members Online</h3>
+        <div id="memberListSearch">
+          <input type="text" id="memberListFilter" placeholder="Filter members..." oninput="filterMemberList()" />
+        </div>
         <ul id="memberList"></ul>
       </div>
       <div style="text-align:center; margin-top:10px;">
@@ -467,7 +533,7 @@
     /* =====================================================
        Global Variables & OP List
        ===================================================== */
-    const NEW_OP_LIST = ["god", "nubunknown", "pasta"];
+    let opList = {}; // will be loaded from Firebase (node: "opList")
     let lastMsgTimestamp = 2000;
     const RATE_LIMIT = 2000;
     const forbiddenWords = ["shit","fuck","bitch","nigga","fucking","shitting","negro","bullshit","pussy"];
@@ -509,15 +575,19 @@
       localStorage.setItem("clientID", clientIdentifier);
     }
 
-    function getRPSEmoji(option) {
-      if (option === "rock") return "✊";
-      if (option === "paper") return "✋";
-      if (option === "scissors") return "✌️";
-      return "";
+    // Fetch the op list from Firebase (assumed to be stored at node "opList")
+    function fetchOpList() {
+      newDB.ref("opList").once("value")
+        .then(function(snapshot) {
+          opList = snapshot.val() || {};
+        })
+        .catch(function(error) {
+          console.error("Error fetching op list:", error);
+        });
     }
 
     function isUserOP() {
-      return currentUser && NEW_OP_LIST.includes(currentUser.toLowerCase());
+      return currentUser && opList[currentUser.toLowerCase()] === true;
     }
 
     function refreshOpSectionVisibility() {
@@ -690,7 +760,6 @@
       const desiredPass = document.getElementById("accPassInput").value.trim();
       if (!desiredName || !desiredPass) { alert("Please provide both a username and a password."); return; }
       if (/\s/.test(desiredName)) { alert("Usernames cannot contain spaces."); return; }
-      if (NEW_OP_LIST.includes(desiredName.toLowerCase())) { desiredName = desiredName.toLowerCase(); }
       const passHash = sha256(desiredPass);
       try {
         const snap = await newDB.ref(NEW_KEYS.accounts + "/" + desiredName).once("value");
@@ -698,7 +767,6 @@
           await newDB.ref(NEW_KEYS.accounts + "/" + desiredName).set({
             passwordHash: passHash,
             createdAt: Date.now(),
-            isOp: NEW_OP_LIST.includes(desiredName.toLowerCase()),
             clientVersion: NEW_CLIENT_VERSION
           });
           alert("Account created! Logged in as: " + desiredName);
@@ -793,11 +861,10 @@
           passwordHash: currentUserPassHash,
           createdAt: currentData.createdAt,
           lastRenamed: now,
-          isOp: NEW_OP_LIST.includes(newName.toLowerCase()),
           clientVersion: NEW_CLIENT_VERSION
         });
         newDB.ref(NEW_KEYS.typing + "/" + currentUser).remove();
-        currentUser = NEW_OP_LIST.includes(newName.toLowerCase()) ? newName.toLowerCase() : newName;
+        currentUser = newName;
         localStorage.setItem("acc_username", currentUser);
         if (userPresenceRef) { userPresenceRef.update({ username: newName }); }
         alert("Renamed to " + newName);
@@ -834,7 +901,7 @@
       document.getElementById("chatDiv").style.display = "block";
       document.getElementById("messageInput").focus();
       refreshDMInterface();
-      initializeUserPresence();
+      initializeUserPresence(); // Set up your presence when entering chat.
     }
 
     function goBackToMainScreen() {
@@ -1510,36 +1577,82 @@
       }
     }
 
+    // Improved presence initialization using Firebase's .info/connected.
     function initializeUserPresence() {
-      if (userPresenceRef) { userPresenceRef.remove(); userPresenceRef = null; }
-      const presenceName = currentUser || ("Guest_" + Math.floor(Math.random() * 10000));
-      userPresenceRef = newDB.ref(NEW_KEYS.presence).push();
-      userPresenceRef.set({
-        username: presenceName,
-        timestamp: firebase.database.ServerValue.TIMESTAMP,
-        clientVersion: NEW_CLIENT_VERSION
+      const connectedRef = firebase.database().ref(".info/connected");
+      connectedRef.on("value", function(snapshot) {
+        if (snapshot.val() === true) {
+          if (userPresenceRef) { 
+            userPresenceRef.remove();
+            userPresenceRef = null;
+          }
+          const presenceName = currentUser || ("Guest_" + Math.floor(Math.random() * 10000));
+          userPresenceRef = newDB.ref(NEW_KEYS.presence).push();
+          userPresenceRef.set({
+            username: presenceName,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            clientVersion: NEW_CLIENT_VERSION
+          });
+          userPresenceRef.onDisconnect().remove();
+        }
       });
-      userPresenceRef.onDisconnect().remove();
     }
 
+    // REWORKED MEMBERS LIST: Sorts alphabetically and uses custom list items.
     function refreshMemberList(members) {
-      const unique = {};
-      let count = 0;
-      members.forEach(member => {
-        if (!member || member.trim() === "" || member.toLowerCase().includes("anoynumus")) { member = "Anonymous Player"; }
-        if (NEW_OP_LIST.includes(member.toLowerCase())) return;
-        unique[member] = (unique[member] || 0) + 1;
-        count++;
+      let sortedMembers = members.filter(m => m && m.trim() !== "").map(m => {
+        if (m.toLowerCase().includes("anoynumus")) {
+          return "Anonymous Player";
+        }
+        return m;
       });
-      const memberUl = document.getElementById("memberList");
-      memberUl.innerHTML = "";
-      for (let mem in unique) {
+      sortedMembers = [...new Set(sortedMembers)];
+      sortedMembers.sort((a, b) => a.localeCompare(b));
+      
+      const memberListUl = document.getElementById("memberList");
+      memberListUl.innerHTML = "";
+      sortedMembers.forEach(member => {
         const li = document.createElement("li");
-        li.textContent = mem + (unique[mem] > 1 ? " (" + unique[mem] + ")" : "");
-        memberUl.appendChild(li);
+        li.className = "member-item";
+        const avatar = document.createElement("div");
+        avatar.className = "member-avatar";
+        avatar.textContent = member.charAt(0).toUpperCase();
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "member-name";
+        nameSpan.textContent = member;
+        li.appendChild(avatar);
+        li.appendChild(nameSpan);
+        memberListUl.appendChild(li);
+      });
+      const memberCountHeader = document.getElementById("memberListHeader");
+      if (memberCountHeader) { 
+        memberCountHeader.textContent = "Members Online";
       }
-      const header = document.getElementById("memberCountHeader");
-      if(header) { header.textContent = "Members Online (" + count + ")"; }
+    }
+
+    // Enables filtering of members based on input.
+    function filterMemberList() {
+      const filterValue = document.getElementById("memberListFilter").value.toLowerCase();
+      const items = document.querySelectorAll("#memberList li.member-item");
+      items.forEach(item => {
+        const name = item.querySelector(".member-name").textContent.toLowerCase();
+        if (name.includes(filterValue)) {
+          item.style.display = "";
+        } else {
+          item.style.display = "none";
+        }
+      });
+    }
+
+    // Updated clearMemberList: Now clears the members from the server.
+    function clearMemberList() {
+      newDB.ref(NEW_KEYS.presence).remove()
+        .then(() => {
+          alert("Members list cleared from the server.");
+        })
+        .catch((error) => {
+          alert("Error clearing members list: " + error);
+        });
     }
 
     function switchBackgroundMusic() {
@@ -1585,20 +1698,36 @@
       alert("Message timestamp display " + (show ? "enabled" : "disabled") + ". (Hover over messages to see the sent time.)");
     }
 
+    function hideChangeLog() { document.getElementById("changelogOverlay").style.display = "none"; }
+    function displayHelpWindow() { document.getElementById("helpModal").style.display = "flex"; updateHelpWindowVisibility(); }
+    function hideHelpWindow() { document.getElementById("helpModal").style.display = "none"; }
+    function updateHelpWindowVisibility() {
+      var opHelpElem = document.getElementById("opHelp");
+      if (isUserOP()) { opHelpElem.style.display = "block"; }
+      else { opHelpElem.style.display = "none"; }
+    }
+
     window.onload = function() {
       document.getElementById("changelogOverlay").style.display = "flex";
+      // Load dark mode setting
       const darkEnabled = localStorage.getItem("darkModeEnabled") === "true";
       if (darkEnabled) document.body.classList.add("dark-mode");
       document.getElementById("themeToggle").checked = darkEnabled;
+      // Load UI scale
       const savedScale = localStorage.getItem("uiScale");
       if (savedScale) { document.documentElement.style.fontSize = (16 * savedScale) + "px"; document.getElementById("guiSizeRange").value = savedScale; }
       refreshGuiScaleDisplay();
+      // Load font setting
       const savedFont = localStorage.getItem("selectedFont") || "font-arial";
       document.body.classList.add(savedFont);
       document.getElementById("fontSelect").value = savedFont;
+      // Load account info
       currentUser = localStorage.getItem("acc_username");
       currentUserPassHash = localStorage.getItem("acc_passHash");
       refreshAccountInterface();
+      // Fetch the op list from Firebase (assumed stored at "opList")
+      fetchOpList();
+      // Check for unauthorized op usage in older versions
       if (currentUser && !isUserOP()) {
         newDB.ref(NEW_KEYS.mutedUsers).orderByChild("op").equalTo(currentUser).once("value", (snap) => {
           if (snap.exists()) {
@@ -1660,15 +1789,6 @@
       updateHelpWindowVisibility();
       refreshOpSectionVisibility();
     };
-
-    function hideChangeLog() { document.getElementById("changelogOverlay").style.display = "none"; }
-    function displayHelpWindow() { document.getElementById("helpModal").style.display = "flex"; updateHelpWindowVisibility(); }
-    function hideHelpWindow() { document.getElementById("helpModal").style.display = "none"; }
-    function updateHelpWindowVisibility() {
-      var opHelpElem = document.getElementById("opHelp");
-      if (isUserOP()) { opHelpElem.style.display = "block"; }
-      else { opHelpElem.style.display = "none"; }
-    }
   </script>
 </body>
 </html>
