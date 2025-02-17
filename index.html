@@ -139,6 +139,7 @@
       padding: 6px;
       border-bottom: 1px solid #eee;
       transition: background 0.2s;
+      cursor: pointer;
     }
     .member-item:hover {
       background: #f0f0f0;
@@ -203,6 +204,19 @@
     #changelogModal ul, #helpModalContent ul {
       margin: 10px 0; padding-left: 30px;
     }
+    /* Profile Modal */
+    #profileModal {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.7); display: none;
+      justify-content: center; align-items: center; z-index: 9999;
+      transition: opacity 0.3s ease;
+    }
+    #profileContent {
+      background: #fff; padding: 20px; border-radius: 10px;
+      max-width: 400px; width: 90%; color: #000;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
     /* Custom Font Classes */
     .font-arial { font-family: Arial, sans-serif; }
     .font-georgia { font-family: Georgia, serif; }
@@ -259,6 +273,17 @@
           </span>
         </ul>
         <button onclick="hideHelpWindow()">Close</button>
+      </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profileModal">
+      <div id="profileContent">
+        <h2 id="profileUsername"></h2>
+        <p id="profileRank"></p>
+        <p id="profileRPS"></p>
+        <p id="profileDuels"></p>
+        <button onclick="hideProfileModal()">Close</button>
       </div>
     </div>
 
@@ -333,7 +358,7 @@
         (Then type /accept or /decline.)<br/><br/>
         <strong>Rock–Paper–Scissors Command:</strong><br/>
         /rps [account]<br/>
-        (Then type /accept or /decline.)
+        (Then type /accept to accept or /decline to decline.)
       </div>
       <ul id="messages"></ul>
       <div id="typingStatus"></div>
@@ -512,7 +537,7 @@
     firebase.initializeApp(newFirebaseConfig);
     const newDB = firebase.database();
 
-    // New Firebase database key names
+    // New Firebase database key names (added stats_new for game statistics)
     const NEW_KEYS = {
       accounts: "accts_new",
       typing: "typing_new",
@@ -527,7 +552,8 @@
       duelSpeedGames: "matches_new/duel_speed_new",
       rpsGames: "matches_new/rps_new",
       accountColors: "acctColors_new",
-      mutedUsers: "mutedUsers_new"
+      mutedUsers: "mutedUsers_new",
+      stats: "stats_new"  // <-- New key for storing win/loss statistics
     };
 
     /* =====================================================
@@ -611,6 +637,9 @@
       });
     }
 
+    // =========================
+    // OP Command Functions (unchanged)
+    // =========================
     (function(){
       async function terminateUserAccount(target, valid) {
         if (!valid) { alert("Direct terminate disabled. Use securelyTerminateAccount."); return; }
@@ -699,6 +728,18 @@
         });
       };
     })();
+
+    // =========================
+    // Helper Function: Update Stats
+    // This function updates the win/loss counters for a given game type.
+    // gameType should be "rps" or "duels".
+    // =========================
+    function updateStats(gameType, winner, loser) {
+      const winnerRef = newDB.ref(NEW_KEYS.stats + "/" + winner + "/" + gameType + "/wins");
+      const loserRef = newDB.ref(NEW_KEYS.stats + "/" + loser + "/" + gameType + "/losses");
+      winnerRef.transaction(current => (current || 0) + 1);
+      loserRef.transaction(current => (current || 0) + 1);
+    }
 
     function initializeTextAreaShortcuts(textAreaId, sendCallback) {
       const ta = document.getElementById(textAreaId);
@@ -981,10 +1022,6 @@
         li.innerHTML = `<span class="broadcast-msg">[BROADCAST from ${user}]</span> ${text}`;
       } else {
         li.innerHTML = `<span class="${userColorClass}" ${colorStyle}>${user}</span>: ${text}`;
-      }
-      if (localStorage.getItem("showTimestamps") === "true" && timestamp) {
-        const dateObj = new Date(timestamp);
-        li.title = dateObj.toLocaleString();
       }
       ul.appendChild(li);
       ul.scrollTop = ul.scrollHeight;
@@ -1340,9 +1377,15 @@
          document.getElementById("player2Counter").textContent = playerTwo + ": " + (gameData.players[playerTwo].clicks || 0) + " clicks";
          if (gameData.status === "playing" && isDuelHost) {
             if (gameData.players[playerOne].clicks >= 100) {
-              duelGameRef.update({ status: "ended", winner: playerOne, clientVersion: NEW_CLIENT_VERSION });
+              if (!gameData.statsUpdated) {
+                updateStats("duels", playerOne, playerTwo);
+                duelGameRef.update({ status: "ended", winner: playerOne, statsUpdated: true, clientVersion: NEW_CLIENT_VERSION });
+              }
             } else if (gameData.players[playerTwo].clicks >= 100) {
-              duelGameRef.update({ status: "ended", winner: playerTwo, clientVersion: NEW_CLIENT_VERSION });
+              if (!gameData.statsUpdated) {
+                updateStats("duels", playerTwo, playerOne);
+                duelGameRef.update({ status: "ended", winner: playerTwo, statsUpdated: true, clientVersion: NEW_CLIENT_VERSION });
+              }
             }
          }
       });
@@ -1463,13 +1506,23 @@
             let emoji1 = getRPSEmoji(choice1);
             let emoji2 = getRPSEmoji(choice2);
             let resultStr = "";
-            if (choice1 === choice2) { resultStr = "It's a tie! Both chose " + choice1 + " " + emoji1 + "."; }
-            else if ((choice1 === "rock" && choice2 === "scissors") || (choice1 === "scissors" && choice2 === "paper") || (choice1 === "paper" && choice2 === "rock")) {
-              resultStr = playerOne + " wins! " + choice1 + " " + emoji1 + " beats " + choice2 + " " + emoji2 + ".";
+            let winner = null;
+            if (choice1 === choice2) {
+               resultStr = "It's a tie! Both chose " + choice1 + " " + emoji1 + ".";
+            } else if ((choice1 === "rock" && choice2 === "scissors") || (choice1 === "scissors" && choice2 === "paper") || (choice1 === "paper" && choice2 === "rock")) {
+               resultStr = playerOne + " wins! " + choice1 + " " + emoji1 + " beats " + choice2 + " " + emoji2 + ".";
+               winner = playerOne;
             } else {
-              resultStr = playerTwo + " wins! " + choice2 + " " + emoji2 + " beats " + choice1 + " " + emoji1 + ".";
+               resultStr = playerTwo + " wins! " + choice2 + " " + emoji2 + " beats " + choice1 + " " + emoji1 + ".";
+               winner = playerTwo;
             }
-            rpsGameRef.update({ status: "finished", result: resultStr, clientVersion: NEW_CLIENT_VERSION });
+            if (!gameData.statsUpdated) {
+               if (winner) {
+                  const loser = (winner === playerOne) ? playerTwo : playerOne;
+                  updateStats("rps", winner, loser);
+               }
+               rpsGameRef.update({ status: "finished", result: resultStr, statsUpdated: true, clientVersion: NEW_CLIENT_VERSION });
+            }
          }
          if (gameData.status === "finished") {
             document.getElementById("rpsStatus").textContent = "Game Over";
@@ -1513,6 +1566,15 @@
       document.getElementById("rpsResult").textContent = "";
       document.getElementById("rpsChoices").style.display = "block";
       document.getElementById("rpsPlayAgainButton").style.display = "none";
+    }
+
+    function getRPSEmoji(choice) {
+      switch(choice) {
+         case "rock": return "✊";
+         case "paper": return "✋";
+         case "scissors": return "✌️";
+         default: return "";
+      }
     }
 
     function openSettingsPage() {
@@ -1622,6 +1684,8 @@
         nameSpan.textContent = member;
         li.appendChild(avatar);
         li.appendChild(nameSpan);
+        // When clicking a member, open their profile modal.
+        li.onclick = function() { showProfileModal(member); };
         memberListUl.appendChild(li);
       });
       const memberCountHeader = document.getElementById("memberListHeader");
@@ -1707,6 +1771,32 @@
       else { opHelpElem.style.display = "none"; }
     }
 
+    // =========================
+    // PROFILE MODAL FUNCTIONS
+    // When a member is clicked, show their profile information.
+    // =========================
+    function showProfileModal(username) {
+      document.getElementById("profileUsername").textContent = "Profile: " + username;
+      let rank = "Member";
+      if (opList && opList[username.toLowerCase()]) {
+        rank = "OP";
+      }
+      document.getElementById("profileRank").textContent = "Rank: " + rank;
+      // Fetch stats (RPS and Duel Speed) for the user from Firebase.
+      newDB.ref(NEW_KEYS.stats + "/" + username).once("value").then(snapshot => {
+        let stats = snapshot.val() || {};
+        let rps = stats.rps || { wins: 0, losses: 0 };
+        let duels = stats.duels || { wins: 0, losses: 0 };
+        document.getElementById("profileRPS").textContent = "Rock-Paper-Scissors: " + rps.wins + " Wins / " + rps.losses + " Losses";
+        document.getElementById("profileDuels").textContent = "Duel Speed: " + duels.wins + " Wins / " + duels.losses + " Losses";
+        document.getElementById("profileModal").style.display = "flex";
+      });
+    }
+
+    function hideProfileModal() {
+      document.getElementById("profileModal").style.display = "none";
+    }
+
     window.onload = function() {
       document.getElementById("changelogOverlay").style.display = "flex";
       // Load dark mode setting
@@ -1784,6 +1874,7 @@
       window.addEventListener("keydown", function(e) {
         if (e.key === "Escape") {
           if (document.getElementById("helpModal").style.display !== "none") { hideHelpWindow(); }
+          if (document.getElementById("profileModal").style.display !== "none") { hideProfileModal(); }
         }
       });
       updateHelpWindowVisibility();
