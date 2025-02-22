@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Yaproom (Official) - v201</title>
+  <title>yaproom (official)</title>
   <style>
     /* GENERAL RESET & CONTAINER */
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -13,12 +13,53 @@
       transition: background 0.3s, color 0.3s;
     }
     .container { max-width: 480px; margin: 0 auto; padding: 10px; }
-    /* CONTAINERS (Login, Chat, Settings, Duel Speed Game, RPS Game) */
-    #loginDiv, #chatDiv, #settingsDiv, #duelSpeedGameDiv, #rpsGameDiv {
+    /* CONTAINERS (Login, Chat, Settings, Leaderboard, Duel Speed Game, RPS Game) */
+    #loginDiv, #chatDiv, #settingsDiv, #leaderboardDiv, #duelSpeedGameDiv, #rpsGameDiv {
       background: #ffffff; border-radius: 8px; padding: 16px; margin-top: 10px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    /* Duel Speed Game UI */
+    /* MODAL OVERLAYS (placed outside .container in the HTML) */
+    #changelogOverlay,
+    #helpModal,
+    #profileModal,
+    #opToolsModal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0,0,0,0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.3s ease;
+    }
+    /* Scrollable modal content */
+    #changelogModal,
+    #opToolsContent {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 400px;
+      width: 90%;
+      color: #000;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    #changelogModal ul { margin: 10px 0; padding-left: 30px; }
+    /* Profile Modal Content */
+    #profileContent {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 400px;
+      width: 90%;
+      color: #000;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    /* DUEL SPEED GAME UI */
     #duelSpeedGameDiv { text-align: center; }
     #duelSpeedCounters p { font-size: 18px; margin: 8px 0; }
     #duelSpeedClickButton {
@@ -26,7 +67,7 @@
       background: #7289da; color: #fff; cursor: pointer; transition: background 0.2s;
     }
     #duelSpeedClickButton:disabled { background: #ccc; cursor: not-allowed; }
-    /* RPS Game UI */
+    /* RPS GAME UI */
     #rpsGameDiv { text-align: center; }
     #rpsChoices button {
       margin: 5px; padding: 10px 20px; font-size: 16px;
@@ -35,6 +76,11 @@
     }
     #rpsChoices button:hover { background: #677bc4; }
     #rpsResult { margin-top: 10px; font-size: 16px; font-weight: bold; }
+    #rpsPlayAgainButton { margin-top: 10px; }
+    /* LEADERBOARD UI */
+    #leaderboardDiv h2 { margin-bottom: 12px; font-weight: 600; }
+    #leaderboardDiv h3 { margin-top: 16px; margin-bottom: 8px; font-weight: 600; }
+    #leaderboardDiv ol { padding-left: 20px; }
     /* DARK MODE */
     body.dark-mode {
       background: #2f3136; color: #dcdcdc;
@@ -42,8 +88,14 @@
     body.dark-mode #loginDiv,
     body.dark-mode #chatDiv,
     body.dark-mode #settingsDiv,
+    body.dark-mode #leaderboardDiv,
     body.dark-mode #duelSpeedGameDiv,
-    body.dark-mode #rpsGameDiv {
+    body.dark-mode #rpsGameDiv,
+    body.dark-mode #changelogOverlay,
+    body.dark-mode #helpModal,
+    body.dark-mode #profileModal,
+    body.dark-mode #opToolsModal,
+    body.dark-mode #opToolsContent {
       background: #36393f; color: #dcdcdc;
     }
     body.dark-mode textarea {
@@ -119,7 +171,7 @@
     #memberListHeader {
       margin-bottom: 8px; 
       font-size: 18px; 
-      font-weight: bold;
+      font-weight: 600;
     }
     #memberListSearch input {
       width: 100%;
@@ -187,36 +239,6 @@
     .message-enter { animation: message-enter 0.3s ease forwards; }
     /* EXTRA SETTINGS HEADINGS */
     #settingsDiv h3 { margin-top: 16px; margin-bottom: 8px; font-weight: 600; }
-    /* Hide audio elements */
-    audio { display: none; }
-    /* Changelog & Help Modal Overlays */
-    #changelogOverlay, #helpModal {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background-color: rgba(0,0,0,0.7); display: none;
-      justify-content: center; align-items: center; z-index: 9999;
-      transition: opacity 0.3s ease;
-    }
-    #changelogModal, #helpModalContent {
-      background: #fff; padding: 20px; border-radius: 10px;
-      max-width: 400px; width: 90%; color: #000;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    }
-    #changelogModal ul, #helpModalContent ul {
-      margin: 10px 0; padding-left: 30px;
-    }
-    /* Profile Modal */
-    #profileModal {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background-color: rgba(0,0,0,0.7); display: none;
-      justify-content: center; align-items: center; z-index: 9999;
-      transition: opacity 0.3s ease;
-    }
-    #profileContent {
-      background: #fff; padding: 20px; border-radius: 10px;
-      max-width: 400px; width: 90%; color: #000;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    }
     /* Custom Font Classes */
     .font-arial { font-family: Arial, sans-serif; }
     .font-georgia { font-family: Georgia, serif; }
@@ -238,59 +260,95 @@
   </style>
 </head>
 <body>
+  <!-- Modal Overlays (placed outside the container for full-screen coverage) -->
+  <div id="changelogOverlay">
+    <div id="changelogModal">
+      <h2>Alpha v2.1.1</h2>
+      <ul>
+        <li>Updated UI and layout for improved performance.</li>
+        <li>Added background music controls, sound notifications, and message timestamp toggles.</li>
+        <li>Integrated Duel Speed and Rock–Paper–Scissors minigames.</li>
+        <li>Fixed Member List bug.</li>
+        <li>Initialized user profiles with proper win/loss stats.</li>
+        <li>Fixed the settings tab so it now opens correctly.</li>
+        <li>Adjusted GUI scaling to uniformly scale the entire interface (including text).</li>
+        <li>Added filtering for messages from undefined players with a settings toggle.</li>
+        <li>Added a Leaderboard tab with separate sections for RPS, Duel Speed, and Overall wins.</li>
+        <li>Recreated the OP Tools section with its button moved to the main menu under Settings.</li>
+      </ul>
+      <button onclick="hideChangeLog()">Close</button>
+    </div>
+  </div>
+
+  <div id="helpModal">
+    <div id="helpModalContent">
+      <h2>Help &amp; Commands</h2>
+      <ul>
+        <li>/createroom [roomName] - Create a group chat room</li>
+        <li>/join [roomName] - Join a group chat room</li>
+        <li>/invite [accountName] - Invite someone to a group chat room</li>
+        <li>/leave - Leave the current group chat room</li>
+        <li>/duelspeed [account] - Challenge someone to a Duel Speed game</li>
+        <li>/rps [account] - Challenge someone to a Rock–Paper–Scissors game</li>
+        <li>/accept - Accept a pending challenge</li>
+        <li>/decline - Decline a pending challenge</li>
+      </ul>
+      <button onclick="hideHelpWindow()">Close</button>
+    </div>
+  </div>
+
+  <div id="profileModal">
+    <div id="profileContent">
+      <h2 id="profileUsername"></h2>
+      <p id="profileRank"></p>
+      <p id="profileRPS"></p>
+      <p id="profileDuels"></p>
+      <button onclick="hideProfileModal()">Close</button>
+    </div>
+  </div>
+
+  <div id="opToolsModal">
+    <div id="opToolsContent">
+      <h2>OP Tools</h2>
+      <p>Access administrative tools:</p>
+      <label for="muteTargetModal">Mute User:</label>
+      <input type="text" id="muteTargetModal" placeholder="Username to mute" />
+      <button onclick="securelyMuteUser(document.getElementById('muteTargetModal').value.trim())">Mute User</button>
+      <br/><br/>
+      <label for="unmuteTargetModal">Unmute User:</label>
+      <input type="text" id="unmuteTargetModal" placeholder="Username to unmute" />
+      <button onclick="securelyUnmuteUser(document.getElementById('unmuteTargetModal').value.trim())">Unmute User</button>
+      <br/><br/>
+      <label for="terminateTargetModal">Terminate User:</label>
+      <input type="text" id="terminateTargetModal" placeholder="Username to terminate" />
+      <button onclick="securelyTerminateAccount(document.getElementById('terminateTargetModal').value.trim())">Terminate User</button>
+      <br/><br/>
+      <label for="opColorPickerModal">Set Name Color:</label>
+      <input type="color" id="opColorPickerModal" value="#7289da" />
+      <button onclick="setOpUserColorModal()">Set Name Color</button>
+      <br/><br/>
+      <button onclick="securelyClearChatGlobal()">Clear Global Chat</button>
+      <br/><br/>
+      <button onclick="securelyClearTypingGlobal()">Clear Global Typing</button>
+      <br/><br/>
+      <button onclick="closeOpToolsModal()">Close</button>
+    </div>
+  </div>
+
+  <div id="leaderboardDiv" style="display:none;">
+    <h2>Leaderboard</h2>
+    <h3>Most RPS Wins</h3>
+    <ol id="rpsLeaderboard"></ol>
+    <h3>Most Duel Speed Wins</h3>
+    <ol id="duelsLeaderboard"></ol>
+    <h3>Most Overall Wins</h3>
+    <ol id="overallLeaderboard"></ol>
+    <button onclick="closeLeaderboardPage()">Back</button>
+  </div>
+
+  <!-- MAIN CONTENT -->
   <div class="container">
-    <!-- Changelog Overlay -->
-    <div id="changelogOverlay">
-      <div id="changelogModal">
-        <h2>Alpha v2.0.0</h2>
-        <ul>
-          <li>Updated UI and layout.</li>
-          <li>Added background music controls, sound notifications, and message timestamp toggles.</li>
-          <li>Integrated Duel Speed and Rock–Paper–Scissors minigames.</li>
-          <li>Fixed Member List Bug</li>
-          <li>Profiles</li>
-          <li>No more self granted op. you suck medal</li>
-          <li>Rewrote Functions</li>
-        </ul>
-        <button onclick="hideChangeLog()">Close</button>
-      </div>
-    </div>
-
-    <!-- Help Modal -->
-    <div id="helpModal">
-      <div id="helpModalContent">
-        <h2>Help &amp; Commands</h2>
-        <ul>
-          <li>/createroom [roomName] - Create a group chat room</li>
-          <li>/join [roomName] - Join a group chat room</li>
-          <li>/invite [accountName] - Invite someone to a group chat room</li>
-          <li>/leave - Leave the current group chat room</li>
-          <li>/duelspeed [account] - Challenge someone to a Duel Speed game</li>
-          <li>/rps [account] - Challenge someone to a Rock–Paper–Scissors game</li>
-          <li>/accept - Accept a pending challenge</li>
-          <li>/decline - Decline a pending challenge</li>
-          <span id="opHelp" style="display:none;">
-            <li>/mute [username] - (OP Only) Mute a user</li>
-            <li>/unmute [username] - (OP Only) Unmute a user</li>
-            <li>/terminate [accountName] - (OP Only) Terminate an account</li>
-          </span>
-        </ul>
-        <button onclick="hideHelpWindow()">Close</button>
-      </div>
-    </div>
-
-    <!-- Profile Modal -->
-    <div id="profileModal">
-      <div id="profileContent">
-        <h2 id="profileUsername"></h2>
-        <p id="profileRank"></p>
-        <p id="profileRPS"></p>
-        <p id="profileDuels"></p>
-        <button onclick="hideProfileModal()">Close</button>
-      </div>
-    </div>
-
-    <!-- LOGIN SCREEN -->
+    <!-- LOGIN SCREEN / MAIN MENU -->
     <div id="loginDiv">
       <h2>Enter Chat</h2>
       <p>Anonymous / Temporary Name:</p>
@@ -315,36 +373,8 @@
       </div>
       <hr />
       <button onclick="openSettingsPage()">Settings</button>
-      <!-- OP-ONLY Section -->
-      <div id="opSection" style="display:none; margin-top: 10px; border-top:1px solid #ccc; padding-top:10px;">
-        <h3>OP Tools</h3>
-        <button onclick="securelyClearChatGlobal()">Clear Chat (Server-Side)</button>
-        <br /><br />
-        <label for="opBroadcastInput">Broadcast Message:</label>
-        <input type="text" id="opBroadcastInput" />
-        <button onclick="sendOpBroadcast()">Send Broadcast</button>
-        <br /><br />
-        <label for="opColorPicker">Change Your Name Color:</label>
-        <input type="color" id="opColorPicker" value="#7289da" />
-        <button onclick="setOpUserColor()">Set Name Color</button>
-        <br /><br />
-        <button onclick="securelyClearTypingGlobal()">Clear All 'Typing'</button>
-        <br /><br />
-        <label for="muteTarget">Mute User:</label>
-        <input type="text" id="muteTarget" placeholder="Username to mute" />
-        <button onclick="securelyMuteUser(document.getElementById('muteTarget').value.trim())">Mute User</button>
-        <br /><br />
-        <label for="unmuteTarget">Unmute User:</label>
-        <input type="text" id="unmuteTarget" placeholder="Username to unmute" />
-        <button onclick="securelyUnmuteUser(document.getElementById('unmuteTarget').value.trim())">Unmute User</button>
-        <br /><br />
-        <label for="terminateTarget">Terminate Account:</label>
-        <input type="text" id="terminateTarget" placeholder="Account to terminate" />
-        <button onclick="securelyTerminateAccount(document.getElementById('terminateTarget').value.trim())">Terminate Account</button>
-        <br /><br />
-        <!-- Button to clear the members list from the server -->
-        <button onclick="clearMemberList()">Clear Member List</button>
-      </div>
+      <!-- OP Tools button placed under Settings -->
+      <button id="opToolsMainButton" onclick="openOpToolsModal()">funny button heheheh >:D</button>
     </div>
 
     <!-- CHAT SCREEN -->
@@ -369,6 +399,7 @@
         <textarea id="messageInput" placeholder="Type a message" oninput="processTypingIndicator()"></textarea>
         <button onclick="dispatchMessage()">Send</button>
         <button onclick="eraseChatDisplay()">Clear Chat</button>
+        <button onclick="openLeaderboardPage()">Leaderboard</button>
       </div>
       <!-- DM Section -->
       <div id="dmSection">
@@ -484,9 +515,15 @@
         Show Message Timestamps (hover to view)
       </label>
       <br/><br/>
+      <!-- New setting: toggle undefined messages -->
+      <label>
+        <input type="checkbox" id="showUndefinedCheckbox" onchange="toggleUndefinedMessages()" />
+        Show messages from undefined players
+      </label>
+      <br/><br/>
       <button onclick="returnToSettingsOrLogin()">Back</button>
     </div>
-    
+
     <!-- DUEL SPEED GAME UI -->
     <div id="duelSpeedGameDiv" style="display:none;">
       <h2>Duel Speed</h2>
@@ -540,7 +577,7 @@
     firebase.initializeApp(newFirebaseConfig);
     const newDB = firebase.database();
 
-    // New Firebase database key names (added stats_new for game statistics)
+    // New Firebase database key names
     const NEW_KEYS = {
       accounts: "accts_new",
       typing: "typing_new",
@@ -556,13 +593,13 @@
       rpsGames: "matches_new/rps_new",
       accountColors: "acctColors_new",
       mutedUsers: "mutedUsers_new",
-      stats: "stats_new"  // <-- New key for storing win/loss statistics
+      stats: "stats_new"
     };
 
     /* =====================================================
        Global Variables & OP List
        ===================================================== */
-    let opList = {}; // will be loaded from Firebase (node: "opList")
+    let opList = {};
     let lastMsgTimestamp = 2000;
     const RATE_LIMIT = 2000;
     const forbiddenWords = ["shit","fuck","bitch","nigga","fucking","shitting","negro","bullshit","pussy"];
@@ -604,24 +641,33 @@
       localStorage.setItem("clientID", clientIdentifier);
     }
 
-    // Fetch the op list from Firebase (assumed to be stored at node "opList")
+    // --------------------------------------------------------------------
+    // Fetch the op list for realtime updates.
+    // --------------------------------------------------------------------
     function fetchOpList() {
-      newDB.ref("opList").once("value")
-        .then(function(snapshot) {
-          opList = snapshot.val() || {};
-        })
-        .catch(function(error) {
-          console.error("Error fetching op list:", error);
-        });
+      newDB.ref("opList").on("value", function(snapshot) {
+        opList = snapshot.val() || {};
+        refreshOpSectionVisibility();
+      }, function(error) {
+        console.error("Error fetching op list:", error);
+      });
     }
 
+    // --------------------------------------------------------------------
+    // Updated isUserOP: checks if the op value is exactly true or "true".
+    // --------------------------------------------------------------------
     function isUserOP() {
-      return currentUser && opList[currentUser.toLowerCase()] === true;
+      if (!currentUser) return false;
+      const opVal = opList[currentUser.toLowerCase()];
+      return opVal === true || opVal === "true";
     }
 
+    // Hide or show the OP Tools button in the main menu (loginDiv)
     function refreshOpSectionVisibility() {
-      const opSec = document.getElementById("opSection");
-      if (opSec) { opSec.style.display = isUserOP() ? "block" : "none"; }
+      const opToolsBtn = document.getElementById("opToolsMainButton");
+      if (opToolsBtn) {
+        opToolsBtn.style.display = isUserOP() ? "block" : "none";
+      }
     }
 
     function verifyOpCommandAuthorization(callback) {
@@ -640,9 +686,32 @@
       });
     }
 
-    // =========================
+    // ----------------------------
+    // OP Tools Modal Functions
+    // ----------------------------
+    function openOpToolsModal() {
+      if (!isUserOP()) {
+        alert("You must be an op to access the OP tools section.");
+        return;
+      }
+      document.getElementById("opToolsModal").style.display = "flex";
+    }
+    function closeOpToolsModal() {
+      document.getElementById("opToolsModal").style.display = "none";
+    }
+    function setOpUserColorModal() {
+      if (!isUserOP()) {
+        alert("You must be an op to use this tool.");
+        return;
+      }
+      const chosenColor = document.getElementById("opColorPickerModal").value;
+      newDB.ref(NEW_KEYS.accountColors + "/" + currentUser).set(chosenColor);
+      alert("Your chat color has been updated to: " + chosenColor);
+    }
+
+    // ----------------------------
     // OP Command Functions (unchanged)
-    // =========================
+    // ----------------------------
     (function(){
       async function terminateUserAccount(target, valid) {
         if (!valid) { alert("Direct terminate disabled. Use securelyTerminateAccount."); return; }
@@ -721,27 +790,89 @@
       window.securelyUnmuteUser = securelyUnmuteUser;
       window.securelyClearChatGlobal = securelyClearChatGlobal;
       window.securelyClearTypingGlobal = securelyClearTypingGlobal;
-      window.setOpUserColor = function() {
-        verifyOpCommandAuthorization(function(valid){
-          if (!valid) { alert("Op authorization failed. Command voided."); return; }
-          const colorPicker = document.getElementById("opColorPicker");
-          const chosenColor = colorPicker.value;
-          newDB.ref(NEW_KEYS.accountColors + "/" + currentUser).set(chosenColor);
-          alert("Your chat color has been updated to: " + chosenColor);
-        });
-      };
     })();
 
-    // =========================
-    // Helper Function: Update Stats
-    // This function updates the win/loss counters for a given game type.
-    // gameType should be "rps" or "duels".
-    // =========================
+    // ----------------------------
+    // Group Chat System Functions (unchanged)
+    // ----------------------------
+    async function createGroupRoom(roomName) {
+      const roomRef = newDB.ref(NEW_KEYS.groupRooms + "/" + roomName);
+      const snap = await roomRef.once("value");
+      if (snap.exists()) {
+        alert("Room already exists. Try joining it.");
+        return;
+      }
+      await roomRef.set({
+        createdBy: currentUser,
+        members: { [currentUser]: true },
+        messages: {}
+      });
+      inGroupChatMode = true;
+      activeGroupRoom = roomName;
+      attachGroupRoomListener(roomName);
+      alert("Room '" + roomName + "' created and joined.");
+    }
+
+    async function joinGroupRoom(roomName) {
+      const roomRef = newDB.ref(NEW_KEYS.groupRooms + "/" + roomName);
+      const snap = await roomRef.once("value");
+      if (!snap.exists()) {
+        alert("Room does not exist. Create it with /createroom [roomName]");
+        return;
+      }
+      await roomRef.child("members/" + currentUser).set(true);
+      inGroupChatMode = true;
+      activeGroupRoom = roomName;
+      attachGroupRoomListener(roomName);
+      alert("Joined room '" + roomName + "'.");
+    }
+
+    async function inviteToGroupRoom(accountName) {
+      if (!activeGroupRoom) {
+        alert("You are not in a group room. Create or join one first.");
+        return;
+      }
+      const roomRef = newDB.ref(NEW_KEYS.groupRooms + "/" + activeGroupRoom);
+      await roomRef.child("members/" + accountName).set(true);
+      alert("Invited " + accountName + " to room '" + activeGroupRoom + "'.");
+    }
+
+    function leaveGroupRoom() {
+      if (!activeGroupRoom) {
+        alert("You are not in a group room.");
+        return;
+      }
+      newDB.ref(NEW_KEYS.groupRooms + "/" + activeGroupRoom + "/members/" + currentUser).remove();
+      if (groupRoomListener) {
+        newDB.ref(NEW_KEYS.groupRooms + "/" + activeGroupRoom + "/messages").off("child_added", groupRoomListener);
+        groupRoomListener = null;
+      }
+      inGroupChatMode = false;
+      alert("Left group room '" + activeGroupRoom + "'.");
+      activeGroupRoom = null;
+      activatePublicChatListeners();
+    }
+
+    function attachGroupRoomListener(roomName) {
+      if (groupRoomListener) {
+        newDB.ref(NEW_KEYS.groupRooms + "/" + activeGroupRoom + "/messages").off("child_added", groupRoomListener);
+        groupRoomListener = null;
+      }
+      document.getElementById("messages").innerHTML = "";
+      groupRoomListener = newDB.ref(NEW_KEYS.groupRooms + "/" + roomName + "/messages").on("child_added", function(snap) {
+        const msg = snap.val();
+        renderChatMessage(msg.user, msg.text, true, false, snap.key, msg.timestamp);
+      });
+    }
+
+    // ----------------------------
+    // Update Stats Helper (unchanged)
+    // ----------------------------
     function updateStats(gameType, winner, loser) {
       const winnerRef = newDB.ref(NEW_KEYS.stats + "/" + winner + "/" + gameType + "/wins");
       const loserRef = newDB.ref(NEW_KEYS.stats + "/" + loser + "/" + gameType + "/losses");
-      winnerRef.transaction(current => (current || 0) + 1);
-      loserRef.transaction(current => (current || 0) + 1);
+      winnerRef.transaction(current => ((current === undefined || current === null) ? 0 : current) + 1);
+      loserRef.transaction(current => ((current === undefined || current === null) ? 0 : current) + 1);
     }
 
     function initializeTextAreaShortcuts(textAreaId, sendCallback) {
@@ -758,6 +889,20 @@
       ta.style.height = (ta.scrollHeight) + "px";
     }
 
+    // ----------------------------
+    // Public Chat Functions (unchanged)
+    // ----------------------------
+    function refreshChatMessages() {
+      const messagesUl = document.getElementById("messages");
+      messagesUl.innerHTML = "";
+      publicMsgs.forEach(msgObj => {
+        if ((!msgObj.user || msgObj.user.trim() === "") && localStorage.getItem("showUndefinedMessages") !== "true") {
+          return;
+        }
+        renderChatMessage(msgObj.user, msgObj.text, msgObj.isAccount, false, msgObj.key, msgObj.timestamp);
+      });
+    }
+
     function activatePublicChatListeners() {
       newDB.ref(NEW_KEYS.messages).off("child_added", publicListenerAddNew);
       newDB.ref(NEW_KEYS.messages).off("child_removed", publicListenerRemoveNew);
@@ -768,8 +913,9 @@
         const key = snap.key;
         if (msg.user && mutedList[msg.user]) return;
         publicMsgs.push({ key, ...msg });
-        if (!inGroupChatMode) { renderChatMessage(msg.user, msg.text, msg.isAccount, false, key, msg.timestamp); }
-        if (msg.user && msg.text) { verifyMentionsAndAlert(msg.user, msg.text); }
+        if ((msg.user && msg.user.trim() !== "") || localStorage.getItem("showUndefinedMessages") === "true") {
+          renderChatMessage(msg.user, msg.text, msg.isAccount, false, key, msg.timestamp);
+        }
       });
       publicListenerRemoveNew = newDB.ref(NEW_KEYS.messages).on("child_removed", (snap) => {
         const remKey = snap.key;
@@ -779,26 +925,24 @@
       });
     }
 
+    function toggleUndefinedMessages() {
+      const checkbox = document.getElementById("showUndefinedCheckbox");
+      localStorage.setItem("showUndefinedMessages", checkbox.checked ? "true" : "false");
+      refreshChatMessages();
+    }
+
     function verifyMentionsAndAlert(sender, text) {
       if (!currentUser || !text) return;
       const lowerText = text.toLowerCase();
       const mentionStr = "@" + currentUser.toLowerCase();
       if (lowerText.includes(mentionStr) && sender !== currentUser) {
-        displayMentionAlert(sender, text);
+        displayDMAlert(sender, text);
       }
     }
 
-    function displayMentionAlert(sender, text) {
-      const notifOn = localStorage.getItem("notificationsEnabled") === "true";
-      if (!("Notification" in window) || !notifOn) return;
-      if (document.hidden && Notification.permission === "granted") {
-        new Notification("You were mentioned by " + sender, {
-          body: text,
-          icon: "https://via.placeholder.com/50"
-        });
-      }
-    }
-
+    // ----------------------------
+    // Account Registration/Login Functions (unchanged)
+    // ----------------------------
     async function registerOrAccessAccount() {
       let desiredName = document.getElementById("accNameInput").value.trim();
       const desiredPass = document.getElementById("accPassInput").value.trim();
@@ -813,11 +957,22 @@
             createdAt: Date.now(),
             clientVersion: NEW_CLIENT_VERSION
           });
+          await newDB.ref(NEW_KEYS.stats + "/" + desiredName).set({
+            rps: { wins: 0, losses: 0 },
+            duels: { wins: 0, losses: 0 }
+          });
           alert("Account created! Logged in as: " + desiredName);
         } else {
           const data = snap.val();
           if (data.passwordHash !== passHash) { alert("Incorrect password or name is taken by someone else."); return; }
           alert("Logged in successfully as: " + desiredName);
+          const statsSnap = await newDB.ref(NEW_KEYS.stats + "/" + desiredName).once("value");
+          if (!statsSnap.exists()) {
+            await newDB.ref(NEW_KEYS.stats + "/" + desiredName).set({
+              rps: { wins: 0, losses: 0 },
+              duels: { wins: 0, losses: 0 }
+            });
+          }
         }
         currentUser = desiredName;
         currentUserPassHash = passHash;
@@ -945,7 +1100,7 @@
       document.getElementById("chatDiv").style.display = "block";
       document.getElementById("messageInput").focus();
       refreshDMInterface();
-      initializeUserPresence(); // Set up your presence when entering chat.
+      initializeUserPresence();
     }
 
     function goBackToMainScreen() {
@@ -953,7 +1108,6 @@
       if (userPresenceRef) { userPresenceRef.remove(); userPresenceRef = null; }
       document.getElementById("chatDiv").style.display = "none";
       document.getElementById("loginDiv").style.display = "block";
-      refreshOpSectionVisibility();
     }
 
     function filterForbiddenWords(text) {
@@ -1017,6 +1171,7 @@
       const li = document.createElement("li");
       li.classList.add("message-enter");
       if (msgKey) { li.setAttribute("data-key", msgKey); }
+      if (user) { li.setAttribute("data-user", user); }
       let userColorClass = isAccount ? "account-user" : "anonymous-user";
       let colorStyle = "";
       if (userColors[user]) { colorStyle = `style="color:${userColors[user]}; font-weight:bold;"`; }
@@ -1380,15 +1535,19 @@
          document.getElementById("player2Counter").textContent = playerTwo + ": " + (gameData.players[playerTwo].clicks || 0) + " clicks";
          if (gameData.status === "playing" && isDuelHost) {
             if (gameData.players[playerOne].clicks >= 100) {
-              if (!gameData.statsUpdated) {
-                updateStats("duels", playerOne, playerTwo);
-                duelGameRef.update({ status: "ended", winner: playerOne, statsUpdated: true, clientVersion: NEW_CLIENT_VERSION });
-              }
+              duelGameRef.child("statsUpdated").once("value", function(snap) {
+                if (!snap.exists() || !snap.val()) {
+                  updateStats("duels", playerOne, playerTwo);
+                  duelGameRef.update({ statsUpdated: true, status: "ended", winner: playerOne, clientVersion: NEW_CLIENT_VERSION });
+                }
+              });
             } else if (gameData.players[playerTwo].clicks >= 100) {
-              if (!gameData.statsUpdated) {
-                updateStats("duels", playerTwo, playerOne);
-                duelGameRef.update({ status: "ended", winner: playerTwo, statsUpdated: true, clientVersion: NEW_CLIENT_VERSION });
-              }
+              duelGameRef.child("statsUpdated").once("value", function(snap) {
+                if (!snap.exists() || !snap.val()) {
+                  updateStats("duels", playerTwo, playerOne);
+                  duelGameRef.update({ statsUpdated: true, status: "ended", winner: playerTwo, clientVersion: NEW_CLIENT_VERSION });
+                }
+              });
             }
          }
       });
@@ -1413,8 +1572,11 @@
       duelGameRef.once("value", function(snap) {
          let gameData = snap.val();
          if (gameData.status !== "playing") return;
-         let playerRef = duelGameRef.child("players/" + currentUser + "/clicks");
-         playerRef.transaction(function(currentClicks) { return (currentClicks || 0) + 1; });
+         let playerKey = Object.keys(gameData.players).find(key => key.toLowerCase() === currentUser.toLowerCase());
+         if (playerKey) {
+           let playerRef = duelGameRef.child("players/" + playerKey + "/clicks");
+           playerRef.transaction(function(currentClicks) { return (currentClicks || 0) + 1; });
+         }
       });
     }
 
@@ -1512,20 +1674,24 @@
             let winner = null;
             if (choice1 === choice2) {
                resultStr = "It's a tie! Both chose " + choice1 + " " + emoji1 + ".";
-            } else if ((choice1 === "rock" && choice2 === "scissors") || (choice1 === "scissors" && choice2 === "paper") || (choice1 === "paper" && choice2 === "rock")) {
+            } else if ((choice1 === "rock" && choice2 === "scissors") ||
+                       (choice1 === "scissors" && choice2 === "paper") ||
+                       (choice1 === "paper" && choice2 === "rock")) {
                resultStr = playerOne + " wins! " + choice1 + " " + emoji1 + " beats " + choice2 + " " + emoji2 + ".";
                winner = playerOne;
             } else {
                resultStr = playerTwo + " wins! " + choice2 + " " + emoji2 + " beats " + choice1 + " " + emoji1 + ".";
                winner = playerTwo;
             }
-            if (!gameData.statsUpdated) {
-               if (winner) {
+            rpsGameRef.child("statsUpdated").once("value", function(snap) {
+              if (!snap.exists() || !snap.val()) {
+                if (winner) {
                   const loser = (winner === playerOne) ? playerTwo : playerOne;
                   updateStats("rps", winner, loser);
-               }
-               rpsGameRef.update({ status: "finished", result: resultStr, statsUpdated: true, clientVersion: NEW_CLIENT_VERSION });
-            }
+                }
+                rpsGameRef.update({ statsUpdated: true, status: "finished", result: resultStr, clientVersion: NEW_CLIENT_VERSION });
+              }
+            });
          }
          if (gameData.status === "finished") {
             document.getElementById("rpsStatus").textContent = "Game Over";
@@ -1548,8 +1714,13 @@
       rpsGameRef.once("value", function(snap) {
          let gameData = snap.val();
          if (gameData.status !== "waiting") return;
-         if (gameData.players[currentUser].choice === "") {
-            rpsGameRef.child("players/" + currentUser + "/choice").set(choice);
+         let playerKey = Object.keys(gameData.players).find(key => key.toLowerCase() === currentUser.toLowerCase());
+         if (!playerKey) {
+           alert("Player not found in game.");
+           return;
+         }
+         if (gameData.players[playerKey].choice === "") {
+            rpsGameRef.child("players/" + playerKey + "/choice").set(choice);
             document.getElementById("rpsStatus").textContent = "Waiting for opponent's choice...";
          }
       });
@@ -1580,8 +1751,10 @@
       }
     }
 
+    // SETTINGS TAB FUNCTIONS
     function openSettingsPage() {
       document.getElementById("loginDiv").style.display = "none";
+      document.getElementById("chatDiv").style.display = "none";
       document.getElementById("settingsDiv").style.display = "block";
     }
 
@@ -1590,15 +1763,71 @@
       document.getElementById("loginDiv").style.display = "block";
     }
 
-    function switchDarkMode() {
-      document.body.classList.toggle("dark-mode");
-      const darkActive = document.body.classList.contains("dark-mode");
-      localStorage.setItem("darkModeEnabled", darkActive);
+    // LEADERBOARD FUNCTIONS
+    function openLeaderboardPage() {
+      if (!currentUser || !currentUserPassHash) {
+        alert("You must be logged in to view the leaderboard.");
+        return;
+      }
+      document.getElementById("chatDiv").style.display = "none";
+      document.getElementById("settingsDiv").style.display = "none";
+      document.getElementById("leaderboardDiv").style.display = "block";
+      loadLeaderboard();
     }
 
+    function closeLeaderboardPage() {
+      document.getElementById("leaderboardDiv").style.display = "none";
+      document.getElementById("chatDiv").style.display = "block";
+    }
+
+    function loadLeaderboard() {
+      newDB.ref(NEW_KEYS.stats).once("value").then(snapshot => {
+        const stats = snapshot.val() || {};
+        const rpsArray = [];
+        const duelsArray = [];
+        const overallArray = [];
+        for (const username in stats) {
+          const userStats = stats[username];
+          const rpsWins = (userStats.rps && userStats.rps.wins) ? userStats.rps.wins : 0;
+          const duelsWins = (userStats.duels && userStats.duels.wins) ? userStats.duels.wins : 0;
+          const overallWins = rpsWins + duelsWins;
+          rpsArray.push({ username, wins: rpsWins });
+          duelsArray.push({ username, wins: duelsWins });
+          overallArray.push({ username, wins: overallWins });
+        }
+        rpsArray.sort((a, b) => b.wins - a.wins);
+        duelsArray.sort((a, b) => b.wins - a.wins);
+        overallArray.sort((a, b) => b.wins - a.wins);
+        const rpsList = document.getElementById("rpsLeaderboard");
+        const duelsList = document.getElementById("duelsLeaderboard");
+        const overallList = document.getElementById("overallLeaderboard");
+        rpsList.innerHTML = "";
+        duelsList.innerHTML = "";
+        overallList.innerHTML = "";
+        rpsArray.forEach(entry => {
+          const li = document.createElement("li");
+          li.textContent = `${entry.username} - ${entry.wins} wins`;
+          rpsList.appendChild(li);
+        });
+        duelsArray.forEach(entry => {
+          const li = document.createElement("li");
+          li.textContent = `${entry.username} - ${entry.wins} wins`;
+          duelsList.appendChild(li);
+        });
+        overallArray.forEach(entry => {
+          const li = document.createElement("li");
+          li.textContent = `${entry.username} - ${entry.wins} wins`;
+          overallList.appendChild(li);
+        });
+      });
+    }
+
+    // Uniform GUI scaling using a CSS transform on the container
     function adjustGuiScaling() {
       const scale = document.getElementById("guiSizeRange").value;
-      document.documentElement.style.fontSize = (16 * scale) + "px";
+      const container = document.querySelector('.container');
+      container.style.transform = 'scale(' + scale + ')';
+      container.style.transformOrigin = 'top center';
       localStorage.setItem("uiScale", scale);
       refreshGuiScaleDisplay();
     }
@@ -1642,7 +1871,6 @@
       }
     }
 
-    // Improved presence initialization using Firebase's .info/connected.
     function initializeUserPresence() {
       const connectedRef = firebase.database().ref(".info/connected");
       connectedRef.on("value", function(snapshot) {
@@ -1663,7 +1891,6 @@
       });
     }
 
-    // REWORKED MEMBERS LIST: Sorts alphabetically and uses custom list items.
     function refreshMemberList(members) {
       let sortedMembers = members.filter(m => m && m.trim() !== "").map(m => {
         if (m.toLowerCase().includes("anoynumus")) {
@@ -1687,7 +1914,6 @@
         nameSpan.textContent = member;
         li.appendChild(avatar);
         li.appendChild(nameSpan);
-        // When clicking a member, open their profile modal.
         li.onclick = function() { showProfileModal(member); };
         memberListUl.appendChild(li);
       });
@@ -1697,7 +1923,6 @@
       }
     }
 
-    // Enables filtering of members based on input.
     function filterMemberList() {
       const filterValue = document.getElementById("memberListFilter").value.toLowerCase();
       const items = document.querySelectorAll("#memberList li.member-item");
@@ -1711,7 +1936,6 @@
       });
     }
 
-    // Updated clearMemberList: Now clears the members from the server.
     function clearMemberList() {
       newDB.ref(NEW_KEYS.presence).remove()
         .then(() => {
@@ -1774,10 +1998,6 @@
       else { opHelpElem.style.display = "none"; }
     }
 
-    // =========================
-    // PROFILE MODAL FUNCTIONS
-    // When a member is clicked, show their profile information.
-    // =========================
     function showProfileModal(username) {
       document.getElementById("profileUsername").textContent = "Profile: " + username;
       let rank = "Member";
@@ -1785,7 +2005,6 @@
         rank = "OP";
       }
       document.getElementById("profileRank").textContent = "Rank: " + rank;
-      // Fetch stats (RPS and Duel Speed) for the user from Firebase.
       newDB.ref(NEW_KEYS.stats + "/" + username).once("value").then(snapshot => {
         let stats = snapshot.val() || {};
         let rps = stats.rps || { wins: 0, losses: 0 };
@@ -1802,25 +2021,19 @@
 
     window.onload = function() {
       document.getElementById("changelogOverlay").style.display = "flex";
-      // Load dark mode setting
       const darkEnabled = localStorage.getItem("darkModeEnabled") === "true";
       if (darkEnabled) document.body.classList.add("dark-mode");
       document.getElementById("themeToggle").checked = darkEnabled;
-      // Load UI scale
       const savedScale = localStorage.getItem("uiScale");
-      if (savedScale) { document.documentElement.style.fontSize = (16 * savedScale) + "px"; document.getElementById("guiSizeRange").value = savedScale; }
+      if (savedScale) { document.getElementById("guiSizeRange").value = savedScale; adjustGuiScaling(); }
       refreshGuiScaleDisplay();
-      // Load font setting
       const savedFont = localStorage.getItem("selectedFont") || "font-arial";
       document.body.classList.add(savedFont);
       document.getElementById("fontSelect").value = savedFont;
-      // Load account info
       currentUser = localStorage.getItem("acc_username");
       currentUserPassHash = localStorage.getItem("acc_passHash");
       refreshAccountInterface();
-      // Fetch the op list from Firebase (assumed stored at "opList")
       fetchOpList();
-      // Check for unauthorized op usage in older versions
       if (currentUser && !isUserOP()) {
         newDB.ref(NEW_KEYS.mutedUsers).orderByChild("op").equalTo(currentUser).once("value", (snap) => {
           if (snap.exists()) {
@@ -1865,6 +2078,10 @@
       if (storedSoundVol) { document.getElementById("soundVolume").value = storedSoundVol; document.getElementById("chatSound").volume = parseFloat(storedSoundVol); }
       const showTime = localStorage.getItem("showTimestamps") === "true";
       document.getElementById("timestampToggle").checked = showTime;
+      if (localStorage.getItem("showUndefinedMessages") === null) {
+        localStorage.setItem("showUndefinedMessages", "false");
+      }
+      document.getElementById("showUndefinedCheckbox").checked = (localStorage.getItem("showUndefinedMessages") === "true");
       window.onbeforeunload = () => { clearUserTypingStatus(); };
       const storedMusic = localStorage.getItem("bgMusic");
       if (storedMusic) {
@@ -1878,6 +2095,7 @@
         if (e.key === "Escape") {
           if (document.getElementById("helpModal").style.display !== "none") { hideHelpWindow(); }
           if (document.getElementById("profileModal").style.display !== "none") { hideProfileModal(); }
+          if (document.getElementById("opToolsModal").style.display !== "none") { closeOpToolsModal(); }
         }
       });
       updateHelpWindowVisibility();
