@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>yaproom (official)</title>
+  <title>yaproom (official) - v2.1.3</title>
   <style>
     /* GENERAL RESET & CONTAINER */
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -58,6 +58,24 @@
       width: 90%;
       color: #000;
       box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    /* New Title Section in Profile Modal */
+    #titleSection {
+      margin-top: 16px;
+    }
+    #titlesContainer button {
+      cursor: pointer;
+      border: 1px solid #7289da;
+      background: #fff;
+      color: #7289da;
+      transition: background 0.2s;
+      margin: 4px;
+      padding: 6px;
+      border-radius: 4px;
+    }
+    #titlesContainer button:hover:not(:disabled) {
+      background: #7289da;
+      color: #fff;
     }
     /* DUEL SPEED GAME UI */
     #duelSpeedGameDiv { text-align: center; }
@@ -263,7 +281,7 @@
   <!-- Modal Overlays (placed outside the container for full-screen coverage) -->
   <div id="changelogOverlay">
     <div id="changelogModal">
-      <h2>Alpha v2.1.1</h2>
+      <h2>Alpha v2.1.3</h2>
       <ul>
         <li>Updated UI and layout for improved performance.</li>
         <li>Added background music controls, sound notifications, and message timestamp toggles.</li>
@@ -303,6 +321,13 @@
       <p id="profileRank"></p>
       <p id="profileRPS"></p>
       <p id="profileDuels"></p>
+      <!-- New Title Section -->
+      <div id="titleSection">
+        <h3>Your Titles</h3>
+        <div id="titlesContainer">
+          <!-- Title buttons will be generated here -->
+        </div>
+      </div>
       <button onclick="hideProfileModal()">Close</button>
     </div>
   </div>
@@ -330,6 +355,24 @@
       <button onclick="securelyClearChatGlobal()">Clear Global Chat</button>
       <br/><br/>
       <button onclick="securelyClearTypingGlobal()">Clear Global Typing</button>
+      <br/><br/>
+      <!-- Chat Restrictions Editor moved into OP Tools -->
+      <h3>Chat Restrictions</h3>
+      <label for="usernameLengthLimit">Max Username Length:</label>
+      <input type="number" id="usernameLengthLimit" min="1" value="20" onchange="updateUsernameLengthLimit()" />
+      <br/><br/>
+      <label for="messageLengthLimit">Max Message Length:</label>
+      <input type="number" id="messageLengthLimit" min="1" value="100" onchange="updateMessageLengthLimit()" />
+      <br/><br/>
+      <!-- New Custom Title Assignment Section -->
+      <h3>Custom Title Assignment</h3>
+      <label for="customTitleUsername">Username (leave blank for self):</label>
+      <input type="text" id="customTitleUsername" placeholder="Username" />
+      <br/><br/>
+      <label for="customTitleInput">Custom Title:</label>
+      <input type="text" id="customTitleInput" placeholder="Custom Title" />
+      <br/><br/>
+      <button onclick="assignCustomTitle()">Assign Custom Title</button>
       <br/><br/>
       <button onclick="closeOpToolsModal()">Close</button>
     </div>
@@ -515,7 +558,6 @@
         Show Message Timestamps (hover to view)
       </label>
       <br/><br/>
-      <!-- New setting: toggle undefined messages -->
       <label>
         <input type="checkbox" id="showUndefinedCheckbox" onchange="toggleUndefinedMessages()" />
         Show messages from undefined players
@@ -597,7 +639,7 @@
     };
 
     /* =====================================================
-       Global Variables & OP List
+       Global Variables, Title System, and OP List
        ===================================================== */
     let opList = {};
     let lastMsgTimestamp = 2000;
@@ -634,11 +676,109 @@
     let rpsPlayerTwo = "";
     let rpsGameEndTimer = null;
 
-    // Unique client ID for op commands
-    let clientIdentifier = localStorage.getItem("clientID");
-    if (!clientIdentifier) {
-      clientIdentifier = Math.random().toString(36).substring(2) + Date.now().toString(36);
-      localStorage.setItem("clientID", clientIdentifier);
+    // Title system variables
+    const availableTitles = [
+      {
+        id: "starter",
+        name: "Starter",
+        description: "Play a single match in any mode.",
+        condition: (stats) => (stats.totalMatches || 0) >= 1
+      },
+      {
+        id: "novice",
+        name: "Novice",
+        description: "Win 5 matches in any mode.",
+        condition: (stats) => (stats.totalWins || 0) >= 5
+      },
+      {
+        id: "gooder",
+        name: "Gooder",
+        description: "Win 10 matches in any mode.",
+        condition: (stats) => (stats.totalWins || 0) >= 10
+      },
+      {
+        id: "gooder+",
+        name: "Gooder+",
+        description: "Win 15 matches in any mode.",
+        condition: (stats) => (stats.totalWins || 0) >= 15
+      },
+      {
+        id: "gooder++",
+        name: "Gooder++",
+        description: "Win 20 matches in any mode.",
+        condition: (stats) => (stats.totalWins || 0) >= 20
+      },
+      {
+        id: "gooder+++",
+        name: "Gooder+++",
+        description: "Win 25 matches in any mode.",
+        condition: (stats) => (stats.totalWins || 0) >= 25
+      },
+      {
+        id: "leaderboard_contender",
+        name: "Leaderboard Contender",
+        description: "Earned by being in the top 3 of at least one leaderboard.",
+        condition: function(stats) { return currentUserIsTop3RPS || currentUserIsTop3Duels || currentUserIsTop3Overall; }
+      },
+      {
+        id: "game_master",
+        name: "Game Master",
+        description: "Earned by being in the top 3 of all leaderboards.",
+        condition: function(stats) { return currentUserIsTop3RPS && currentUserIsTop3Duels && currentUserIsTop3Overall; }
+      }
+    ];
+    // Stores equipped title per user (for local rendering)
+    let userTitles = {};
+
+    // Global booleans for leaderboard positions
+    let currentUserIsTop3RPS = false, currentUserIsTop3Duels = false, currentUserIsTop3Overall = false;
+
+    // Adjustable limits (default values are 20 for usernames, 100 for messages)
+    let maxUsernameLength = localStorage.getItem("maxUsernameLength") ? parseInt(localStorage.getItem("maxUsernameLength")) : 20;
+    let maxMessageLength = localStorage.getItem("maxMessageLength") ? parseInt(localStorage.getItem("maxMessageLength")) : 100;
+
+    // Functions to update these limits from the OP Tools (Chat Restrictions) editor
+    function updateUsernameLengthLimit() {
+      maxUsernameLength = parseInt(document.getElementById("usernameLengthLimit").value);
+      localStorage.setItem("maxUsernameLength", maxUsernameLength);
+      alert("Max Username Length set to " + maxUsernameLength);
+    }
+    function updateMessageLengthLimit() {
+      maxMessageLength = parseInt(document.getElementById("messageLengthLimit").value);
+      localStorage.setItem("maxMessageLength", maxMessageLength);
+      alert("Max Message Length set to " + maxMessageLength);
+    }
+
+    // New function: OPs can assign a custom title to a user.
+    function assignCustomTitle() {
+      if (!isUserOP()) {
+        alert("Only OPs can assign custom titles.");
+        return;
+      }
+      // If no username is provided, assign to self.
+      let targetUser = document.getElementById("customTitleUsername").value.trim();
+      if (!targetUser) {
+        targetUser = currentUser;
+      }
+      let customTitle = document.getElementById("customTitleInput").value.trim();
+      if (!customTitle) {
+        alert("Please enter a custom title.");
+        return;
+      }
+      // Set the custom title in the user's account (overwriting any previously equipped title)
+      newDB.ref(NEW_KEYS.accounts + "/" + targetUser + "/equippedTitle")
+        .set(customTitle)
+        .then(function() {
+          // Optionally update local cache if assigning to self.
+          if (targetUser === currentUser) {
+            if (!userTitles[currentUser]) userTitles[currentUser] = {};
+            userTitles[currentUser].equipped = customTitle;
+          }
+          alert("Custom title '" + customTitle + "' assigned to " + targetUser + ".");
+        })
+        .catch(function(error) {
+          alert("Error assigning custom title: " + error);
+        });
     }
 
     // --------------------------------------------------------------------
@@ -866,15 +1006,30 @@
     }
 
     // ----------------------------
-    // Update Stats Helper (unchanged)
+    // Updated Update Stats Helper (Combined with atomic updates)
+    // Also updates the title system
     // ----------------------------
     function updateStats(gameType, winner, loser) {
-      const winnerRef = newDB.ref(NEW_KEYS.stats + "/" + winner + "/" + gameType + "/wins");
-      const loserRef = newDB.ref(NEW_KEYS.stats + "/" + loser + "/" + gameType + "/losses");
-      winnerRef.transaction(current => ((current === undefined || current === null) ? 0 : current) + 1);
-      loserRef.transaction(current => ((current === undefined || current === null) ? 0 : current) + 1);
+      const updates = {};
+      updates[`/${NEW_KEYS.stats}/${winner}/${gameType}/wins`] = firebase.database.ServerValue.increment(1);
+      updates[`/${NEW_KEYS.stats}/${loser}/${gameType}/losses`] = firebase.database.ServerValue.increment(1);
+      newDB.ref().update(updates).then(function() {
+        // After updating stats, re-fetch the winner's stats and update titles.
+        newDB.ref(NEW_KEYS.stats + "/" + winner).once("value").then(function(snap) {
+          const stats = snap.val() || {};
+          stats.totalWins = ((stats.rps && stats.rps.wins) ? stats.rps.wins : 0) + ((stats.duels && stats.duels.wins) ? stats.duels.wins : 0);
+          stats.totalMatches = ((stats.rps && (stats.rps.wins + stats.rps.losses)) || 0) +
+                               ((stats.duels && (stats.duels.wins + stats.duels.losses)) || 0);
+          if (currentUser === winner) {
+            loadUserTitles(stats);
+          }
+        });
+      });
     }
 
+    // ----------------------------
+    // Other helper functions and public chat functions (unchanged)
+    // ----------------------------
     function initializeTextAreaShortcuts(textAreaId, sendCallback) {
       const ta = document.getElementById(textAreaId);
       ta.addEventListener("keydown", function(e) {
@@ -889,9 +1044,6 @@
       ta.style.height = (ta.scrollHeight) + "px";
     }
 
-    // ----------------------------
-    // Public Chat Functions (unchanged)
-    // ----------------------------
     function refreshChatMessages() {
       const messagesUl = document.getElementById("messages");
       messagesUl.innerHTML = "";
@@ -940,11 +1092,12 @@
       }
     }
 
-    // ----------------------------
-    // Account Registration/Login Functions (unchanged)
-    // ----------------------------
     async function registerOrAccessAccount() {
       let desiredName = document.getElementById("accNameInput").value.trim();
+      if (desiredName.length > maxUsernameLength) {
+        alert("Usernames can be at most " + maxUsernameLength + " characters long.");
+        return;
+      }
       const desiredPass = document.getElementById("accPassInput").value.trim();
       if (!desiredName || !desiredPass) { alert("Please provide both a username and a password."); return; }
       if (/\s/.test(desiredName)) { alert("Usernames cannot contain spaces."); return; }
@@ -1039,6 +1192,10 @@
       if (!currentUser || !currentUserPassHash) { alert("Not logged in, cannot rename."); return; }
       const newName = document.getElementById("renameInput").value.trim();
       if (!newName) { alert("Enter a new username."); return; }
+      if (newName.length > maxUsernameLength) {
+        alert("Usernames can be at most " + maxUsernameLength + " characters long.");
+        return;
+      }
       if (/\s/.test(newName)) { alert("Usernames cannot contain spaces!"); return; }
       const snap = await newDB.ref(NEW_KEYS.accounts + "/" + currentUser).once("value");
       if (!snap.exists()) { alert("Your account no longer exists."); return; }
@@ -1093,6 +1250,10 @@
       if (!currentUser) {
         const anonName = document.getElementById("anonymousInput").value.trim();
         if (!anonName) { alert("Enter a name or create an account."); return; }
+        if (anonName.length > maxUsernameLength) {
+          alert("Anonymous names can be at most " + maxUsernameLength + " characters long.");
+          return;
+        }
         if (/\s/.test(anonName)) { alert("Usernames cannot contain spaces."); return; }
         currentUser = anonName;
       }
@@ -1119,6 +1280,94 @@
       return filteredText;
     }
 
+    // Modified renderChatMessage to prepend equipped title if available.
+    function renderChatMessage(user, text, isAccount, isBroadcast, msgKey, timestamp) {
+      const ul = document.getElementById("messages");
+      const li = document.createElement("li");
+      li.classList.add("message-enter");
+      if (msgKey) { li.setAttribute("data-key", msgKey); }
+      if (user) { li.setAttribute("data-user", user); }
+      
+      // Add title prefix if exists:
+      let titlePrefix = "";
+      if (isAccount && userTitles[user] && userTitles[user].equipped) {
+        titlePrefix = "[" + userTitles[user].equipped + "] ";
+      }
+      
+      let userColorClass = isAccount ? "account-user" : "anonymous-user";
+      let colorStyle = "";
+      if (userColors[user]) { colorStyle = `style="color:${userColors[user]}; font-weight:bold;"`; }
+      else if (isAccount) { colorStyle = `style="color:#7289da;"`; }
+      
+      if (isBroadcast) {
+        li.innerHTML = `<span class="broadcast-msg">[BROADCAST from ${user}]</span> ${text}`;
+      } else {
+        li.innerHTML = `<span class="${userColorClass}" ${colorStyle}>${titlePrefix}${user}</span>: ${text}`;
+      }
+      ul.appendChild(li);
+      ul.scrollTop = ul.scrollHeight;
+    }
+
+    // New function: Load available titles into the profile modal based on user stats.
+    function loadUserTitles(userStats) {
+      const container = document.getElementById("titlesContainer");
+      container.innerHTML = "";
+      
+      availableTitles.forEach(function(title) {
+        const unlocked = title.condition(userStats);
+        const btn = document.createElement("button");
+        btn.textContent = title.name;
+        btn.style.margin = "4px";
+        btn.style.padding = "6px";
+        btn.style.borderRadius = "4px";
+        btn.title = title.description + (unlocked ? "" : " (Locked)");
+        
+        if (!unlocked) {
+          btn.disabled = true;
+          btn.innerHTML += " 🔒";
+          btn.style.opacity = 0.5;
+        }
+        
+        btn.onclick = function() {
+          newDB.ref(NEW_KEYS.accounts + "/" + currentUser + "/equippedTitle")
+            .set(title.name)
+            .then(function() {
+              if (!userTitles[currentUser]) userTitles[currentUser] = {};
+              userTitles[currentUser].equipped = title.name;
+              alert("Equipped title: " + title.name);
+            });
+        };
+        
+        container.appendChild(btn);
+      });
+    }
+
+    // New function: Update leaderboard rankings (global booleans) for currentUser.
+    function updateLeaderboardRankings(callback) {
+      newDB.ref(NEW_KEYS.stats).once("value").then(function(snapshot) {
+        const stats = snapshot.val() || {};
+        const rpsArray = [];
+        const duelsArray = [];
+        const overallArray = [];
+        for (const username in stats) {
+          const userStats = stats[username];
+          const rpsWins = (userStats.rps && userStats.rps.wins) ? userStats.rps.wins : 0;
+          const duelsWins = (userStats.duels && userStats.duels.wins) ? userStats.duels.wins : 0;
+          const overallWins = rpsWins + duelsWins;
+          rpsArray.push({ username, wins: rpsWins });
+          duelsArray.push({ username, wins: duelsWins });
+          overallArray.push({ username, wins: overallWins });
+        }
+        rpsArray.sort((a, b) => b.wins - a.wins);
+        duelsArray.sort((a, b) => b.wins - a.wins);
+        overallArray.sort((a, b) => b.wins - a.wins);
+        currentUserIsTop3RPS = rpsArray.slice(0,3).some(entry => entry.username === currentUser);
+        currentUserIsTop3Duels = duelsArray.slice(0,3).some(entry => entry.username === currentUser);
+        currentUserIsTop3Overall = overallArray.slice(0,3).some(entry => entry.username === currentUser);
+        if (callback) callback();
+      });
+    }
+
     function dispatchMessage() {
       const inp = document.getElementById("messageInput");
       let text = inp.value.trim();
@@ -1127,6 +1376,10 @@
         processCommandInput(text);
         inp.value = "";
         inp.style.height = "40px";
+        return;
+      }
+      if (text.length > maxMessageLength) {
+        alert("Your message can be at most " + maxMessageLength + " characters long.");
         return;
       }
       const nowTime = Date.now();
@@ -1164,25 +1417,6 @@
       inp.style.height = "40px";
       lastMsgTimestamp = nowTime;
       if (currentUser) { newDB.ref(NEW_KEYS.typing + "/" + currentUser).remove(); }
-    }
-
-    function renderChatMessage(user, text, isAccount, isBroadcast, msgKey, timestamp) {
-      const ul = document.getElementById("messages");
-      const li = document.createElement("li");
-      li.classList.add("message-enter");
-      if (msgKey) { li.setAttribute("data-key", msgKey); }
-      if (user) { li.setAttribute("data-user", user); }
-      let userColorClass = isAccount ? "account-user" : "anonymous-user";
-      let colorStyle = "";
-      if (userColors[user]) { colorStyle = `style="color:${userColors[user]}; font-weight:bold;"`; }
-      else if (isAccount) { colorStyle = `style="color:#7289da;"`; }
-      if (isBroadcast) {
-        li.innerHTML = `<span class="broadcast-msg">[BROADCAST from ${user}]</span> ${text}`;
-      } else {
-        li.innerHTML = `<span class="${userColorClass}" ${colorStyle}>${user}</span>: ${text}`;
-      }
-      ul.appendChild(li);
-      ul.scrollTop = ul.scrollHeight;
     }
 
     function eraseChatDisplay() {
@@ -1751,7 +1985,6 @@
       }
     }
 
-    // SETTINGS TAB FUNCTIONS
     function openSettingsPage() {
       document.getElementById("loginDiv").style.display = "none";
       document.getElementById("chatDiv").style.display = "none";
@@ -1763,7 +1996,6 @@
       document.getElementById("loginDiv").style.display = "block";
     }
 
-    // LEADERBOARD FUNCTIONS
     function openLeaderboardPage() {
       if (!currentUser || !currentUserPassHash) {
         alert("You must be logged in to view the leaderboard.");
@@ -1780,6 +2012,7 @@
       document.getElementById("chatDiv").style.display = "block";
     }
 
+    // Modified loadLeaderboard to add medal icons for top three and update global leaderboard booleans.
     function loadLeaderboard() {
       newDB.ref(NEW_KEYS.stats).once("value").then(snapshot => {
         const stats = snapshot.val() || {};
@@ -1798,31 +2031,46 @@
         rpsArray.sort((a, b) => b.wins - a.wins);
         duelsArray.sort((a, b) => b.wins - a.wins);
         overallArray.sort((a, b) => b.wins - a.wins);
+        // Update leaderboard booleans for title conditions:
+        currentUserIsTop3RPS = rpsArray.slice(0,3).some(entry => entry.username === currentUser);
+        currentUserIsTop3Duels = duelsArray.slice(0,3).some(entry => entry.username === currentUser);
+        currentUserIsTop3Overall = overallArray.slice(0,3).some(entry => entry.username === currentUser);
         const rpsList = document.getElementById("rpsLeaderboard");
         const duelsList = document.getElementById("duelsLeaderboard");
         const overallList = document.getElementById("overallLeaderboard");
         rpsList.innerHTML = "";
         duelsList.innerHTML = "";
         overallList.innerHTML = "";
-        rpsArray.forEach(entry => {
+        rpsArray.forEach((entry, index) => {
           const li = document.createElement("li");
-          li.textContent = `${entry.username} - ${entry.wins} wins`;
+          let titleBadge = "";
+          if (index === 0) titleBadge = " 🥇";
+          else if (index === 1) titleBadge = " 🥈";
+          else if (index === 2) titleBadge = " 🥉";
+          li.textContent = `${entry.username}${titleBadge} - ${entry.wins} wins`;
           rpsList.appendChild(li);
         });
-        duelsArray.forEach(entry => {
+        duelsArray.forEach((entry, index) => {
           const li = document.createElement("li");
-          li.textContent = `${entry.username} - ${entry.wins} wins`;
+          let titleBadge = "";
+          if (index === 0) titleBadge = " 🥇";
+          else if (index === 1) titleBadge = " 🥈";
+          else if (index === 2) titleBadge = " 🥉";
+          li.textContent = `${entry.username}${titleBadge} - ${entry.wins} wins`;
           duelsList.appendChild(li);
         });
-        overallArray.forEach(entry => {
+        overallArray.forEach((entry, index) => {
           const li = document.createElement("li");
-          li.textContent = `${entry.username} - ${entry.wins} wins`;
+          let titleBadge = "";
+          if (index === 0) titleBadge = " 🥇";
+          else if (index === 1) titleBadge = " 🥈";
+          else if (index === 2) titleBadge = " 🥉";
+          li.textContent = `${entry.username}${titleBadge} - ${entry.wins} wins`;
           overallList.appendChild(li);
         });
       });
     }
 
-    // Uniform GUI scaling using a CSS transform on the container
     function adjustGuiScaling() {
       const scale = document.getElementById("guiSizeRange").value;
       const container = document.querySelector('.container');
@@ -2011,7 +2259,13 @@
         let duels = stats.duels || { wins: 0, losses: 0 };
         document.getElementById("profileRPS").textContent = "Rock-Paper-Scissors: " + rps.wins + " Wins / " + rps.losses + " Losses";
         document.getElementById("profileDuels").textContent = "Duel Speed: " + duels.wins + " Wins / " + duels.losses + " Losses";
-        document.getElementById("profileModal").style.display = "flex";
+        stats.totalWins = (rps.wins || 0) + (duels.wins || 0);
+        stats.totalMatches = ((rps.wins + rps.losses) || 0) + ((duels.wins + duels.losses) || 0);
+        // Update leaderboard rankings before loading titles.
+        updateLeaderboardRankings(function() {
+          loadUserTitles(stats);
+          document.getElementById("profileModal").style.display = "flex";
+        });
       });
     }
 
@@ -2030,6 +2284,8 @@
       const savedFont = localStorage.getItem("selectedFont") || "font-arial";
       document.body.classList.add(savedFont);
       document.getElementById("fontSelect").value = savedFont;
+      document.getElementById("usernameLengthLimit").value = maxUsernameLength;
+      document.getElementById("messageLengthLimit").value = maxMessageLength;
       currentUser = localStorage.getItem("acc_username");
       currentUserPassHash = localStorage.getItem("acc_passHash");
       refreshAccountInterface();
