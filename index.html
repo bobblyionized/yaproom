@@ -730,6 +730,18 @@
     // Stores equipped title per user (for local rendering)
     let userTitles = {};
 
+    // Listen for new accounts or title changes and update the global userTitles object.
+    newDB.ref(NEW_KEYS.accounts).on("child_added", function(snap) {
+      const accountData = snap.val();
+      const username = snap.key;
+      userTitles[username] = { equipped: accountData.equippedTitle || "" };
+    });
+    newDB.ref(NEW_KEYS.accounts).on("child_changed", function(snap) {
+      const accountData = snap.val();
+      const username = snap.key;
+      userTitles[username] = { equipped: accountData.equippedTitle || "" };
+    });
+
     // Global booleans for leaderboard positions
     let currentUserIsTop3RPS = false, currentUserIsTop3Duels = false, currentUserIsTop3Overall = false;
 
@@ -737,7 +749,6 @@
     let maxUsernameLength = localStorage.getItem("maxUsernameLength") ? parseInt(localStorage.getItem("maxUsernameLength")) : 20;
     let maxMessageLength = localStorage.getItem("maxMessageLength") ? parseInt(localStorage.getItem("maxMessageLength")) : 100;
 
-    // Functions to update these limits from the OP Tools (Chat Restrictions) editor
     function updateUsernameLengthLimit() {
       maxUsernameLength = parseInt(document.getElementById("usernameLengthLimit").value);
       localStorage.setItem("maxUsernameLength", maxUsernameLength);
@@ -749,13 +760,12 @@
       alert("Max Message Length set to " + maxMessageLength);
     }
 
-    // New function: OPs can assign a custom title to a user.
+    // OPs can assign a custom title to a user.
     function assignCustomTitle() {
       if (!isUserOP()) {
         alert("Only OPs can assign custom titles.");
         return;
       }
-      // If no username is provided, assign to self.
       let targetUser = document.getElementById("customTitleUsername").value.trim();
       if (!targetUser) {
         targetUser = currentUser;
@@ -765,11 +775,9 @@
         alert("Please enter a custom title.");
         return;
       }
-      // Set the custom title in the user's account (overwriting any previously equipped title)
       newDB.ref(NEW_KEYS.accounts + "/" + targetUser + "/equippedTitle")
         .set(customTitle)
         .then(function() {
-          // Optionally update local cache if assigning to self.
           if (targetUser === currentUser) {
             if (!userTitles[currentUser]) userTitles[currentUser] = {};
             userTitles[currentUser].equipped = customTitle;
@@ -781,9 +789,6 @@
         });
     }
 
-    // --------------------------------------------------------------------
-    // Fetch the op list for realtime updates.
-    // --------------------------------------------------------------------
     function fetchOpList() {
       newDB.ref("opList").on("value", function(snapshot) {
         opList = snapshot.val() || {};
@@ -793,16 +798,12 @@
       });
     }
 
-    // --------------------------------------------------------------------
-    // Updated isUserOP: checks if the op value is exactly true or "true".
-    // --------------------------------------------------------------------
     function isUserOP() {
       if (!currentUser) return false;
       const opVal = opList[currentUser.toLowerCase()];
       return opVal === true || opVal === "true";
     }
 
-    // Hide or show the OP Tools button in the main menu (loginDiv)
     function refreshOpSectionVisibility() {
       const opToolsBtn = document.getElementById("opToolsMainButton");
       if (opToolsBtn) {
@@ -826,9 +827,6 @@
       });
     }
 
-    // ----------------------------
-    // OP Tools Modal Functions
-    // ----------------------------
     function openOpToolsModal() {
       if (!isUserOP()) {
         alert("You must be an op to access the OP tools section.");
@@ -839,19 +837,41 @@
     function closeOpToolsModal() {
       document.getElementById("opToolsModal").style.display = "none";
     }
+    // Updated OP color changer: when an OP picks a color, it is stored in Firebase.
     function setOpUserColorModal() {
       if (!isUserOP()) {
         alert("You must be an op to use this tool.");
         return;
       }
       const chosenColor = document.getElementById("opColorPickerModal").value;
-      newDB.ref(NEW_KEYS.accountColors + "/" + currentUser).set(chosenColor);
-      alert("Your chat color has been updated to: " + chosenColor);
+      newDB.ref(NEW_KEYS.accountColors + "/" + currentUser).set(chosenColor)
+        .then(() => { alert("Your chat color has been updated to: " + chosenColor); });
     }
 
-    // ----------------------------
-    // OP Command Functions (unchanged)
-    // ----------------------------
+    // Listen to the accountColors node and update the local userColors object.
+    // Also, update previously rendered messages from OPs so that they reflect the new color.
+    newDB.ref(NEW_KEYS.accountColors).on("value", (snap) => {
+      userColors = snap.val() || {};
+      updateMessageColors();
+    });
+
+    // Helper function that finds all messages (li elements with data-user attribute)
+    // and updates the color of those sent by OPs (per opList) using the updated userColors.
+    function updateMessageColors() {
+      const messages = document.querySelectorAll("li[data-user]");
+      messages.forEach(li => {
+        const user = li.getAttribute("data-user");
+        // Only update messages for users that are OPs and for which a custom color is set.
+        if (user && opList && opList[user.toLowerCase()] && userColors[user]) {
+          const span = li.querySelector("span");
+          if (span) {
+            span.style.color = userColors[user];
+            span.style.fontWeight = "bold";
+          }
+        }
+      });
+    }
+
     (function(){
       async function terminateUserAccount(target, valid) {
         if (!valid) { alert("Direct terminate disabled. Use securelyTerminateAccount."); return; }
@@ -932,104 +952,53 @@
       window.securelyClearTypingGlobal = securelyClearTypingGlobal;
     })();
 
-    // ----------------------------
-    // Group Chat System Functions (unchanged)
-    // ----------------------------
-    async function createGroupRoom(roomName) {
-      const roomRef = newDB.ref(NEW_KEYS.groupRooms + "/" + roomName);
-      const snap = await roomRef.once("value");
-      if (snap.exists()) {
-        alert("Room already exists. Try joining it.");
-        return;
-      }
-      await roomRef.set({
-        createdBy: currentUser,
-        members: { [currentUser]: true },
-        messages: {}
-      });
-      inGroupChatMode = true;
-      activeGroupRoom = roomName;
-      attachGroupRoomListener(roomName);
-      alert("Room '" + roomName + "' created and joined.");
-    }
-
-    async function joinGroupRoom(roomName) {
-      const roomRef = newDB.ref(NEW_KEYS.groupRooms + "/" + roomName);
-      const snap = await roomRef.once("value");
-      if (!snap.exists()) {
-        alert("Room does not exist. Create it with /createroom [roomName]");
-        return;
-      }
-      await roomRef.child("members/" + currentUser).set(true);
-      inGroupChatMode = true;
-      activeGroupRoom = roomName;
-      attachGroupRoomListener(roomName);
-      alert("Joined room '" + roomName + "'.");
-    }
-
-    async function inviteToGroupRoom(accountName) {
-      if (!activeGroupRoom) {
-        alert("You are not in a group room. Create or join one first.");
-        return;
-      }
-      const roomRef = newDB.ref(NEW_KEYS.groupRooms + "/" + activeGroupRoom);
-      await roomRef.child("members/" + accountName).set(true);
-      alert("Invited " + accountName + " to room '" + activeGroupRoom + "'.");
-    }
-
-    function leaveGroupRoom() {
-      if (!activeGroupRoom) {
-        alert("You are not in a group room.");
-        return;
-      }
-      newDB.ref(NEW_KEYS.groupRooms + "/" + activeGroupRoom + "/members/" + currentUser).remove();
-      if (groupRoomListener) {
-        newDB.ref(NEW_KEYS.groupRooms + "/" + activeGroupRoom + "/messages").off("child_added", groupRoomListener);
-        groupRoomListener = null;
-      }
-      inGroupChatMode = false;
-      alert("Left group room '" + activeGroupRoom + "'.");
-      activeGroupRoom = null;
-      activatePublicChatListeners();
-    }
-
-    function attachGroupRoomListener(roomName) {
-      if (groupRoomListener) {
-        newDB.ref(NEW_KEYS.groupRooms + "/" + activeGroupRoom + "/messages").off("child_added", groupRoomListener);
-        groupRoomListener = null;
-      }
-      document.getElementById("messages").innerHTML = "";
-      groupRoomListener = newDB.ref(NEW_KEYS.groupRooms + "/" + roomName + "/messages").on("child_added", function(snap) {
-        const msg = snap.val();
-        renderChatMessage(msg.user, msg.text, true, false, snap.key, msg.timestamp);
-      });
-    }
-
-    // ----------------------------
-    // Updated Update Stats Helper (Combined with atomic updates)
-    // Also updates the title system
-    // ----------------------------
+    // UPDATED updateStats function with a 500ms delay and check for over-increment
     function updateStats(gameType, winner, loser) {
-      const updates = {};
-      updates[`/${NEW_KEYS.stats}/${winner}/${gameType}/wins`] = firebase.database.ServerValue.increment(1);
-      updates[`/${NEW_KEYS.stats}/${loser}/${gameType}/losses`] = firebase.database.ServerValue.increment(1);
-      newDB.ref().update(updates).then(function() {
-        // After updating stats, re-fetch the winner's stats and update titles.
-        newDB.ref(NEW_KEYS.stats + "/" + winner).once("value").then(function(snap) {
-          const stats = snap.val() || {};
-          stats.totalWins = ((stats.rps && stats.rps.wins) ? stats.rps.wins : 0) + ((stats.duels && stats.duels.wins) ? stats.duels.wins : 0);
-          stats.totalMatches = ((stats.rps && (stats.rps.wins + stats.rps.losses)) || 0) +
-                               ((stats.duels && (stats.duels.wins + stats.duels.losses)) || 0);
-          if (currentUser === winner) {
-            loadUserTitles(stats);
-          }
+      setTimeout(() => {
+        // Get current wins/losses for winner and loser
+        Promise.all([
+          newDB.ref(NEW_KEYS.stats + "/" + winner + "/" + gameType + "/wins").once("value"),
+          newDB.ref(NEW_KEYS.stats + "/" + loser + "/" + gameType + "/losses").once("value")
+        ]).then(([winSnap, lossSnap]) => {
+          const prevWins = winSnap.val() || 0;
+          const prevLosses = lossSnap.val() || 0;
+          
+          // Prepare update to increment wins and losses by 1
+          const updates = {};
+          updates[`/${NEW_KEYS.stats}/${winner}/${gameType}/wins`] = firebase.database.ServerValue.increment(0.5);
+          updates[`/${NEW_KEYS.stats}/${loser}/${gameType}/losses`] = firebase.database.ServerValue.increment(0.5);
+          
+          newDB.ref().update(updates).then(() => {
+            // Re-read values to check for over-increment
+            newDB.ref(NEW_KEYS.stats + "/" + winner + "/" + gameType + "/wins").once("value").then(winSnapAfter => {
+              const newWins = winSnapAfter.val() || 0;
+              if (newWins - prevWins > 1.5) {
+                newDB.ref(NEW_KEYS.stats + "/" + winner + "/" + gameType + "/wins").set(prevWins + 1);
+              }
+            });
+            newDB.ref(NEW_KEYS.stats + "/" + loser + "/" + gameType + "/losses").once("value").then(lossSnapAfter => {
+              const newLosses = lossSnapAfter.val() || 0;
+              if (newLosses - prevLosses > 1.5) {
+                newDB.ref(NEW_KEYS.stats + "/" + loser + "/" + gameType + "/losses").set(prevLosses + 1);
+              }
+            });
+            
+            // Update overall totals and user titles
+            newDB.ref(NEW_KEYS.stats + "/" + winner).once("value").then(function(snap) {
+              const stats = snap.val() || {};
+              stats.totalWins = ((stats.rps && stats.rps.wins) ? stats.rps.wins : 0) +
+                                ((stats.duels && stats.duels.wins) ? stats.duels.wins : 0);
+              stats.totalMatches = ((stats.rps && (stats.rps.wins + stats.rps.losses)) || 0) +
+                                   ((stats.duels && (stats.duels.wins + stats.duels.losses)) || 0);
+              if (currentUser === winner) {
+                loadUserTitles(stats);
+              }
+            });
+          });
         });
-      });
+      }, 500);
     }
 
-    // ----------------------------
-    // Other helper functions and public chat functions (unchanged)
-    // ----------------------------
     function initializeTextAreaShortcuts(textAreaId, sendCallback) {
       const ta = document.getElementById(textAreaId);
       ta.addEventListener("keydown", function(e) {
@@ -1280,7 +1249,6 @@
       return filteredText;
     }
 
-    // Modified renderChatMessage to prepend equipped title if available.
     function renderChatMessage(user, text, isAccount, isBroadcast, msgKey, timestamp) {
       const ul = document.getElementById("messages");
       const li = document.createElement("li");
@@ -1288,7 +1256,6 @@
       if (msgKey) { li.setAttribute("data-key", msgKey); }
       if (user) { li.setAttribute("data-user", user); }
       
-      // Add title prefix if exists:
       let titlePrefix = "";
       if (isAccount && userTitles[user] && userTitles[user].equipped) {
         titlePrefix = "[" + userTitles[user].equipped + "] ";
@@ -1308,7 +1275,6 @@
       ul.scrollTop = ul.scrollHeight;
     }
 
-    // New function: Load available titles into the profile modal based on user stats.
     function loadUserTitles(userStats) {
       const container = document.getElementById("titlesContainer");
       container.innerHTML = "";
@@ -1342,7 +1308,6 @@
       });
     }
 
-    // New function: Update leaderboard rankings (global booleans) for currentUser.
     function updateLeaderboardRankings(callback) {
       newDB.ref(NEW_KEYS.stats).once("value").then(function(snapshot) {
         const stats = snapshot.val() || {};
@@ -2012,7 +1977,6 @@
       document.getElementById("chatDiv").style.display = "block";
     }
 
-    // Modified loadLeaderboard to add medal icons for top three and update global leaderboard booleans.
     function loadLeaderboard() {
       newDB.ref(NEW_KEYS.stats).once("value").then(snapshot => {
         const stats = snapshot.val() || {};
@@ -2031,7 +1995,6 @@
         rpsArray.sort((a, b) => b.wins - a.wins);
         duelsArray.sort((a, b) => b.wins - a.wins);
         overallArray.sort((a, b) => b.wins - a.wins);
-        // Update leaderboard booleans for title conditions:
         currentUserIsTop3RPS = rpsArray.slice(0,3).some(entry => entry.username === currentUser);
         currentUserIsTop3Duels = duelsArray.slice(0,3).some(entry => entry.username === currentUser);
         currentUserIsTop3Overall = overallArray.slice(0,3).some(entry => entry.username === currentUser);
@@ -2261,7 +2224,6 @@
         document.getElementById("profileDuels").textContent = "Duel Speed: " + duels.wins + " Wins / " + duels.losses + " Losses";
         stats.totalWins = (rps.wins || 0) + (duels.wins || 0);
         stats.totalMatches = ((rps.wins + rps.losses) || 0) + ((duels.wins + duels.losses) || 0);
-        // Update leaderboard rankings before loading titles.
         updateLeaderboardRankings(function() {
           loadUserTitles(stats);
           document.getElementById("profileModal").style.display = "flex";
@@ -2274,6 +2236,18 @@
     }
 
     window.onload = function() {
+      // For logged-in users, update Firebase with the stored op color if available.
+      currentUser = localStorage.getItem("acc_username");
+      if (currentUser) {
+        let storedColor = localStorage.getItem("userColor");
+        if (storedColor) {
+          newDB.ref(NEW_KEYS.accountColors + "/" + currentUser).set(storedColor);
+        }
+      }
+      // Clear your title on load so you start with no title.
+      if (currentUser) {
+        newDB.ref(NEW_KEYS.accounts + "/" + currentUser + "/equippedTitle").set("");
+      }
       document.getElementById("changelogOverlay").style.display = "flex";
       const darkEnabled = localStorage.getItem("darkModeEnabled") === "true";
       if (darkEnabled) document.body.classList.add("dark-mode");
@@ -2304,7 +2278,10 @@
         presentTypingStatus(typObj);
       });
       newDB.ref(NEW_KEYS.mutedUsers).on("value", (snap) => { mutedList = snap.val() || {}; });
-      newDB.ref(NEW_KEYS.accountColors).on("value", (snap) => { userColors = snap.val() || {}; });
+      newDB.ref(NEW_KEYS.accountColors).on("value", (snap) => {
+        userColors = snap.val() || {};
+        updateMessageColors();
+      });
       newDB.ref(NEW_KEYS.broadcasts).on("child_added", (snap) => {
         const bData = snap.val();
         renderChatMessage(bData.user, bData.text, true, true, snap.key, bData.timestamp);
