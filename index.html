@@ -59,24 +59,6 @@
       color: #000;
       box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     }
-    /* New Title Section in Profile Modal */
-    #titleSection {
-      margin-top: 16px;
-    }
-    #titlesContainer button {
-      cursor: pointer;
-      border: 1px solid #7289da;
-      background: #fff;
-      color: #7289da;
-      transition: background 0.2s;
-      margin: 4px;
-      padding: 6px;
-      border-radius: 4px;
-    }
-    #titlesContainer button:hover:not(:disabled) {
-      background: #7289da;
-      color: #fff;
-    }
     /* DUEL SPEED GAME UI */
     #duelSpeedGameDiv { text-align: center; }
     #duelSpeedCounters p { font-size: 18px; margin: 8px 0; }
@@ -275,10 +257,20 @@
     .font-open-sans { font-family: "Open Sans", sans-serif; }
     .font-lato { font-family: Lato, sans-serif; }
     .font-montserrat { font-family: Montserrat, sans-serif; }
+    
+    /* ---------- Reworked OP Tools Modal Styles ---------- */
+    #opToolsContent h2 { text-align: center; margin-bottom: 16px; }
+    #opToolsContent section { margin-bottom: 16px; }
+    #opToolsContent section h3 { margin-bottom: 8px; font-size: 16px; }
+    #opToolsContent input[type="text"],
+    #opToolsContent input[type="number"],
+    #opToolsContent select,
+    #opToolsContent input[type="color"] { width: 100%; }
+    #opToolsContent button { width: auto; margin-top: 4px; }
   </style>
 </head>
 <body>
-  <!-- Modal Overlays (placed outside the container for full-screen coverage) -->
+  <!-- Modal Overlays -->
   <div id="changelogOverlay">
     <div id="changelogModal">
       <h2>Alpha v2.1.3</h2>
@@ -321,60 +313,56 @@
       <p id="profileRank"></p>
       <p id="profileRPS"></p>
       <p id="profileDuels"></p>
-      <!-- New Title Section -->
-      <div id="titleSection">
-        <h3>Your Titles</h3>
-        <div id="titlesContainer">
-          <!-- Title buttons will be generated here -->
-        </div>
-      </div>
       <button onclick="hideProfileModal()">Close</button>
     </div>
   </div>
 
+  <!-- Reworked OP Tools Modal -->
   <div id="opToolsModal">
     <div id="opToolsContent">
       <h2>OP Tools</h2>
-      <p>Access administrative tools:</p>
-      <label for="muteTargetModal">Mute User:</label>
-      <input type="text" id="muteTargetModal" placeholder="Username to mute" />
-      <button onclick="securelyMuteUser(document.getElementById('muteTargetModal').value.trim())">Mute User</button>
-      <br/><br/>
-      <label for="unmuteTargetModal">Unmute User:</label>
-      <input type="text" id="unmuteTargetModal" placeholder="Username to unmute" />
-      <button onclick="securelyUnmuteUser(document.getElementById('unmuteTargetModal').value.trim())">Unmute User</button>
-      <br/><br/>
-      <label for="terminateTargetModal">Terminate User:</label>
-      <input type="text" id="terminateTargetModal" placeholder="Username to terminate" />
-      <button onclick="securelyTerminateAccount(document.getElementById('terminateTargetModal').value.trim())">Terminate User</button>
-      <br/><br/>
-      <label for="opColorPickerModal">Set Name Color:</label>
-      <input type="color" id="opColorPickerModal" value="#7289da" />
-      <button onclick="setOpUserColorModal()">Set Name Color</button>
-      <br/><br/>
-      <button onclick="securelyClearChatGlobal()">Clear Global Chat</button>
-      <br/><br/>
-      <button onclick="securelyClearTypingGlobal()">Clear Global Typing</button>
-      <br/><br/>
-      <!-- Chat Restrictions Editor moved into OP Tools -->
-      <h3>Chat Restrictions</h3>
-      <label for="usernameLengthLimit">Max Username Length:</label>
-      <input type="number" id="usernameLengthLimit" min="1" value="20" onchange="updateUsernameLengthLimit()" />
-      <br/><br/>
-      <label for="messageLengthLimit">Max Message Length:</label>
-      <input type="number" id="messageLengthLimit" min="1" value="100" onchange="updateMessageLengthLimit()" />
-      <br/><br/>
-      <!-- New Custom Title Assignment Section -->
-      <h3>Custom Title Assignment</h3>
-      <label for="customTitleUsername">Username (leave blank for self):</label>
-      <input type="text" id="customTitleUsername" placeholder="Username" />
-      <br/><br/>
-      <label for="customTitleInput">Custom Title:</label>
-      <input type="text" id="customTitleInput" placeholder="Custom Title" />
-      <br/><br/>
-      <button onclick="assignCustomTitle()">Assign Custom Title</button>
-      <br/><br/>
-      <button onclick="closeOpToolsModal()">Close</button>
+      <!-- User Actions Section -->
+      <section id="opUserActions">
+        <h3>User Actions</h3>
+        <input type="text" id="opTargetUser" placeholder="Target Username" />
+        <select id="opActionSelect">
+          <option value="mute">Mute User</option>
+          <option value="unmute">Unmute User</option>
+          <option value="terminate">Terminate User</option>
+        </select>
+        <button id="opExecuteAction">Execute</button>
+      </section>
+      <!-- Color Picker Section -->
+      <section id="opColorSection">
+        <h3>Set User Color</h3>
+        <input type="color" id="opColorPicker" value="#7289da" />
+        <button id="opSetColor">Set Name Color</button>
+      </section>
+      <!-- Chat Controls Section -->
+      <section id="opChatControls">
+        <h3>Chat Controls</h3>
+        <button id="opClearChat">Clear Global Chat</button>
+        <button id="opClearTyping">Clear Global Typing</button>
+      </section>
+      <!-- Chat Restrictions Section -->
+      <section id="opChatRestrictions">
+        <h3>Chat Restrictions</h3>
+        <label for="usernameLengthLimit">Max Username Length:</label>
+        <input type="number" id="usernameLengthLimit" min="1" value="20" />
+        <button id="opUpdateUsernameLimit">Update</button>
+        <br/><br/>
+        <label for="messageLengthLimit">Max Message Length:</label>
+        <input type="number" id="messageLengthLimit" min="1" value="100" />
+        <button id="opUpdateMessageLimit">Update</button>
+      </section>
+      <!-- Custom Title Assignment Section -->
+      <section id="opCustomTitle">
+        <h3>Custom Title Assignment</h3>
+        <input type="text" id="customTitleUsername" placeholder="Username (leave blank for self)" />
+        <input type="text" id="customTitleInput" placeholder="Custom Title" />
+        <button id="opAssignTitle">Assign Custom Title</button>
+      </section>
+      <button id="opCloseModal">Close</button>
     </div>
   </div>
 
@@ -563,6 +551,10 @@
         Show messages from undefined players
       </label>
       <br/><br/>
+      <!-- NEW Titles Section in Settings -->
+      <h3>Titles</h3>
+      <div id="titlesContainer"></div>
+      <br/>
       <button onclick="returnToSettingsOrLogin()">Back</button>
     </div>
 
@@ -601,6 +593,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js"></script>
 
   <script>
+    // Define a unique client identifier so that OP authorization works correctly.
+    const clientIdentifier = 'client_' + Math.floor(Math.random() * 1000000);
+    
     // Set required client version
     const NEW_CLIENT_VERSION = 201;
 
@@ -727,10 +722,8 @@
         condition: function(stats) { return currentUserIsTop3RPS && currentUserIsTop3Duels && currentUserIsTop3Overall; }
       }
     ];
-    // Stores equipped title per user (for local rendering)
     let userTitles = {};
 
-    // Listen for new accounts or title changes and update the global userTitles object.
     newDB.ref(NEW_KEYS.accounts).on("child_added", function(snap) {
       const accountData = snap.val();
       const username = snap.key;
@@ -742,10 +735,7 @@
       userTitles[username] = { equipped: accountData.equippedTitle || "" };
     });
 
-    // Global booleans for leaderboard positions
     let currentUserIsTop3RPS = false, currentUserIsTop3Duels = false, currentUserIsTop3Overall = false;
-
-    // Adjustable limits (default values are 20 for usernames, 100 for messages)
     let maxUsernameLength = localStorage.getItem("maxUsernameLength") ? parseInt(localStorage.getItem("maxUsernameLength")) : 20;
     let maxMessageLength = localStorage.getItem("maxMessageLength") ? parseInt(localStorage.getItem("maxMessageLength")) : 100;
 
@@ -760,7 +750,6 @@
       alert("Max Message Length set to " + maxMessageLength);
     }
 
-    // OPs can assign a custom title to a user.
     function assignCustomTitle() {
       if (!isUserOP()) {
         alert("Only OPs can assign custom titles.");
@@ -837,31 +826,23 @@
     function closeOpToolsModal() {
       document.getElementById("opToolsModal").style.display = "none";
     }
-    // Updated OP color changer: when an OP picks a color, it is stored in Firebase.
     function setOpUserColorModal() {
       if (!isUserOP()) {
         alert("You must be an op to use this tool.");
         return;
       }
-      const chosenColor = document.getElementById("opColorPickerModal").value;
+      const chosenColor = document.getElementById("opColorPicker").value;
       newDB.ref(NEW_KEYS.accountColors + "/" + currentUser).set(chosenColor)
         .then(() => { alert("Your chat color has been updated to: " + chosenColor); });
     }
-
-    // Listen to the accountColors node and update the local userColors object.
-    // Also, update previously rendered messages from OPs so that they reflect the new color.
     newDB.ref(NEW_KEYS.accountColors).on("value", (snap) => {
       userColors = snap.val() || {};
       updateMessageColors();
     });
-
-    // Helper function that finds all messages (li elements with data-user attribute)
-    // and updates the color of those sent by OPs (per opList) using the updated userColors.
     function updateMessageColors() {
       const messages = document.querySelectorAll("li[data-user]");
       messages.forEach(li => {
         const user = li.getAttribute("data-user");
-        // Only update messages for users that are OPs and for which a custom color is set.
         if (user && opList && opList[user.toLowerCase()] && userColors[user]) {
           const span = li.querySelector("span");
           if (span) {
@@ -952,51 +933,66 @@
       window.securelyClearTypingGlobal = securelyClearTypingGlobal;
     })();
 
-    // UPDATED updateStats function with a 500ms delay and check for over-increment
-    function updateStats(gameType, winner, loser) {
-      setTimeout(() => {
-        // Get current wins/losses for winner and loser
-        Promise.all([
-          newDB.ref(NEW_KEYS.stats + "/" + winner + "/" + gameType + "/wins").once("value"),
-          newDB.ref(NEW_KEYS.stats + "/" + loser + "/" + gameType + "/losses").once("value")
-        ]).then(([winSnap, lossSnap]) => {
-          const prevWins = winSnap.val() || 0;
-          const prevLosses = lossSnap.val() || 0;
-          
-          // Prepare update to increment wins and losses by 1
-          const updates = {};
-          updates[`/${NEW_KEYS.stats}/${winner}/${gameType}/wins`] = firebase.database.ServerValue.increment(0.5);
-          updates[`/${NEW_KEYS.stats}/${loser}/${gameType}/losses`] = firebase.database.ServerValue.increment(0.5);
-          
-          newDB.ref().update(updates).then(() => {
-            // Re-read values to check for over-increment
-            newDB.ref(NEW_KEYS.stats + "/" + winner + "/" + gameType + "/wins").once("value").then(winSnapAfter => {
-              const newWins = winSnapAfter.val() || 0;
-              if (newWins - prevWins > 1.5) {
-                newDB.ref(NEW_KEYS.stats + "/" + winner + "/" + gameType + "/wins").set(prevWins + 1);
-              }
-            });
-            newDB.ref(NEW_KEYS.stats + "/" + loser + "/" + gameType + "/losses").once("value").then(lossSnapAfter => {
-              const newLosses = lossSnapAfter.val() || 0;
-              if (newLosses - prevLosses > 1.5) {
-                newDB.ref(NEW_KEYS.stats + "/" + loser + "/" + gameType + "/losses").set(prevLosses + 1);
-              }
-            });
-            
-            // Update overall totals and user titles
-            newDB.ref(NEW_KEYS.stats + "/" + winner).once("value").then(function(snap) {
-              const stats = snap.val() || {};
-              stats.totalWins = ((stats.rps && stats.rps.wins) ? stats.rps.wins : 0) +
-                                ((stats.duels && stats.duels.wins) ? stats.duels.wins : 0);
-              stats.totalMatches = ((stats.rps && (stats.rps.wins + stats.rps.losses)) || 0) +
-                                   ((stats.duels && (stats.duels.wins + stats.duels.losses)) || 0);
-              if (currentUser === winner) {
-                loadUserTitles(stats);
-              }
-            });
-          });
+    /* ------------------ Separated Win Granters ------------------ */
+    function updateOverallStats(username) {
+      newDB.ref(NEW_KEYS.stats + "/" + username).once("value").then(function(snap) {
+        const stats = snap.val() || {};
+        const rpsWins = (stats.rps && stats.rps.wins) || 0;
+        const duelsWins = (stats.duels && stats.duels.wins) || 0;
+        const totalWins = rpsWins + duelsWins;
+        const rpsMatches = stats.rps ? (stats.rps.wins + stats.rps.losses) : 0;
+        const duelsMatches = stats.duels ? (stats.duels.wins + stats.duels.losses) : 0;
+        const totalMatches = rpsMatches + duelsMatches;
+        
+        newDB.ref(NEW_KEYS.stats + "/" + username).update({
+          totalWins: totalWins,
+          totalMatches: totalMatches
         });
-      }, 500);
+      });
+    }
+    function grantDuelSpeedWin(winner, loser) {
+      newDB.ref(NEW_KEYS.stats + "/" + winner + "/duels/wins")
+           .transaction(current => (current || 0) + 1);
+      
+      newDB.ref(NEW_KEYS.stats + "/" + loser + "/duels/losses")
+           .transaction(current => (current || 0) + 1);
+      
+      updateOverallStats(winner);
+    }
+    function grantRPSWin(winner, loser) {
+      newDB.ref(NEW_KEYS.stats + "/" + winner + "/rps/wins")
+           .transaction(current => (current || 0) + 0.5);
+      
+      newDB.ref(NEW_KEYS.stats + "/" + loser + "/rps/losses")
+           .transaction(current => (current || 0) + 0.5);
+      
+      updateOverallStats(winner);
+    }
+
+    /* ------------------ End Separated Win Granters ------------------ */
+
+    function loadUserTitlesInSettings(userStats) {
+      const container = document.getElementById("titlesContainer");
+      container.innerHTML = "";
+      
+      availableTitles.forEach(title => {
+        const unlocked = title.condition(userStats);
+        const btn = document.createElement("button");
+        btn.textContent = title.name;
+        btn.disabled = !unlocked;
+        if (!unlocked) {
+          btn.innerHTML += " 🔒";
+          btn.style.opacity = 0.5;
+        }
+        btn.onclick = function() {
+          newDB.ref(NEW_KEYS.accounts + "/" + currentUser + "/equippedTitle").set(title.name).then(() => {
+            if (!userTitles[currentUser]) userTitles[currentUser] = {};
+            userTitles[currentUser].equipped = title.name;
+            alert("Equipped title: " + title.name);
+          });
+        };
+        container.appendChild(btn);
+      });
     }
 
     function initializeTextAreaShortcuts(textAreaId, sendCallback) {
@@ -1275,38 +1271,7 @@
       ul.scrollTop = ul.scrollHeight;
     }
 
-    function loadUserTitles(userStats) {
-      const container = document.getElementById("titlesContainer");
-      container.innerHTML = "";
-      
-      availableTitles.forEach(function(title) {
-        const unlocked = title.condition(userStats);
-        const btn = document.createElement("button");
-        btn.textContent = title.name;
-        btn.style.margin = "4px";
-        btn.style.padding = "6px";
-        btn.style.borderRadius = "4px";
-        btn.title = title.description + (unlocked ? "" : " (Locked)");
-        
-        if (!unlocked) {
-          btn.disabled = true;
-          btn.innerHTML += " 🔒";
-          btn.style.opacity = 0.5;
-        }
-        
-        btn.onclick = function() {
-          newDB.ref(NEW_KEYS.accounts + "/" + currentUser + "/equippedTitle")
-            .set(title.name)
-            .then(function() {
-              if (!userTitles[currentUser]) userTitles[currentUser] = {};
-              userTitles[currentUser].equipped = title.name;
-              alert("Equipped title: " + title.name);
-            });
-        };
-        
-        container.appendChild(btn);
-      });
-    }
+    function loadUserTitles(userStats) {}
 
     function updateLeaderboardRankings(callback) {
       newDB.ref(NEW_KEYS.stats).once("value").then(function(snapshot) {
@@ -1736,14 +1701,14 @@
             if (gameData.players[playerOne].clicks >= 100) {
               duelGameRef.child("statsUpdated").once("value", function(snap) {
                 if (!snap.exists() || !snap.val()) {
-                  updateStats("duels", playerOne, playerTwo);
+                  grantDuelSpeedWin(playerOne, playerTwo);
                   duelGameRef.update({ statsUpdated: true, status: "ended", winner: playerOne, clientVersion: NEW_CLIENT_VERSION });
                 }
               });
             } else if (gameData.players[playerTwo].clicks >= 100) {
               duelGameRef.child("statsUpdated").once("value", function(snap) {
                 if (!snap.exists() || !snap.val()) {
-                  updateStats("duels", playerTwo, playerOne);
+                  grantDuelSpeedWin(playerTwo, playerOne);
                   duelGameRef.update({ statsUpdated: true, status: "ended", winner: playerTwo, clientVersion: NEW_CLIENT_VERSION });
                 }
               });
@@ -1886,7 +1851,7 @@
               if (!snap.exists() || !snap.val()) {
                 if (winner) {
                   const loser = (winner === playerOne) ? playerTwo : playerOne;
-                  updateStats("rps", winner, loser);
+                  grantRPSWin(winner, loser);
                 }
                 rpsGameRef.update({ statsUpdated: true, status: "finished", result: resultStr, clientVersion: NEW_CLIENT_VERSION });
               }
@@ -1954,6 +1919,11 @@
       document.getElementById("loginDiv").style.display = "none";
       document.getElementById("chatDiv").style.display = "none";
       document.getElementById("settingsDiv").style.display = "block";
+      if (currentUser) {
+        newDB.ref(NEW_KEYS.stats + "/" + currentUser).once("value").then(snapshot => {
+          loadUserTitlesInSettings(snapshot.val() || {});
+        });
+      }
     }
 
     function returnToSettingsOrLogin() {
@@ -2236,7 +2206,6 @@
     }
 
     window.onload = function() {
-      // For logged-in users, update Firebase with the stored op color if available.
       currentUser = localStorage.getItem("acc_username");
       if (currentUser) {
         let storedColor = localStorage.getItem("userColor");
@@ -2244,7 +2213,6 @@
           newDB.ref(NEW_KEYS.accountColors + "/" + currentUser).set(storedColor);
         }
       }
-      // Clear your title on load so you start with no title.
       if (currentUser) {
         newDB.ref(NEW_KEYS.accounts + "/" + currentUser + "/equippedTitle").set("");
       }
@@ -2333,6 +2301,46 @@
       });
       updateHelpWindowVisibility();
       refreshOpSectionVisibility();
+
+      /* ------- Attach New OP Tools Event Listeners -------- */
+      document.getElementById("opExecuteAction").addEventListener("click", function() {
+        var action = document.getElementById("opActionSelect").value;
+        var target = document.getElementById("opTargetUser").value.trim();
+        if(!target) {
+          alert("Please enter a target username.");
+          return;
+        }
+        switch(action) {
+          case "mute":
+            securelyMuteUser(target);
+            break;
+          case "unmute":
+            securelyUnmuteUser(target);
+            break;
+          case "terminate":
+            securelyTerminateAccount(target);
+            break;
+          default:
+            alert("Unknown action.");
+        }
+      });
+      document.getElementById("opSetColor").addEventListener("click", function() {
+        setOpUserColorModal();
+      });
+      document.getElementById("opClearChat").addEventListener("click", securelyClearChatGlobal);
+      document.getElementById("opClearTyping").addEventListener("click", securelyClearTypingGlobal);
+      document.getElementById("opUpdateUsernameLimit").addEventListener("click", function() {
+        updateUsernameLengthLimit();
+      });
+      document.getElementById("opUpdateMessageLimit").addEventListener("click", function() {
+        updateMessageLengthLimit();
+      });
+      document.getElementById("opAssignTitle").addEventListener("click", function() {
+        assignCustomTitle();
+      });
+      document.getElementById("opCloseModal").addEventListener("click", function() {
+        closeOpToolsModal();
+      });
     };
   </script>
 </body>
